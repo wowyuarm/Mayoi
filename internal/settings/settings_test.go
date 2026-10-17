@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"mayoi/internal/remote"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -22,8 +24,10 @@ func TestRoundTrip(t *testing.T) {
 	y.SidebarView = "git"
 	s.Flush()
 	got := Load(path)
-	if len(got.Windows) != 2 || got.Windows[0].Folder != "/tmp/y" || got.Windows[0].ID != 1 ||
-		got.Windows[1].Folder != "/tmp/x" || len(got.Windows[1].Columns) != 1 {
+	// A folder is kept as the platform spells it, as remote.Clean does.
+	x, yDir := remote.Clean("/tmp/x"), remote.Clean("/tmp/y")
+	if len(got.Windows) != 2 || got.Windows[0].Folder != yDir || got.Windows[0].ID != 1 ||
+		got.Windows[1].Folder != x || len(got.Windows[1].Columns) != 1 {
 		t.Errorf("loaded %+v", got)
 	}
 	if x, y := got.Windows[1].Layout, got.Windows[0].Layout; x.SidebarWidth != 300 || x.SidebarView != "" ||
@@ -45,7 +49,7 @@ func TestMigrateTheLayout(t *testing.T) {
 	// The panel's own width is new here, so it takes the default.
 	want := DefaultLayout
 	want.SidebarView, want.SidebarClosed, want.SidebarWidth, want.PanelHeight = "git", true, 320, 400
-	if len(s.Windows) != 1 || s.Windows[0].Layout != want || s.Sessions["/tmp/y"] == nil || s.Sessions["/tmp/y"].Layout != want {
+	if len(s.Windows) != 1 || s.Windows[0].Layout != want || s.Sessions[remote.Clean("/tmp/y")] == nil || s.Sessions[remote.Clean("/tmp/y")].Layout != want {
 		t.Fatalf("windows %+v, sessions %+v", s.Windows, s.Sessions)
 	}
 	_, state := s.Encode()
@@ -69,7 +73,7 @@ func TestMigrateTheWindow(t *testing.T) {
 		t.Fatalf("windows %+v", s.Windows)
 	}
 	w := s.Windows[0]
-	if w.ID != 0 || w.Folder != "/tmp/x" || !w.PanelOpen || !w.TerminalOpen || len(w.Columns) != 1 ||
+	if w.ID != 0 || w.Folder != remote.Clean("/tmp/x") || !w.PanelOpen || !w.TerminalOpen || len(w.Columns) != 1 ||
 		len(w.Columns[0].Tabs) != 2 || w.Columns[0].Active != 1 {
 		t.Fatalf("window %+v", w)
 	}
@@ -105,7 +109,10 @@ func TestStateMovesToItsFile(t *testing.T) {
 		!strings.Contains(string(prefs), `"fontSize": 15`) {
 		t.Errorf("settings %s", prefs)
 	}
-	if !strings.Contains(string(state), `"/tmp/x/a.go"`) || strings.Contains(string(state), "fontSize") {
+	// The state keeps the tab's file as the platform spells it, escaped
+	// as JSON does.
+	quoted, _ := json.Marshal(remote.Clean("/tmp/x/a.go"))
+	if !strings.Contains(string(state), string(quoted)) || strings.Contains(string(state), "fontSize") {
 		t.Errorf("state %s", state)
 	}
 	// A change of the state only leaves the settings' file be.
@@ -132,7 +139,7 @@ func TestSessions(t *testing.T) {
 	w.Columns = []Column{{Tabs: []Tab{{File: "/tmp/x/a.go", Sel: [2]int{3, 5}}}}}
 	w.Expanded = []string{"internal"}
 	s.Forget(w)
-	if len(s.Windows) != 0 || s.Sessions["/tmp/x"] == nil {
+	if len(s.Windows) != 0 || s.Sessions[remote.Clean("/tmp/x")] == nil {
 		t.Fatalf("windows %d, sessions %v", len(s.Windows), s.Sessions)
 	}
 	ses := s.TakeSession("/tmp/x")
@@ -166,6 +173,25 @@ func TestSessions(t *testing.T) {
 	s.ClearRecent()
 	if s.Sessions != nil {
 		t.Errorf("cleared, kept %v", s.Sessions)
+	}
+}
+
+func TestRemotePathsNormalizeAcrossSeparators(t *testing.T) {
+	old := `\ssh:box\home\me\project`
+	want := remote.Path("box", "/home/me/project")
+	s := Default()
+	s.Recent = []string{old}
+	s.Sessions = map[string]*Session{old: {Columns: []Column{{Tabs: []Tab{{File: old + `\main.go`}}}}}}
+
+	s.AddRecent(old)
+	if !slices.Equal(s.Recent, []string{want}) || s.Sessions[want] == nil {
+		t.Fatalf("normalized recent %v, sessions %v", s.Recent, s.Sessions)
+	}
+	if got := s.Sessions[want].Columns[0].Tabs[0].File; got != want+"/main.go" {
+		t.Fatalf("normalized tab path = %q", got)
+	}
+	if got := s.TakeSession(old); got == nil || len(s.Sessions) != 0 {
+		t.Fatalf("TakeSession = %+v, sessions %v", got, s.Sessions)
 	}
 }
 

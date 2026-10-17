@@ -107,10 +107,10 @@ func markdownPath(root, path, dest string) string {
 	if err != nil || u.Scheme != "" || u.Host != "" || u.Path == "" {
 		return ""
 	}
-	if filepath.IsAbs(u.Path) {
-		return filepath.Join(cmp.Or(root, "/"), filepath.FromSlash(u.Path))
+	if strings.HasPrefix(u.Path, "/") {
+		return remote.Join(cmp.Or(root, "/"), u.Path)
 	}
-	return filepath.Join(filepath.Dir(path), filepath.FromSlash(u.Path))
+	return remote.Join(remote.Dir(path), u.Path)
 }
 
 // markdownRoot is the Git repository holding path, or else the workspace
@@ -119,7 +119,7 @@ func markdownRoot(path, workspace string) string {
 	// Of a remote file, the workspace, rather than a round trip to its
 	// host for each folder above it.
 	if remote.Is(path) {
-		if rel, err := filepath.Rel(workspace, path); workspace != "" && err == nil && filepath.IsLocal(rel) {
+		if rel, err := remote.Rel(workspace, path); workspace != "" && err == nil && filepath.IsLocal(rel) {
 			return workspace
 		}
 		return ""

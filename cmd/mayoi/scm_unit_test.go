@@ -139,6 +139,12 @@ func TestTreeRows(t *testing.T) {
 	if got, want := show(treeRows(nil, groupChanges, es, root, closed)), "a/| b/| e.go|x/y/z/| w.go|main.go"; got != want {
 		t.Errorf("closed\n%s, want\n%s", got, want)
 	}
+	// A file whose folder the work tree does not hold, as a path spelled
+	// apart from the root's, shows at the top rather than walking off it.
+	odd := []git.Entry{{Path: "/elsewhere/x.go"}}
+	if got, want := show(treeRows(nil, groupChanges, odd, root, nil)), "x.go"; got != want {
+		t.Errorf("outside the root\n%s, want\n%s", got, want)
+	}
 }
 
 func TestInHead(t *testing.T) {

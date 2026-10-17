@@ -300,6 +300,7 @@ func TestRestoresColumns(t *testing.T) {
 	}
 	w.Column = 2
 	a := newApp(&fakeHost{folder: root}, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	step(tt)
 	step(tt)
@@ -327,6 +328,7 @@ func TestFileGivenAtStartJoinsTheSession(t *testing.T) {
 		{Tabs: []settings.Tab{{File: file("go.mod")}}, Weight: 1},
 	}
 	a := newApp(&fakeHost{folder: root}, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	a.post(func() { a.openFile(file("main.go"), true) })
 	a.post(func() { a.openFile(file("README.md"), true) })

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"path"
 
 	"github.com/egoist/mygo/plugins/terminal"
@@ -19,6 +21,17 @@ func lostNote(host string) string {
 	return "\r\n\x1b[0;2m" + locales.TermLost(host) + "\x1b[0m\r\n"
 }
 
+// wslTermConn starts the terminal connection of a WSL host in dir: the
+// terminal's shell, over a wsl.exe of its own. The shell's PTY is one
+// script makes in the distribution, which it may not have: the
+// connection knows, and says so here rather than once the shell is gone.
+func (a *app) wslTermConn(c *remote.Conn, dir string) (*remote.WSLTerminal, error) {
+	if !c.Info().Script {
+		return nil, errors.New("the distribution has no script: install util-linux in it")
+	}
+	return remote.NewWSLTerminal(context.Background(), c.Host, dir, 80, 24)
+}
+
 // terminalExited takes the end of a terminal's program: a terminal of a
 // host whose connection went waits for it, any other closes.
 func (a *app) terminalExited(s *session, t *terminal.Terminal, code int) {
@@ -30,7 +43,7 @@ func (a *app) terminalExited(s *session, t *terminal.Terminal, code int) {
 	if c := sessionConn(s); c != nil && c == a.conn && (code == 255 || !c.Connected()) {
 		if !s.lost {
 			s.lost = true
-			t.Feed([]byte(lostNote(c.Host)))
+			t.Feed([]byte(lostNote(remote.DisplayHost(c.Host))))
 		}
 		return
 	}
@@ -59,6 +72,10 @@ func (a *app) restartTerminal(s *session) {
 		dir = remote.Path(c.Host, d)
 	}
 	old := s.term
+	if s.wsl != nil {
+		s.wsl.Close()
+		s.wsl = nil
+	}
 	t, err := a.spawnTerminal(s, dir)
 	if err != nil {
 		a.fail("%s", locales.FailRestartTerminal(err.Error()))

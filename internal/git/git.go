@@ -40,9 +40,9 @@ func Open(dir string) (*Repo, error) {
 		return nil, errors.New("not a work tree")
 	}
 	// The folders of a remote work tree are as its host spells them.
-	r := &Repo{Root: filepath.Clean(filepath.Join(dir, lines[0])), Dir: remote.On(dir, lines[1]), Common: lines[2]}
-	if !strings.HasPrefix(r.Common, "/") && !filepath.IsAbs(r.Common) {
-		r.Common = filepath.Join(dir, r.Common)
+	r := &Repo{Root: remote.Clean(remote.Join(dir, lines[0])), Dir: remote.On(dir, lines[1]), Common: lines[2]}
+	if !strings.HasPrefix(r.Common, "/") && !remote.IsAbs(r.Common) {
+		r.Common = remote.Join(dir, r.Common)
 	} else {
 		r.Common = remote.On(dir, r.Common)
 	}
@@ -97,7 +97,7 @@ func (r *Repo) run(stdin []byte, args ...string) ([]byte, error) { return run(r.
 
 // Rel returns path relative to the root, with slashes, as Git names it.
 func (r *Repo) Rel(path string) string {
-	rel, err := filepath.Rel(r.Root, path)
+	rel, err := remote.Rel(r.Root, path)
 	if err != nil {
 		return filepath.ToSlash(path)
 	}
@@ -105,11 +105,11 @@ func (r *Repo) Rel(path string) string {
 }
 
 // Abs returns the path of a file Git names relative to the root.
-func (r *Repo) Abs(rel string) string { return filepath.Join(r.Root, filepath.FromSlash(rel)) }
+func (r *Repo) Abs(rel string) string { return remote.Join(r.Root, rel) }
 
 // Contains reports whether path is in the work tree.
 func (r *Repo) Contains(path string) bool {
-	return path == r.Root || strings.HasPrefix(path, r.Root+string(filepath.Separator))
+	return remote.Contains(r.Root, path)
 }
 
 // Entry is a file whose state differs from HEAD, or that Git does not
@@ -325,7 +325,7 @@ func subproject(hash string, dirty bool) string {
 // it. ok is false when it is not checked out.
 func (r *Repo) WorkSubproject(path string, dirty bool) (text string, ok bool, err error) {
 	// Without its own .git, git in the folder would find this repository.
-	if _, err := vfs.Lstat(filepath.Join(path, ".git")); err != nil {
+	if _, err := vfs.Lstat(remote.Join(path, ".git")); err != nil {
 		return "", false, nil
 	}
 	out, err := run(path, nil, "rev-parse", "--verify", "-q", "HEAD")
@@ -447,12 +447,12 @@ func (r *Repo) InProgress() Op {
 	names := []string{"rebase-merge", "rebase-apply", "CHERRY_PICK_HEAD", "REVERT_HEAD", "MERGE_HEAD"}
 	paths := make([]string, len(names))
 	for i, n := range names {
-		paths[i] = filepath.Join(r.Dir, n)
+		paths[i] = remote.Join(r.Dir, n)
 	}
 	// At one round trip to a remote host.
 	there, _ := vfs.StatMany(paths)
 	exists := func(name string) bool {
-		_, ok := there[filepath.Join(r.Dir, name)]
+		_, ok := there[remote.Join(r.Dir, name)]
 		return ok
 	}
 	switch {
@@ -537,7 +537,7 @@ func (r *Repo) Abort(op Op) error {
 // MergeMessage returns the message git proposes for the commit that ends
 // a merge, cherry-pick or revert stopped part way, without its comments.
 func (r *Repo) MergeMessage() string {
-	b, err := vfs.ReadFile(filepath.Join(r.Dir, "MERGE_MSG"))
+	b, err := vfs.ReadFile(remote.Join(r.Dir, "MERGE_MSG"))
 	if err != nil {
 		return ""
 	}

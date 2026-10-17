@@ -81,7 +81,7 @@ func (a *app) sidebar(c *ui.Context) {
 		// is over the sidebar or the tree has the keyboard: on the title's
 		// row, they would leave the title no room.
 		ui.Row(c).Height(24).Padding(0, 6, 0, 16).Gap(2).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, strings.ToUpper(filepath.Base(a.root))).FontSize(11).FontWeight(700).LetterSpacing(0.4).
+			ui.Text(c, strings.ToUpper(remote.Base(a.root))).FontSize(11).FontWeight(700).LetterSpacing(0.4).
 				TextColor(p.text).SingleLine().Grow(1)
 			if !hovered && !a.files.List.FocusWithin(c) {
 				return
@@ -200,7 +200,7 @@ func (a *app) noFolder(c *ui.Context) {
 		if ui.PrimaryButton(c, locales.OpenFolder()).FillWidth().Clicked() {
 			a.chooseFolder()
 		}
-		if remoteSupported && ui.Button(c.Key("no-folder-remote"), locales.CmdRemoteConnect()).FillWidth().Clicked() {
+		if remoteSupported && ui.Button(c.Key("no-folder-remote"), remoteLabel(locales.CmdRemoteConnect(), "Connect to WSL…")).FillWidth().Clicked() {
 			a.openRemotePicker()
 		}
 	})
@@ -253,11 +253,11 @@ func (a *app) fileTree(c *ui.Context) {
 	// brighter, as the block of the caret's is in the editor.
 	activeDir := ""
 	if activePath != "" {
-		activeDir = filepath.Dir(activePath)
+		activeDir = remote.Dir(activePath)
 	}
 	out := ui.Outline(c.Key("files"), &a.files, t.Children(a.root), children, func(path string) {
 		isDir := t.IsDir(path)
-		name := filepath.Base(path)
+		name := remote.Base(path)
 		row := ui.Row(c).Grow(1).Gap(6).AlignItems(ui.Center).Height(explorerRowH)
 		if n := a.files.Rows(); n > 0 && a.files.Item(n-1) == path {
 			if r := row.Bounds(); r.H > 0 {
@@ -288,7 +288,7 @@ func (a *app) fileTree(c *ui.Context) {
 		if paths := row.DroppedFiles(); paths != nil {
 			srcs, into := slices.Clone(paths), path
 			if !isDir {
-				into = filepath.Dir(path)
+				into = remote.Dir(path)
 			}
 			action = func() { a.copyPathsInto(srcs, into) }
 		}
@@ -298,7 +298,7 @@ func (a *app) fileTree(c *ui.Context) {
 		row.ContextMenu(func(m *ui.Menu) {
 			dir := path
 			if !isDir {
-				dir = filepath.Dir(path)
+				dir = remote.Dir(path)
 			}
 			if m.Item(locales.NewFileEllipsis()).Chosen() {
 				action = func() { a.askNewEntry(dir, false) }
@@ -503,10 +503,11 @@ func (a *app) fileTree(c *ui.Context) {
 // treeDepth returns how deep path is in the tree of root: 0 for the
 // files and folders at its top.
 func treeDepth(root, path string) int {
-	if len(path) <= len(root)+1 || !strings.HasPrefix(path, root) {
+	rel, err := remote.Rel(root, path)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, "../") {
 		return 0
 	}
-	return strings.Count(path[len(root)+1:], string(filepath.Separator))
+	return strings.Count(rel, "/")
 }
 
 // treeGuides paints the indent guides of a row of the tree, depth deep,
@@ -517,7 +518,7 @@ func (a *app) treeGuides(pt *ui.Painter, r ui.Rect, path string, depth int, acti
 	x0 := treeGuideX(r.X, depth, th.Space(4), th.Space(1))
 	gap := th.Space(1)
 	y, h := r.Y-gap, r.H+2*gap
-	dir := filepath.Dir(path)
+	dir := remote.Dir(path)
 	for k := depth - 1; k >= 0; k-- {
 		x := x0[k]
 		col := p.guide
@@ -525,7 +526,7 @@ func (a *app) treeGuides(pt *ui.Painter, r ui.Rect, path string, depth int, acti
 			col = p.guideNow
 		}
 		pt.Fill(ui.Rect{X: x, Y: y, W: 1, H: h}, col, 0)
-		dir = filepath.Dir(dir)
+		dir = remote.Dir(dir)
 	}
 }
 
@@ -556,7 +557,7 @@ func (a *app) targetDir() string {
 		if a.tree.IsDir(p) {
 			return p
 		}
-		return filepath.Dir(p)
+		return remote.Dir(p)
 	}
 	return a.root
 }
@@ -564,11 +565,11 @@ func (a *app) targetDir() string {
 // revealInTree opens the folders above a file, and chooses it and scrolls
 // to it once the tree lists it.
 func (a *app) revealInTree(path string) {
-	if a.tree == nil || !strings.HasPrefix(path, a.root+string(filepath.Separator)) {
+	if a.tree == nil || path == a.root || !remote.Contains(a.root, path) {
 		return
 	}
 	a.selectInTree = path
-	for d := filepath.Dir(path); d != a.root && len(d) > len(a.root); d = filepath.Dir(d) {
+	for d := remote.Dir(path); d != a.root && len(d) > len(a.root); d = remote.Dir(d) {
 		a.files.Open.Add(d)
 		a.tree.Load(d)
 	}
@@ -584,7 +585,7 @@ func (a *app) askNewEntry(dir string, folder bool) {
 		if name == "" {
 			return locales.EnterName()
 		}
-		path := filepath.Join(dir, filepath.FromSlash(name))
+		path := remote.Join(dir, name)
 		if remote.Is(path) {
 			a.newRemoteEntry(dir, path, folder)
 			return ""
@@ -615,12 +616,12 @@ func (a *app) askNewEntry(dir string, folder bool) {
 }
 
 func (a *app) askRename(path string) {
-	a.prompt = &prompt{title: locales.RenameTitle(), hint: a.relOrPath(path), value: filepath.Base(path), done: func(name string) string {
+	a.prompt = &prompt{title: locales.RenameTitle(), hint: a.relOrPath(path), value: remote.Base(path), done: func(name string) string {
 		name = strings.TrimSpace(name)
 		if name == "" || strings.ContainsRune(name, filepath.Separator) {
 			return locales.EnterNameNoSlashes()
 		}
-		to := filepath.Join(filepath.Dir(path), name)
+		to := remote.Join(remote.Dir(path), name)
 		if to == path {
 			return ""
 		}
@@ -629,7 +630,7 @@ func (a *app) askRename(path string) {
 				err := vfs.Rename(path, to)
 				a.post(func() {
 					if err != nil {
-						a.fail("%s", locales.FailRename(filepath.Base(path), err.Error()))
+						a.fail("%s", locales.FailRename(remote.Base(path), err.Error()))
 						return
 					}
 					a.renamed(path, to)
@@ -651,11 +652,15 @@ func (a *app) askRename(path string) {
 // renamed has the open documents follow the files renamed.
 func (a *app) renamed(path, to string) {
 	for _, d := range a.docs {
-		if d.path == path || strings.HasPrefix(d.path, path+string(filepath.Separator)) {
+		if d.path == path || remote.Contains(path, d.path) {
 			if a.tree != nil {
 				a.tree.Unwatch(d.path)
 			}
-			d.path = to + d.path[len(path):]
+			if d.path == path {
+				d.path = to
+			} else if rel, err := remote.Rel(path, d.path); err == nil {
+				d.path = remote.Join(to, rel)
+			}
 			d.diskGone = false
 			if a.tree != nil {
 				a.tree.Watch(d.path)
@@ -683,7 +688,7 @@ func (a *app) newRemoteEntry(dir, path string, folder bool) {
 		}
 		a.post(func() {
 			if err != nil {
-				a.fail("%s", locales.FailMake(filepath.Base(path), err.Error()))
+				a.fail("%s", locales.FailMake(remote.Base(path), err.Error()))
 				return
 			}
 			a.files.Open.Add(dir)
@@ -707,14 +712,14 @@ func (a *app) trashLabel() string {
 
 func (a *app) trash(path string) {
 	if remote.Is(path) {
-		a.confirm = &confirm{title: locales.DeleteQuestion(filepath.Base(path)),
-			message: locales.DeleteRemoteDetail(remote.HostOf(path)),
+		a.confirm = &confirm{title: locales.DeleteQuestion(remote.Base(path)),
+			message: locales.DeleteRemoteDetail(remote.DisplayHost(remote.HostOf(path))),
 			ok:      locales.ButtonDelete(), danger: true, run: func() {
 				go func() {
 					err := vfs.RemoveAll(path)
 					a.post(func() {
 						if err != nil {
-							a.fail("%s", locales.FailDelete(filepath.Base(path), err.Error()))
+							a.fail("%s", locales.FailDelete(remote.Base(path), err.Error()))
 							return
 						}
 						a.tree.Refresh()
@@ -725,7 +730,7 @@ func (a *app) trash(path string) {
 		return
 	}
 	if err := a.host.trash(path); err != nil {
-		a.fail("%s", locales.FailMoveTo(filepath.Base(path), trashName(), err.Error()))
+		a.fail("%s", locales.FailMoveTo(remote.Base(path), trashName(), err.Error()))
 		return
 	}
 	a.tree.Refresh()
@@ -735,10 +740,12 @@ func (a *app) trash(path string) {
 func (a *app) relOrPath(path string) string {
 	if a.root != "" {
 		if path == a.root {
-			return filepath.Base(a.root)
+			return remote.Base(a.root)
 		}
-		if strings.HasPrefix(path, a.root+string(filepath.Separator)) {
-			return filepath.ToSlash(path[len(a.root)+1:])
+		if remote.Contains(a.root, path) {
+			if rel, err := remote.Rel(a.root, path); err == nil {
+				return rel
+			}
 		}
 	}
 	return shortenHome(path)

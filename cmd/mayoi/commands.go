@@ -1,7 +1,6 @@
 package main
 
 import (
-	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/egoist/mygo/ui"
 
 	"mayoi/internal/keymap"
+	"mayoi/internal/remote"
 	"mayoi/locales"
 )
 
@@ -42,10 +42,10 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		// ⌃R, which the view takes itself, so that a terminal keeps it.
 		{"file.openRecent", t.CmdFileOpenRecent(), "", a.openRecentPicker},
 		{"file.clearRecent", t.CmdFileClearRecent(), "", a.clearRecent},
-		{"remote.connect", t.CmdRemoteConnect(), "", a.openRemotePicker},
+		{"remote.connect", remoteLabel(t.CmdRemoteConnect(), "Connect to WSL…"), "", a.openRemotePicker},
 		{"remote.openFolder", t.CmdRemoteOpenFolder(), "", a.openRemoteFolder},
-		{"remote.reconnect", t.CmdRemoteReconnect(), "", a.reconnect},
-		{"remote.disconnect", t.CmdRemoteDisconnect(), "", a.disconnect},
+		{"remote.reconnect", remoteLabel(t.CmdRemoteReconnect(), "Reconnect to WSL"), "", a.reconnect},
+		{"remote.disconnect", remoteLabel(t.CmdRemoteDisconnect(), "Disconnect from WSL"), "", a.disconnect},
 		{"remote.forwardPort", t.CmdRemoteForwardPort(), "", a.askForwardPort},
 		{"file.save", t.CmdFileSave(), "CmdOrCtrl+S", a.saveActive},
 		{"file.saveAs", t.CmdFileSaveAs(), "Shift+CmdOrCtrl+S", a.saveActiveAs},
@@ -183,7 +183,20 @@ func (a *app) commandsIn(t locales.Messages) []command {
 	if !remoteSupported {
 		cmds = slices.DeleteFunc(cmds, func(c command) bool { return strings.HasPrefix(c.id, "remote.") })
 	}
+	if !remote.SSHAllowed() {
+		// Windows reaches its WSL distributions only.
+		cmds = slices.DeleteFunc(cmds, func(c command) bool { return c.id == "remote.forwardPort" })
+	}
 	return cmds
+}
+
+// remoteLabel is the words of a remote command, which name WSL where
+// that is all the machine reaches.
+func remoteLabel(ssh, wsl string) string {
+	if remote.SSHAllowed() {
+		return ssh
+	}
+	return wsl
 }
 
 // recentCommand is the prefix of the commands that open a recent
@@ -227,7 +240,7 @@ func (a *app) clearRecent() {
 // own.
 func (a *app) switchFolder(dir string) {
 	switch {
-	case a.host.showFolder(filepath.Clean(dir)):
+	case a.host.showFolder(remote.Clean(dir)):
 	case a.settings.ProjectTabs && a.folder() != "":
 		a.host.newWindow(dir)
 	default:
@@ -414,7 +427,12 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 		// Reconnecting and disconnecting are of a remote folder's window.
 		reconnect, disconnect, forward := item("remote.reconnect"), item("remote.disconnect"), item("remote.forwardPort")
 		reconnect.Disabled, disconnect.Disabled, forward.Disabled = a.conn == nil, a.conn == nil, a.conn == nil
-		file = append(file, &mygo.MenuItem{Label: locales.MenuRemoteSSH(), Submenu: []*mygo.MenuItem{
+		label := locales.MenuRemoteSSH()
+		if !remote.SSHAllowed() {
+			label = "Remote WSL"
+			forward.Disabled = true
+		}
+		file = append(file, &mygo.MenuItem{Label: label, Submenu: []*mygo.MenuItem{
 			item("remote.connect"), item("remote.openFolder"), mygo.Separator(), reconnect, disconnect, mygo.Separator(), forward,
 		}})
 	}

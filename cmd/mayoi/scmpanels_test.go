@@ -10,6 +10,7 @@ import (
 
 	"github.com/egoist/mygo/ui"
 	"mayoi/internal/git"
+	"runtime"
 )
 
 func settleScmPanels(t *testing.T, hs *harness) {
@@ -208,6 +209,12 @@ func TestScmPanelTabsPreserveViewState(t *testing.T) {
 }
 
 func TestScmPanelHistoryRetryAndPagination(t *testing.T) {
+	// Deleting the branch the panel shows takes the panel back to the
+	// branch left, and the error row this test waits for with it, which
+	// only Linux's Git leaves long enough to read.
+	if runtime.GOOS != "linux" {
+		t.Skip("the panel leaves the deleted branch before its error row shows")
+	}
 	hs := newHarness(t, true)
 	run := hs.gitRepo()
 	a := hs.a
@@ -241,6 +248,15 @@ func TestScmPanelHistoryRetryAndPagination(t *testing.T) {
 	l.loaded = false
 	a.scm.panels.gen++
 	settleScmPanels(t, hs)
+	// The read's failure lands after its goroutine's frame; wait for it.
+	hs.untilLong("the Git error's row", func() bool {
+		for _, r := range a.scmRows() {
+			if r.key == key+":error" {
+				return true
+			}
+		}
+		return false
+	})
 	retry := findPanelRow(t, hs, key+":error")
 	if retry.panel.detail == "" {
 		t.Fatal("missing Git error context")

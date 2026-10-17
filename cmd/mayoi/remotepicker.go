@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -88,6 +89,42 @@ func (a *app) recentHosts() ([]string, map[string]string) {
 	return hosts, last
 }
 
+// hostList returns the hosts the box lists besides the recent ones: the
+// WSL distributions on Windows, the hosts of ~/.ssh/config elsewhere.
+// The distributions take a wsl.exe to list, so they are found in the
+// background and added to the box as they come.
+func (a *app) hostList(r *remotePicker) {
+	if runtime.GOOS != "windows" {
+		for _, h := range remote.ConfigHosts() {
+			if !slices.Contains(r.hosts, h) {
+				r.hosts = append(r.hosts, h)
+			}
+		}
+		return
+	}
+	go func() {
+		hosts, err := remote.WSLHosts()
+		if err != nil {
+			return
+		}
+		a.post(func() {
+			if !a.remotePick.open {
+				return
+			}
+			before := len(a.remotePick.hosts)
+			for _, h := range hosts {
+				if !slices.Contains(a.remotePick.hosts, h) {
+					a.remotePick.hosts = append(a.remotePick.hosts, h)
+				}
+			}
+			if len(a.remotePick.hosts) != before {
+				a.remotePick.stale = true
+				a.invalidate()
+			}
+		})
+	}()
+}
+
 // openRemotePicker shows the box of the hosts.
 func (a *app) openRemotePicker() {
 	if !remoteSupported {
@@ -97,11 +134,7 @@ func (a *app) openRemotePicker() {
 	r := &a.remotePick
 	*r = remotePicker{open: true, stale: true, resolved: map[string]string{}}
 	r.hosts, r.recent = a.recentHosts()
-	for _, h := range remote.ConfigHosts() {
-		if !slices.Contains(r.hosts, h) {
-			r.hosts = append(r.hosts, h)
-		}
-	}
+	a.hostList(r)
 	// Who and where each signs in as, which ssh -G tells: known at once
 	// for those asked before, the others a few at a time.
 	var ask []string
@@ -174,6 +207,10 @@ func (a *app) chooseHost(host string) {
 	host = strings.TrimSpace(host)
 	if err := remote.CheckHost(host); err != nil {
 		r.err = err.Error()
+		return
+	}
+	if !remote.SSHAllowed() && !remote.IsWSLHost(host) {
+		r.err = "Windows reaches its WSL distributions: wsl:" + host
 		return
 	}
 	a.releasePick()
@@ -440,8 +477,12 @@ func (a *app) remotePickerView(c *ui.Context) {
 		}
 	}
 	title, placeholder := locales.PickConnectTitle(), locales.PickConnectPlaceholder()
+	if !remote.SSHAllowed() {
+		placeholder = "Choose a WSL distribution"
+	}
 	if r.stage != pickHost && r.conn != nil {
-		title, placeholder = locales.PickFolderTitle(r.conn.Host), locales.PickFolderPlaceholder()
+		title, placeholder = locales.PickFolderTitle(remote.DisplayHost(r.conn.Host)), locales.PickFolderPlaceholder()
+
 	}
 	ui.Overlay(c, func() {
 		back := a.dialogBack(c, "remote")
@@ -471,7 +512,12 @@ func (a *app) remotePickerView(c *ui.Context) {
 				case pickConnecting:
 					a.connectingFooter(c)
 				case pickHost:
-					a.quickFooter(c, false, locales.QuickConnectAction(), locales.PickSignsIn(), false)
+					hint := locales.PickSignsIn()
+					if !remote.SSHAllowed() {
+						hint = "Starts the WSL distribution"
+					}
+					a.quickFooter(c, false, locales.QuickConnectAction(), hint, false)
+
 				}
 			})
 			if box.PressedOutside() {
@@ -577,8 +623,11 @@ func (a *app) pickHostRows(c *ui.Context, extra bool, typed string, choose func(
 	if !extra && len(r.results) == 0 {
 		ui.Column(c).Padding(22, 16).Gap(6).AlignItems(ui.Center).Children(func() {
 			msg, tip := locales.PickNoHosts(), locales.PickNoHostsTip()
-			if typed != "" {
+			if !remote.SSHAllowed() {
+				msg, tip = "No WSL distributions", "Install one from the Microsoft Store, or with wsl --install."
+			} else if typed != "" {
 				msg, tip = locales.PickNoHostsMatch(typed), locales.PickConnectAnyway()
+
 			}
 			ui.Icon(c, iconServer).FontSize(22).TextColor(p.faint)
 			ui.Text(c, msg).FontSize(13).FontWeight(500).TextColor(p.text)
@@ -598,27 +647,56 @@ func (a *app) pickHostRows(c *ui.Context, extra bool, typed string, choose func(
 			h := r.hosts[m.Index]
 			last, recent := r.recent[h]
 			if grouped {
-				s := locales.PickSshConfig()
-				if recent {
-					s = locales.PickRecent()
-				}
-				if s != section {
+				if s := hostSection(h, recent); s != section {
 					section = s
 					a.pickSection(c, s)
 				}
 			}
 			icon := iconServer
-			if recent {
+			if remote.IsWSLHost(h) {
+				icon = iconTerminal
+			} else if recent {
 				icon = iconClock
 			}
 			trail := ""
 			if recent {
 				trail = a.homeShort(h, last)
 			}
-			a.pickRow(c, i, "remote-host:"+h, icon, a.matchSpans(h, 0, m.Positions, p.text), r.resolved[h], trail, choose)
+			shown, positions := hostMatch(h, m.Positions)
+			a.pickRow(c, i, "remote-host:"+h, icon, a.matchSpans(shown, 0, positions, p.text), r.resolved[h], trail, choose)
 			i++
 		}
 	})
+}
+
+// hostSection is the group of the box of the hosts that host is in: the
+// folders opened last, the WSL distributions of this machine, or those
+// ssh's config names.
+func hostSection(host string, recent bool) string {
+	switch {
+	case recent:
+		return locales.PickRecent()
+	case remote.IsWSLHost(host):
+		return "WSL Distributions"
+	}
+	return locales.PickSshConfig()
+}
+
+// hostMatch is host as the box of the hosts shows it, with the
+// characters the query matched of it. A WSL distribution shows as
+// "WSL: Ubuntu", while the query matched the host as it is spelled,
+// wsl:Ubuntu: the characters matched move with what shows.
+func hostMatch(host string, positions []int) (string, []int) {
+	shown := remote.DisplayHost(host)
+	d := len(shown) - len(host)
+	if d == 0 {
+		return shown, positions
+	}
+	out := make([]int, len(positions))
+	for i, p := range positions {
+		out[i] = p + d
+	}
+	return shown, out
 }
 
 // homeShort is a path of a host with its home folder as ~, when the
@@ -644,10 +722,13 @@ func (a *app) pickConnecting(c *ui.Context) {
 	}
 	host := r.conn.Host
 	ui.Column(c).Padding(26, 20, 24).Gap(8).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, locales.PickSigningIn(host)).FontSize(13.5).FontWeight(500).TextColor(p.text)
+		ui.Text(c, locales.PickSigningIn(remote.DisplayHost(host))).FontSize(13.5).FontWeight(500).TextColor(p.text)
 		detail := r.resolved[host]
-		if detail == "" || detail == host {
+		if remote.IsWSLHost(host) {
+			detail = "starting the distribution"
+		} else if detail == "" || detail == host {
 			detail = locales.PickWithKeys()
+
 		} else {
 			detail = locales.PickAs(detail)
 		}

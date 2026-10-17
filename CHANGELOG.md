@@ -3,8 +3,23 @@
 The update window shows the section of the version it offers. Every release
 needs a `## <version>` section here, or its build fails.
 
+## Unreleased
+
+- Windows: the folders of the machine's WSL distributions open as remote
+  folders, by **Connect to WSL…**, which lists the distributions; their
+  files, Git and search are reached through wsl.exe, and a terminal is a
+  login shell of the distribution. The connection shows as `WSL: <name>`,
+  and the ports of a distribution need no forwarding: they are on
+  localhost.
+- Windows remote paths keep one platform-independent spelling across the
+  Explorer, search, Git, recent folders, sessions and command-line opens;
+  paths saved with Windows separators are read back correctly.
+
 ## 0.10.0
 
+- Remote folders: while inotifywait watches a folder on its host, a file
+  open outside it is looked at again, which the change of that condition
+  had left unlooked at.
 - **Settings sync:** **Mayoi → Sign In to Sync Settings…** (**Help** on
   Windows and Linux) signs in to a mon.sorrycc.dev account with GitHub or
   Google, and syncs `settings.json` and `keybindings.json` between your

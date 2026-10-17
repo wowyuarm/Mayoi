@@ -1,6 +1,9 @@
 package workspace
 
 import (
+	"io/fs"
+	"mayoi/internal/remote"
+	"mayoi/internal/vfs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +11,35 @@ import (
 	"testing"
 	"time"
 )
+
+func TestRemoteEntriesKeepLogicalPaths(t *testing.T) {
+	root := `\ssh:box\home\me\project`
+	kids, dirs := sortEntries(root, []vfs.Entry{{Name: "src", Dir: true}, {Name: "main.go"}})
+	want := []string{remote.Path("box", "/home/me/project/src"), remote.Path("box", "/home/me/project/main.go")}
+	if !slices.Equal(kids, want) || !dirs[want[0]] {
+		t.Fatalf("entries = %v, dirs = %v", kids, dirs)
+	}
+	tree := NewTree(root, func(func()) {})
+	defer tree.Close()
+	if tree.Root != remote.Path("box", "/home/me/project") {
+		t.Fatalf("tree root = %q", tree.Root)
+	}
+}
+
+func TestRemoteTreeTakesStatsWithLogicalKeys(t *testing.T) {
+	tree := NewTree(`\ssh:box\home\me\project`, func(func()) {})
+	defer tree.Close()
+	path := remote.Join(tree.Root, "main.go")
+	tree.Watch(`\ssh:box\home\me\project\main.go`)
+	info, err := os.Stat(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tree.took(nil, nil, []string{path}, map[string]fs.FileInfo{path: info})
+	if tree.stamps[path] == nil {
+		t.Fatalf("stamp for %q was not recorded: %v", path, tree.stamps)
+	}
+}
 
 func mkfiles(t *testing.T, root string, files ...string) {
 	for _, f := range files {
@@ -117,5 +149,31 @@ func TestIndexLeavesOutWhatGitIgnores(t *testing.T) {
 	want := []string{".gitignore", "main.go", "new.go", "src/a.go"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("Index = %v, want %v", got, want)
+	}
+}
+
+// TestRemoteTreePollsFilesInotifywaitMisses: while inotifywait tells of
+// the files under a remote tree's root, a poll looks again at the ones
+// outside it, which inotifywait does not tell of, and not at those under
+// it, which it does: those would tell nothing new. A full poll, and one
+// with no inotifywait, looks at all of them.
+func TestRemoteTreePollsFilesInotifywaitMisses(t *testing.T) {
+	root := remote.Path("box", "/home/me/project")
+	tree := NewTree(root, func(func()) {})
+	defer tree.Close()
+	tree.Watch(remote.Join(root, "main.go"))
+	tree.Watch(remote.Join(root, "src/a.go"))
+	tree.Watch(remote.Path("box", "/etc/hosts"))
+	tree.Watch(remote.Path("box", "/home/me/other/b.go"))
+	got := tree.filesToPoll(true)
+	slices.Sort(got)
+	want := []string{remote.Path("box", "/etc/hosts"), remote.Path("box", "/home/me/other/b.go")}
+	if !slices.Equal(got, want) {
+		t.Errorf("polled while inotifywait watches = %v, want %v", got, want)
+	}
+	got = tree.filesToPoll(false)
+	slices.Sort(got)
+	if len(got) != 4 {
+		t.Errorf("polled without inotifywait = %v", got)
 	}
 }

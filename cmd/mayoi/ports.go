@@ -24,7 +24,7 @@ func (a *app) askForwardPort() {
 	if a.conn == nil {
 		return
 	}
-	host := a.conn.Host
+	host := remote.DisplayHost(a.conn.Host)
 	a.prompt = &prompt{title: locales.PortForwardTitle(), hint: locales.PortOfHost(host), done: func(v string) string {
 		port, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(v), ":")))
 		if err != nil || port < 1 || port > 65535 {
@@ -50,8 +50,9 @@ func (a *app) forwardPort(port int) (*remote.Forward, error) {
 		return nil, err
 	}
 	if was == 0 {
-		msg := locales.PortIsAt(port, c.Host, f.Local)
+		msg := locales.PortIsAt(port, remote.DisplayHost(c.Host), f.Local)
 		a.tell(note{message: msg, label: locales.OpenInBrowser(), action: func() { a.services.OpenURL(f.URL()) }})
+
 	}
 	return f, nil
 }
@@ -109,9 +110,11 @@ func (a *app) portsStatus(c *ui.Context, text func(string) ui.Element) {
 	}
 	p := a.pal
 	label := portsLabel(fs)
-	tip := locales.PortsForwarded(len(fs), a.conn.Host)
+	host := remote.DisplayHost(a.conn.Host)
+	tip := locales.PortsForwarded(len(fs), host)
 	if len(fs) == 1 {
-		tip = locales.PortIsAt(fs[0].Port, a.conn.Host, fs[0].Local)
+		tip = locales.PortIsAt(fs[0].Port, host, fs[0].Local)
+
 	}
 	b := ui.ButtonBase(c.Key("status:ports")).Height(statusBarH-6).Padding(0, 6).Gap(5).Radius(4).
 		AlignItems(ui.Center).Label(tip).Tooltip(tip)

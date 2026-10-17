@@ -12,6 +12,11 @@ func vimHarness(t *testing.T, name, text string) (*harness, *editor) {
 	t.Helper()
 	hs, d := editHarness(t, name, text)
 	hs.a.settings.Vim = true
+	// Off macOS, vim's ⌃F, ⌃B and ⌃R are the view's shortcuts unless the
+	// user gives it the Control keys, as TestVimCtrl asserts.
+	if !macKeys() {
+		hs.a.settings.VimCtrlKeys = true
+	}
 	hs.frames()
 	return hs, d
 }

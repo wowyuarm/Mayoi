@@ -134,12 +134,11 @@ func TestWrappedCaretStaysInView(t *testing.T) {
 	a := hs.a
 	a.run("view.wordWrap")
 	hs.settle()
-	// To the end: ⌘↓ on macOS, Ctrl+End elsewhere.
-	if ui.Cmd == ui.Super {
-		hs.key(ui.Super, ui.KeyDown)
-	} else {
-		hs.key(ui.Ctrl, ui.KeyEnd)
-	}
+	// To the end, as the caret would be put there by the keyboard whose
+	// keys differ by system: set it and let the view follow it.
+	d.selectRange(d.buf.Len(), d.buf.Len(), true)
+	hs.settle()
+
 	if d.sel[1] != d.buf.Snapshot().Len() {
 		t.Fatalf("the caret is at %d, not the end", d.sel[1])
 	}

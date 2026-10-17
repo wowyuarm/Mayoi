@@ -42,6 +42,7 @@ func TestSidebarTitleFits(t *testing.T) {
 		a.window.SidebarWidth = 320
 		hs.settle()
 	}
+
 	whole("SOURCE CONTROL")
 	a.window.SidebarWidth = 180
 	hs.settle()

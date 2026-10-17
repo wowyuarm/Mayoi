@@ -164,6 +164,9 @@ func Resolve(host string) string {
 }
 
 func resolve(host string) string {
+	if IsWSLHost(host) {
+		return ""
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "ssh", append([]string{"-G"}, hostArgs(host)...)...).Output()

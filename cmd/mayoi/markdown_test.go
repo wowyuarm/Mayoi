@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -149,7 +148,7 @@ func TestMarkdownBlocks(t *testing.T) {
 	if bs[len(bs)-2].marker != "•" || bs[len(bs)-1].marker != "☑" {
 		t.Fatal("task checkbox detection")
 	}
-	if markdownPath("", path, "https://example.com/a.png") != "" || markdownPath("", path, "//example.com/a.png") != "" || markdownPath("", path, "/tmp/a%20b.png") != "/tmp/a b.png" {
+	if markdownPath("", path, "https://example.com/a.png") != "" || markdownPath("", path, "//example.com/a.png") != "" || filepath.ToSlash(markdownPath("", path, "/tmp/a%20b.png")) != "/tmp/a b.png" {
 		t.Fatal("destination resolution")
 	}
 }
@@ -160,10 +159,10 @@ func TestMarkdownPreview(t *testing.T) {
 	a.openFile(hs.path("README.md"), true)
 	hs.settle()
 	d := a.activeEditor()
-	if d.preview != nil || !hs.tt.HasText("Show Preview (⇧⌘V)") {
+	if d.preview != nil || !hs.tt.HasText(a.withKey("Show Preview", "view.togglePreview")) {
 		t.Fatal("Markdown did not open as source")
 	}
-	if err := hs.tt.Click("Show Preview (⇧⌘V)"); err != nil {
+	if err := hs.tt.Click(a.withKey("Show Preview", "view.togglePreview")); err != nil {
 		t.Fatal(err)
 	}
 	hs.until("Markdown preview", func() bool { return d.preview != nil && d.preview.loaded })
@@ -317,6 +316,11 @@ func markdownRunsText(runs []markdownInline) string {
 }
 
 func TestMarkdownLocalImagesAndLinks(t *testing.T) {
+	// The images' paths in the markdown are POSIX ones, which Windows'
+	// separators spell differently than its own paths.
+	if runtime.GOOS == "windows" {
+		t.Skip("the links and roots are POSIX paths")
+	}
 	hs := newHarness(t, false)
 	dir := hs.path("docs")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -450,11 +454,8 @@ func TestMarkdownLocalImagesAndLinks(t *testing.T) {
 func TestMarkdownDebounceAndClosedResult(t *testing.T) {
 	hs := newHarness(t, true)
 	a := hs.a
-	fifo := hs.path("fifo")
-	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	for _, path := range []string{fifo, "/dev/zero"} {
+	images, readme := writeSpecialFiles(hs.root)
+	for _, path := range images {
 		done := make(chan error, 1)
 		var before, after runtime.MemStats
 		runtime.ReadMemStats(&before)
@@ -472,8 +473,7 @@ func TestMarkdownDebounceAndClosedResult(t *testing.T) {
 			t.Fatal("special file allocated too much")
 		}
 	}
-	os.WriteFile(hs.path("README.md"), []byte("![fifo]("+fifo+") ![zero](/dev/zero)"), 0o644)
-	a.openFile(hs.path("README.md"), true)
+	a.openFile(readme, true)
 	a.run("view.togglePreview")
 	hs.until("special-file preview", func() bool { return a.activeEditor().preview.loaded })
 	ed := a.activeEditor()

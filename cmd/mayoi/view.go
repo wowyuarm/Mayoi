@@ -389,10 +389,7 @@ func (a *app) commandCenter(c *ui.Context) {
 			}
 		}
 		if a.root != "" {
-			folder = filepath.Base(a.root)
-			if host := remote.HostOf(a.root); host != "" {
-				folder = filepath.Base(hostPath(a.root)) + " [SSH: " + host + "]"
-			}
+			folder = remoteFolder(a.root)
 		}
 		if name != "" && folder != "" && room > 0 {
 			// The folder goes before the name is cut short.
@@ -681,8 +678,10 @@ func (a *app) breadcrumbs(c *ui.Context, t *colTab) {
 	var parts []string
 	if path := t.path(); path != "" {
 		rel := path
-		if a.root != "" && strings.HasPrefix(path, a.root+string(filepath.Separator)) {
-			rel = path[len(a.root)+1:]
+		if a.root != "" && path != a.root && remote.Contains(a.root, path) {
+			if path, err := remote.Rel(a.root, path); err == nil {
+				rel = path
+			}
 		}
 		parts = strings.Split(filepath.ToSlash(rel), "/")
 	} else if t.diff != nil && t.diff.commit != nil && t.diff.commit.from != "" {
@@ -816,7 +815,7 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 		used += measure(busy, true)
 	}
 	if a.conn != nil {
-		used += measure("SSH: "+a.conn.Host, true) + 2
+		used += measure(remote.KindHost(a.conn.Host), true) + 2
 		if l := portsLabel(a.conn.Forwards()); l != "" {
 			used += measure(l, true)
 		}
@@ -832,7 +831,7 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 	}
 	folder := func() {
 		if a.root != "" {
-			add(&v.folder, measure(filepath.Base(a.root), true))
+			add(&v.folder, measure(remote.Base(a.root), true))
 		}
 	}
 	t := a.activeTab()
@@ -976,9 +975,9 @@ func (a *app) statusBar(c *ui.Context) {
 		}
 		if a.root != "" && visible.folder {
 			if a.conn != nil {
-				item("folder", filepath.Base(hostPath(a.root)), "", iconFolder, nil)
+				item("folder", remote.Base(a.root), "", iconFolder, nil)
 			} else {
-				item("folder", filepath.Base(a.root), revealFolderLabel(shortenHome(a.root)), iconFolder, func() { a.host.reveal(a.root) })
+				item("folder", remote.Base(a.root), revealFolderLabel(shortenHome(a.root)), iconFolder, func() { a.host.reveal(a.root) })
 			}
 		}
 		a.reviewStatus(c, text)
@@ -1145,7 +1144,7 @@ func (a *app) welcome(c *ui.Context) {
 					if a.root == "" {
 						a.welcomeAction(c, iconFolderOpen, locales.CmdFileOpenFolder(), a.keyHint("file.openFolder"), a.chooseFolder)
 						if remoteSupported {
-							a.welcomeAction(c, iconServer, locales.CmdRemoteConnect(), a.keyHint("remote.connect"), a.openRemotePicker)
+							a.welcomeAction(c, iconServer, remoteLabel(locales.CmdRemoteConnect(), "Connect to WSL…"), a.keyHint("remote.connect"), a.openRemotePicker)
 						}
 					} else {
 						a.welcomeAction(c, iconSearch, locales.CmdGoQuickOpen(), a.keyHint("go.quickOpen"), func() { a.openQuick("") })
@@ -1177,8 +1176,8 @@ func (a *app) welcome(c *ui.Context) {
 									icon = iconServer
 								}
 								ui.Icon(c, icon).FontSize(15).TextColor(p.accent)
-								ui.Text(c, filepath.Base(dir)).FontSize(13).TextColor(p.text).SingleLine().Shrink(0)
-								ui.Text(c, shortenHome(filepath.Dir(dir))).FontSize(12).TextColor(p.faint).SingleLine().Shrink(1)
+								ui.Text(c, remote.Base(dir)).FontSize(13).TextColor(p.text).SingleLine().Shrink(0)
+								ui.Text(c, shortenHome(remote.Dir(dir))).FontSize(12).TextColor(p.faint).SingleLine().Shrink(1)
 							})
 							// With Cmd, in a window of its own.
 							switch {

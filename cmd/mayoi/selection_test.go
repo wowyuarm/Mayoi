@@ -11,9 +11,15 @@ import (
 
 // The editor places what it paints by measuring the text itself: a tab
 // ends where the text area's layout ends it, not after four cells.
+// Where the shaper lays a tab out (CoreText does), that is: pango gives
+// a tab no width at all, and newFont falls back to four cells there.
 func TestWidthFollowsTabStops(t *testing.T) {
 	hs := newHarness(t, true)
 	f := hs.a.font
+	shaped, _ := ui.ShapeText("\t", f.font(), 0).Size()
+	if shaped <= 0 {
+		t.Skip("the shaper gives a tab no width to follow")
+	}
 	for _, s := range []string{"\t", "\t\tx", "a\tb", "abc\td\t", "    x", "\t\tfoo := bar(1, 2)\t// c", "\tnaïve\t迷い"} {
 		want, _ := ui.ShapeText(s, ui.Font{Family: f.family, Size: f.size}, 0).Size()
 		if got := f.width(s); got < want-0.05 || got > want+0.05 {

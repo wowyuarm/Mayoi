@@ -187,6 +187,11 @@ git init -q && git -c user.email=t@t -c user.name=t add -A && git -c user.email=
 
 // useFakeSSH puts fakeSSH first on the PATH.
 func useFakeSSH(t *testing.T) {
+	// The fake is a shell script; Windows has no shell to run it, and its
+	// hosts are WSL's. A real host still runs these, by MAYOI_SSH_TEST_HOST.
+	if runtime.GOOS == "windows" {
+		t.Skip("the fake ssh is a shell script, which Windows cannot run")
+	}
 	bin := t.TempDir()
 	if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSH), 0o755); err != nil {
 		t.Fatal(err)
@@ -213,8 +218,8 @@ func (hs *harness) untilLong(what string, ok func() bool) {
 func TestRemoteFolder(t *testing.T) {
 	hs, c, dir := remoteHarness(t)
 	a := hs.a
-	if !strings.Contains(a.windowTitle(), "[SSH: "+c.Host+"]") {
-		t.Errorf("title = %q", a.windowTitle())
+	if want := "[" + remote.KindHost(c.Host) + "]"; !strings.Contains(a.windowTitle(), want) {
+		t.Errorf("title = %q, want %s in it", a.windowTitle(), want)
 	}
 	main := hs.path("main.go")
 	a.openFile(main, true)
@@ -234,10 +239,20 @@ func TestRemoteFolder(t *testing.T) {
 	if err != nil || !strings.HasPrefix(string(got), "// edited\npackage main") {
 		t.Fatalf("on the host: %q, %v", got, err)
 	}
-	// Git sees the change.
+	// Git sees the change, and stages and unstages it on the host.
 	hs.untilLong("the status", func() bool {
 		e, ok := a.git.entries[main]
 		return ok && e.Letter() == 'M'
+	})
+	a.stage(main)
+	hs.untilLong("the stage", func() bool {
+		e, ok := a.git.entries[main]
+		return ok && e.X != '.' && e.Y == '.'
+	})
+	a.unstage(main)
+	hs.untilLong("the unstage", func() bool {
+		e, ok := a.git.entries[main]
+		return ok && e.X == '.' && e.Y == 'M'
 	})
 	// A change on the host shows in the editor, and a new file in the tree.
 	if _, err := c.Run(nil, `sleep 1; printf 'changed on the host\n' > "$1/main.go"; : > "$1/new.txt"`, dir); err != nil {
@@ -383,5 +398,65 @@ func TestRemoteProjectLogo(t *testing.T) {
 	h.logoDone, h.logoDir, h.logoIcon = true, off, "/icons/a.png"
 	if !h.needsLogoScan(off, "") {
 		t.Error("the icon reset waits for the host")
+	}
+}
+
+// TestHostRowsGroupAndMatch: the rows of the box of the hosts name the
+// group each host is in, and highlight the characters the query matched
+// where the row shows them, which for a WSL distribution is not where
+// they were of the host as it is spelled.
+func TestHostRowsGroupAndMatch(t *testing.T) {
+	for _, c := range []struct {
+		host   string
+		recent bool
+		group  string
+	}{
+		{"wsl:Ubuntu", false, "WSL Distributions"},
+		{"wsl:Ubuntu", true, "Recent"},
+		{"me@box", false, "SSH Config"},
+		{"me@box", true, "Recent"},
+	} {
+		if got := hostSection(c.host, c.recent); got != c.group {
+			t.Errorf("hostSection(%q, %v) = %q, want %q", c.host, c.recent, got, c.group)
+		}
+	}
+	// "Ubuntu" matches wsl:Ubuntu at 4..9, which shows as "WSL: Ubuntu"
+	// five characters in: the highlights move with what shows.
+	shown, positions := hostMatch("wsl:Ubuntu", []int{4, 5, 6, 7, 8, 9})
+	if shown != "WSL: Ubuntu" {
+		t.Fatalf("shown = %q", shown)
+	}
+	if want := []int{5, 6, 7, 8, 9, 10}; !slices.Equal(positions, want) {
+		t.Errorf("positions = %v, want %v", positions, want)
+	}
+	spans := (&app{pal: darkPal}).matchSpans(shown, 0, positions, darkPal.text)
+	on := ""
+	for _, s := range spans {
+		if s.Weight == 650 {
+			on += s.Text
+		}
+	}
+	if on != "Ubuntu" {
+		t.Errorf("the characters highlighted = %q", on)
+	}
+	// A host that shows as it is spelled keeps the positions it matched.
+	shown, positions = hostMatch("me@box", []int{3, 4, 5})
+	if shown != "me@box" || !slices.Equal(positions, []int{3, 4, 5}) {
+		t.Errorf("an ssh host: %q, %v", shown, positions)
+	}
+}
+
+// TestRemoteFolderNameNamesTheKindOfHost: the window title and the status
+// bar name a folder with the host it is on, an ssh host as SSH and a WSL
+// distribution as WSL, never the editor's own spelling of the host.
+func TestRemoteFolderNameNamesTheKindOfHost(t *testing.T) {
+	for _, c := range []struct{ root, want string }{
+		{remote.Path("box", "/home/me/proj"), "proj [SSH: box]"},
+		{remote.Path("wsl:Ubuntu", "/home/me/proj"), "proj [WSL: Ubuntu]"},
+		{"/home/me/proj", "proj"},
+	} {
+		if got := remoteFolder(c.root); got != c.want {
+			t.Errorf("remoteFolder(%q) = %q, want %q", c.root, got, c.want)
+		}
 	}
 }

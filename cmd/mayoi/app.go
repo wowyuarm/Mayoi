@@ -381,7 +381,7 @@ func (a *app) start() {
 
 // openFolder makes dir the workspace.
 func (a *app) openFolder(dir string) {
-	dir = filepath.Clean(dir)
+	dir = remote.Clean(dir)
 	if a.tree != nil {
 		a.tree.Close()
 	}
@@ -419,7 +419,7 @@ func (a *app) folder() string {
 	if a.root != "" || a.window.Folder == "" {
 		return a.root
 	}
-	return filepath.Clean(a.window.Folder)
+	return remote.Clean(a.window.Folder)
 }
 
 // blank reports whether the window shows nothing: no folder, no tabs and
@@ -677,10 +677,7 @@ func (a *app) windowTitle() string {
 		parts = append(parts, name)
 	}
 	if a.root != "" {
-		parts = append(parts, filepath.Base(a.root))
-		if host := remote.HostOf(a.root); host != "" {
-			parts[len(parts)-1] = filepath.Base(hostPath(a.root)) + " [SSH: " + host + "]"
-		}
+		parts = append(parts, remoteFolder(a.root))
 	}
 	if len(parts) == 0 {
 		return "Mayoi"

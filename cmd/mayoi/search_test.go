@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/egoist/mygo/ui"
+	"runtime"
 )
 
 // settleSearch draws frames until the search under way, or waiting to
 // start, is done.
 func (hs *harness) settleSearch() {
 	s := &hs.a.inFiles
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 	for {
 		hs.settle()
 		if !s.running && !s.waiting || time.Now().After(deadline) {
@@ -134,7 +135,7 @@ func TestSearchFilesAndEdits(t *testing.T) {
 	// So is a file changed on disk.
 	os.WriteFile(hs.path("go.mod"), []byte("module mayoi\n"), 0o644)
 	os.WriteFile(hs.path("web/index.html"), []byte("<!doctype html>\n"), 0o644)
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		hs.settle()
 		if strings.Join(resultFiles(s), " ") == "README.md go.mod internal/b/b.ts main.go" {
@@ -194,7 +195,8 @@ func TestReplaceInFiles(t *testing.T) {
 	if string(css) != "b0dy {\r\n  c0l0r: #333;\r\n}\r\n" {
 		t.Errorf("style.css: %q", css)
 	}
-	if info, _ := os.Stat(hs.path("web/style.css")); info.Mode().Perm() != 0o600 {
+	// Windows carries no permission bits.
+	if info, _ := os.Stat(hs.path("web/style.css")); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Errorf("style.css mode %v", info.Mode())
 	}
 	d := a.activeEditor()

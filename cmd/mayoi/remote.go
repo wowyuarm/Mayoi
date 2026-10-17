@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"path"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -18,9 +17,10 @@ import (
 	"mayoi/locales"
 )
 
-// remoteSupported is whether Mayoi reaches folders over SSH here: the
-// paths of remote files are POSIX's, as on macOS and Linux.
-var remoteSupported = runtime.GOOS != "windows"
+// remoteSupported is whether Mayoi reaches folders on other machines
+// here: over SSH, and on Windows, into its WSL distributions. The paths
+// of remote files are POSIX's everywhere.
+var remoteSupported = true
 
 // fileStamp is what tells that a file changed: its size and the time of
 // its last change, and, for a remote file, both as its host printed
@@ -101,10 +101,26 @@ func (a *app) connChanged() {
 		if was == remote.Connecting && a.retry == nil {
 			a.retries++
 		}
+		a.closeWSLTerminals()
 		a.scheduleRetry()
 	default:
 		// Disconnected on purpose, or refused: until asked.
+		a.closeWSLTerminals()
 		a.stopRetry()
+	}
+}
+
+// closeWSLTerminals ends the terminal connections of the folder's WSL
+// host, as its connection goes: their wsl.exe would run on without the
+// connection, unlike an ssh terminal's program, which ends with its
+// master. The terminals themselves stay, marked lost, to start again
+// once the connection is back.
+func (a *app) closeWSLTerminals() {
+	for _, s := range a.terms {
+		if s.wsl != nil {
+			s.wsl.Close()
+			s.wsl = nil
+		}
 	}
 }
 
@@ -158,7 +174,7 @@ func (a *app) reconnected() {
 			a.tree.Load(a.root)
 		}
 		for _, dir := range a.window.Expanded {
-			if d := filepath.Join(a.root, filepath.FromSlash(dir)); !a.tree.Loaded(d) {
+			if d := remote.Join(a.root, dir); !a.tree.Loaded(d) {
 				a.tree.Load(d)
 			}
 		}
@@ -343,7 +359,7 @@ func (a *app) saveRemote(d *document, done func(), failed func(error)) {
 		return
 	}
 	if !remote.IsConnected(d.path) {
-		failed(errors.New(locales.ErrNotConnectedTo(remote.HostOf(d.path))))
+		failed(errors.New(locales.ErrNotConnectedTo(remote.DisplayHost(remote.HostOf(d.path)))))
 		return
 	}
 	d.saving = true
@@ -398,7 +414,7 @@ func (a *app) askSavePath(name string, done func(path string)) {
 		return
 	}
 	host, root, _ := remote.Split(a.root)
-	a.prompt = &prompt{title: locales.SaveAsEllipsis(), hint: locales.OnHost(host), value: path.Join(root, name), done: func(p string) string {
+	a.prompt = &prompt{title: locales.SaveAsEllipsis(), hint: locales.OnHost(remote.DisplayHost(host)), value: path.Join(root, name), done: func(p string) string {
 		p = strings.TrimSpace(p)
 		if !strings.HasPrefix(p, "/") {
 			return locales.EnterPathFromRoot()
@@ -417,6 +433,17 @@ func hostPath(p string) string {
 	return p
 }
 
+// remoteFolder is how a remote folder is named in a window title or the
+// status bar: its name, and the host it is on, with the kind of machine
+// that host is.
+func remoteFolder(root string) string {
+	name := remote.Base(root)
+	if host := remote.HostOf(root); host != "" {
+		return name + " [" + remote.KindHost(host) + "]"
+	}
+	return name
+}
+
 // remoteBanner shows above the editors of a remote folder while its host
 // is not connected: connecting, the reconnection due, or why it is not,
 // and a button to connect now.
@@ -425,39 +452,41 @@ func (a *app) remoteBanner(c *ui.Context) {
 		return
 	}
 	p := a.pal
-	host := a.conn.Host
+	// The host as the banner shows it: WSL: Ubuntu, not the wsl:Ubuntu the
+	// connection names it.
+	shown := remote.DisplayHost(a.conn.Host)
 	bold := func(t string) ui.Span { return ui.Span{Text: t, Color: p.text, Weight: 600} }
 	plain := func(t string) ui.Span { return ui.Span{Text: t, Color: p.text} }
 	faint := func(t string) ui.Span { return ui.Span{Text: t, Color: p.muted} }
 	tint, icon, iconCol := p.hover, iconServer, p.muted
 	// A message of the catalogs, with the host in it in bold.
 	about := func(msg string) []ui.Span {
-		before, after, ok := strings.Cut(msg, host)
+		before, after, ok := strings.Cut(msg, shown)
 		if !ok {
 			return []ui.Span{plain(msg)}
 		}
-		return []ui.Span{plain(before), bold(host), plain(after)}
+		return []ui.Span{plain(before), bold(shown), plain(after)}
 	}
 	var spans []ui.Span
 	button := locales.RemoteReconnect()
 	switch {
 	case a.connState == remote.Connecting && a.retries > 0:
-		spans = append(about(locales.RemoteReconnectingTo(host)), faint(locales.RemoteAttempt(a.retries+1)))
+		spans = append(about(locales.RemoteReconnectingTo(shown)), faint(locales.RemoteAttempt(a.retries+1)))
 	case a.connState == remote.Connecting:
-		spans = about(locales.RemoteConnectingTo(host))
+		spans = about(locales.RemoteConnectingTo(shown))
 	case remote.Refused(a.connErr):
 		tint, icon, iconCol = p.danger.Alpha(0.10), iconLock, p.danger
-		spans = append(about(locales.RemoteRefused(host)), faint(a.connErr.Error()))
+		spans = append(about(locales.RemoteRefused(shown)), faint(a.connErr.Error()))
 		button = locales.RemoteTryAgain()
 	case a.connErr != nil:
 		tint, icon, iconCol = p.danger.Alpha(0.08), iconWifiOff, p.danger
-		spans = about(locales.RemoteLostTo(host))
+		spans = about(locales.RemoteLostTo(shown))
 		if !errors.Is(a.connErr, remote.ErrLost) {
 			spans = append(spans, faint(a.connErr.Error()))
 		}
 		button = locales.RemoteReconnectNow()
 	default:
-		spans = append(about(locales.RemoteDisconnectedFrom(host)), faint(locales.RemoteReadOnly()))
+		spans = append(about(locales.RemoteDisconnectedFrom(shown)), faint(locales.RemoteReadOnly()))
 	}
 	full := ""
 	for _, sp := range spans {
@@ -491,7 +520,7 @@ func (a *app) remoteBanner(c *ui.Context) {
 // that its host is connecting, or is not, with a button to connect.
 func (a *app) remoteTreeWaits(c *ui.Context) {
 	p := a.pal
-	host := a.conn.Host
+	host := remote.DisplayHost(a.conn.Host)
 	ui.Column(c).Padding(28, 20, 16, 20).Gap(8).AlignItems(ui.Center).Children(func() {
 		ui.Box(c).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center).Children(func() {
 			if a.connState == remote.Connecting {
@@ -540,18 +569,18 @@ func (a *app) remoteStatus(c *ui.Context, text func(string) ui.Element) {
 	}
 	p := a.pal
 	host := a.conn.Host
-	label, tip, tint := "SSH: "+host, locales.RemoteConnectedTo(host), p.accent
+	label, tip, tint := remote.KindHost(host), locales.RemoteConnectedTo(remote.DisplayHost(host)), p.accent
 	switch {
 	case a.connState == remote.Connected:
 		if info := a.conn.Info(); info.OS != "" {
 			tip += " (" + info.OS + ")"
 		}
 	case a.connState == remote.Connecting:
-		tip = locales.RemoteConnectingTip(host)
+		tip = locales.RemoteConnectingTip(remote.DisplayHost(host))
 	case a.retry != nil:
-		tip, tint = locales.RemoteLostReconnecting(host), p.danger
+		tip, tint = locales.RemoteLostReconnecting(remote.DisplayHost(host)), p.danger
 	default:
-		tip, tint = locales.RemoteDisconnectedTip(host), p.danger
+		tip, tint = locales.RemoteDisconnectedTip(remote.DisplayHost(host)), p.danger
 	}
 	b := ui.ButtonBase(c.Key("status:ssh")).Height(statusBarH-6).Padding(0, 7).Gap(5).Radius(4).
 		AlignItems(ui.Center).Label(tip).Tooltip(tip)
@@ -579,7 +608,9 @@ func (a *app) remoteStatus(c *ui.Context, text func(string) ui.Element) {
 			a.disconnect()
 		}
 		m.Separator()
-		m.Submenu(locales.RemotePorts(), a.portsMenu)
+		if !remote.IsWSLHost(a.conn.Host) {
+			m.Submenu(locales.RemotePorts(), a.portsMenu)
+		}
 		m.Separator()
 		if m.Item(locales.CmdRemoteOpenFolder()).Chosen() {
 			a.post(a.openRemoteFolder)
@@ -608,7 +639,7 @@ func (a *app) loadingView(c *ui.Context, d *editor) {
 		ui.Icon(c, iconServer).FontSize(20).TextColor(p.muted)
 		msg := locales.RemoteCouldNotRead(d.name(), d.loadErr.Error())
 		if errors.Is(d.loadErr, remote.ErrOffline) {
-			msg = locales.RemoteShowsOnce(d.name(), remote.HostOf(d.path))
+			msg = locales.RemoteShowsOnce(d.name(), remote.DisplayHost(remote.HostOf(d.path)))
 		}
 		ui.Text(c, msg).FontSize(13).TextColor(p.muted).MaxWidth(420)
 		if !errors.Is(d.loadErr, remote.ErrOffline) && ui.Button(c.Key("retry:"+d.path), locales.RemoteTryAgain()).Clicked() {
@@ -636,7 +667,7 @@ func (a *app) saveConflict(d *document, done func(), failed func(error)) {
 		return
 	}
 	d.conflict = true
-	host := remote.HostOf(d.path)
+	host := remote.DisplayHost(remote.HostOf(d.path))
 	a.confirm = &confirm{
 		title:   locales.RemoteChangedOn(d.name(), host),
 		message: locales.RemoteChangedDetail(host),

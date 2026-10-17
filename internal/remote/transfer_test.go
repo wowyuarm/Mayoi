@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -39,6 +40,12 @@ func connectFake(t *testing.T) *Conn {
 }
 
 func TestTransfer(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The fake ssh is a shell script; Windows runs a real ssh to real
+		// hosts only, by MAYOI_SSH_TEST_HOST.
+		t.Skip("the fake ssh is a shell script, which Windows cannot run")
+	}
+
 	c := connectFake(t)
 	local := t.TempDir()
 	write := func(rel, data string, mode os.FileMode) {
@@ -148,6 +155,12 @@ done
 ` + fakeSSH
 
 func TestForward(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The fake ssh is a shell script; Windows runs a real ssh to real
+		// hosts only, by MAYOI_SSH_TEST_HOST.
+		t.Skip("the fake ssh is a shell script, which Windows cannot run")
+	}
+
 	host := os.Getenv("MAYOI_SSH_TEST_HOST")
 	if host == "" {
 		host = "fake-forward.invalid"
@@ -205,6 +218,12 @@ func TestForward(t *testing.T) {
 // TestWriteFileIf: a write with the stamp of the file read goes, one
 // after the file changed on the host fails and leaves it.
 func TestWriteFileIf(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The fake ssh is a shell script; Windows runs a real ssh to real
+		// hosts only, by MAYOI_SSH_TEST_HOST.
+		t.Skip("the fake ssh is a shell script, which Windows cannot run")
+	}
+
 	c := connectFake(t)
 	p := filepath.Join(t.TempDir(), "f.txt")
 	os.WriteFile(p, []byte("one\n"), 0o644)

@@ -1,8 +1,7 @@
 package main
 
 import (
-	"path/filepath"
-
+	"mayoi/internal/remote"
 	"mayoi/internal/settings"
 )
 
@@ -44,7 +43,7 @@ func (a *app) openSession(dir string) {
 // with its own, once the documents of the folder are closed. A window
 // with no folder keeps the files it has open.
 func (a *app) switchTo(dir string) {
-	dir = filepath.Clean(dir)
+	dir = remote.Clean(dir)
 	if a.root == "" || a.root == dir {
 		a.openSession(dir)
 		return

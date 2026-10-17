@@ -12,6 +12,7 @@ import (
 	"github.com/egoist/mygo/ui"
 
 	"mayoi/internal/git"
+	"mayoi/internal/remote"
 	"mayoi/internal/vfs"
 	"mayoi/locales"
 )
@@ -215,15 +216,23 @@ func treeRows(rows []scmRow, g scmGroup, es []git.Entry, root string, closed map
 		if d, ok := at[path]; ok {
 			return d
 		}
-		parent := dirOf(filepath.Dir(path))
-		d := &scmDir{name: filepath.Base(path), path: path}
-		parent.dirs = append(parent.dirs, d)
+		parent := remote.Dir(path)
+		if parent == path || !remote.Contains(root, path) {
+			// The top of the tree, reached without the root's own
+			// spelling: Windows names a folder both as C:/Users/me and as
+			// its 8.3 form, and Git may give either. A path outside the
+			// root shows there too.
+			return top
+		}
+		p := dirOf(parent)
+		d := &scmDir{name: remote.Base(path), path: path}
+		p.dirs = append(p.dirs, d)
 		at[path] = d
 		return d
 	}
 	for _, e := range es {
-		dir := filepath.Dir(e.Path)
-		if dir != root && !strings.HasPrefix(dir, root+string(filepath.Separator)) {
+		dir := remote.Clean(remote.Dir(e.Path))
+		if dir != root && !remote.Contains(root, dir) {
 			dir = root // outside the work tree: shown at its top
 		}
 		d := dirOf(dir)
@@ -271,7 +280,7 @@ func (a *app) toggleDir(r scmRow) {
 func (a *app) dirEntries(g scmGroup, dir string) []git.Entry {
 	var out []git.Entry
 	for _, e := range a.groupEntries()[g] {
-		if strings.HasPrefix(e.Path, dir+string(filepath.Separator)) {
+		if e.Path != dir && remote.Contains(dir, e.Path) {
 			out = append(out, e)
 		}
 	}

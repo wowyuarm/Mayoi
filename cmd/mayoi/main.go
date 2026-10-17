@@ -6,11 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"mayoi/internal/cli"
-	"mayoi/internal/keymap"
-	"mayoi/internal/remote"
-	"mayoi/internal/settings"
-	"mayoi/locales"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,6 +17,13 @@ import (
 	"github.com/egoist/mygo/i18n"
 	"github.com/egoist/mygo/plugins/updater/native"
 	"github.com/egoist/mygo/ui"
+
+	"mayoi/internal/cli"
+	"mayoi/internal/keymap"
+	"mayoi/internal/remote"
+	"mayoi/internal/settings"
+	"mayoi/internal/vfs"
+	"mayoi/locales"
 )
 
 // desktop is a project of the app, a folder and what shows of it, in a
@@ -191,7 +193,7 @@ func (h *desktop) showFolder(dir string) bool {
 }
 
 func (h *desktop) newWindow(dir string) {
-	h.m.openFolder(filepath.Clean(dir), false)
+	h.m.openFolder(remote.Clean(dir), false)
 }
 
 func (h *desktop) newBlankWindow() { h.m.openBlankWindow() }
@@ -389,7 +391,7 @@ func argPaths(args []string, wd string) []string {
 		if arg == "" || strings.HasPrefix(arg, "-") {
 			continue
 		}
-		if !filepath.IsAbs(arg) {
+		if !remote.IsAbs(arg) {
 			arg = filepath.Join(wd, arg)
 		}
 		paths = append(paths, arg)
@@ -430,7 +432,7 @@ func (m *mayoi) launch(paths []string) {
 		// sessions.
 		var keep []*settings.Window
 		for _, w := range m.s.Windows {
-			if slices.Contains(folders, filepath.Clean(w.Folder)) && !slices.ContainsFunc(keep, func(k *settings.Window) bool { return k.Folder == w.Folder }) {
+			if slices.Contains(folders, remote.Clean(w.Folder)) && !slices.ContainsFunc(keep, func(k *settings.Window) bool { return k.Folder == w.Folder }) {
 				keep = append(keep, w)
 			} else {
 				m.s.Stash(w)
@@ -464,8 +466,9 @@ func (m *mayoi) open(paths []string) {
 // that are neither.
 func splitPaths(paths []string) (folders, files []string) {
 	for _, p := range paths {
-		info, err := os.Stat(p)
-		switch p = filepath.Clean(p); {
+		p = remote.Clean(p)
+		info, err := vfs.Stat(p)
+		switch {
 		case err != nil:
 		case info.IsDir():
 			if !slices.Contains(folders, p) {
@@ -499,7 +502,7 @@ func (m *mayoi) openFolder(dir string, reuse bool) {
 		}
 	}
 	for _, w := range m.s.Windows {
-		if filepath.Clean(w.Folder) == dir && m.of(w) == nil {
+		if remote.Clean(w.Folder) == dir && m.of(w) == nil {
 			// As the last session left it.
 			m.openWindow(w)
 			return
@@ -517,10 +520,11 @@ func (m *mayoi) openFolder(dir string, reuse bool) {
 // openFile opens a file in the window whose folder holds it, else in the
 // window focused last, else in a new window.
 func (m *mayoi) openFile(path string) {
+	path = remote.Clean(path)
 	var win *desktop
 	deepest := ""
 	for _, w := range m.wins {
-		if root := w.a.folder(); root != "" && strings.HasPrefix(path, root+string(filepath.Separator)) && len(root) > len(deepest) {
+		if root := w.a.folder(); root != "" && path != root && remote.Contains(root, path) && len(root) > len(deepest) {
 			win, deepest = w, root
 		}
 	}

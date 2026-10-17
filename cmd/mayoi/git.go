@@ -392,7 +392,7 @@ func (a *app) gitDo(busy string, fn func(r *git.Repo) error, then func()) {
 		return
 	}
 	if !a.online() {
-		a.fail("%s", locales.NotConnectedTo(a.conn.Host))
+		a.fail("%s", locales.NotConnectedTo(remote.DisplayHost(a.conn.Host)))
 		return
 	}
 	if busy != "" {

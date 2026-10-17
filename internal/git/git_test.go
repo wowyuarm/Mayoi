@@ -26,6 +26,9 @@ func repo(t *testing.T) (*Repo, func(args ...string)) {
 	git("init", "-q", "-b", "main")
 	git("config", "user.email", "t@t")
 	git("config", "user.name", "t")
+	// Windows' Git converts line endings by default, which muddies the
+	// contents the tests compare.
+	git("config", "core.autocrlf", "false")
 	write(t, dir, "a.txt", "one\ntwo\nthree\n")
 	write(t, dir, "b.txt", "bee\n")
 	git("add", ".")

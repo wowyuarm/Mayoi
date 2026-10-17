@@ -4,11 +4,16 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
 func TestWorktreeForBranch(t *testing.T) {
+	// The name has a newline and a quote in it; Windows forbids both.
+	if runtime.GOOS == "windows" {
+		t.Skip("the worktree's name has characters Windows forbids")
+	}
 	r, git := repo(t)
 	path := filepath.Join(t.TempDir(), "work tree\nquoted\"name")
 	git("worktree", "add", "-b", "topic", path)

@@ -36,6 +36,9 @@ func (hs *harness) gitRepo() func(args ...string) string {
 	git("init", "-q", "-b", "main")
 	git("config", "user.email", "t@t")
 	git("config", "user.name", "t")
+	// Windows' Git converts line endings by default, which warns and
+	// muddies the diffs the tests compare.
+	git("config", "core.autocrlf", "false")
 	os.WriteFile(hs.path(".gitignore"), []byte("node_modules/\n"), 0o644)
 	git("add", ".")
 	git("commit", "-q", "-m", "first")

@@ -2,10 +2,7 @@ package main
 
 import (
 	"fmt"
-	"mayoi/internal/keymap"
-	"mayoi/internal/remote"
-	"mayoi/internal/settings"
-	"mayoi/locales"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -14,6 +11,11 @@ import (
 	"github.com/egoist/mygo/plugins/terminal"
 	mtransfer "github.com/egoist/mygo/transfer"
 	"github.com/egoist/mygo/ui"
+
+	"mayoi/internal/keymap"
+	"mayoi/internal/remote"
+	"mayoi/internal/settings"
+	"mayoi/locales"
 )
 
 // session is a terminal: one of the panel, or one a tab of a column
@@ -25,6 +27,9 @@ type session struct {
 	dir   string
 	view  ui.Handle // its view, which takes the keyboard
 	tab   *colTab   // the tab that shows it, nil for one of the panel
+	// wsl is the terminal connection of a WSL host, which ends with the
+	// terminal, or as the connection goes.
+	wsl *remote.WSLTerminal
 	// lost is set while a terminal of a host waits for the connection
 	// that ended it, to start again.
 	lost bool
@@ -75,7 +80,7 @@ func (a *app) startTerminal(dir string) *session {
 	a.nextTerm++
 	s := &session{id: a.nextTerm, dir: dir, title: shellName()}
 	if c := sessionConn(s); c != nil {
-		s.title = c.Host
+		s.title = remote.DisplayHost(c.Host)
 	}
 	term, err := a.spawnTerminal(s, dir)
 	if err != nil {
@@ -91,10 +96,21 @@ func (a *app) startTerminal(dir string) *session {
 // the host in a remote folder.
 func (a *app) spawnTerminal(s *session, dir string) (*terminal.Terminal, error) {
 	light, dark := a.termThemes()
-	// In a remote folder, a shell of its host, over the connection.
+	// In a remote folder, a shell of its host, over the connection: an
+	// ssh one by its own ssh command, a WSL one through a terminal
+	// connection of its distribution.
 	var command []string
+	var conn io.ReadWriteCloser
 	if c, rdir, ok := remote.Lookup(dir); ok {
-		command = c.TerminalCommand(rdir)
+		if remote.IsWSLHost(c.Host) {
+			var err error
+			if s.wsl, err = a.wslTermConn(c, rdir); err != nil {
+				return nil, err
+			}
+			conn = s.wsl
+		} else {
+			command = c.TerminalCommand(rdir)
+		}
 		dir, _ = os.UserHomeDir()
 	}
 	// term is the terminal made, which OnExit tells from one that took
@@ -102,6 +118,7 @@ func (a *app) spawnTerminal(s *session, dir string) (*terminal.Terminal, error) 
 	var term *terminal.Terminal
 	term, err := terminal.New(terminal.Options{
 		Command:   command,
+		Conn:      conn,
 		Dir:       dir,
 		Font:      termFont(a.settings),
 		Theme:     light,
@@ -242,6 +259,10 @@ func (a *app) removeTerminal(s *session) {
 	if i < 0 {
 		return
 	}
+	if s.wsl != nil {
+		s.wsl.Close()
+		s.wsl = nil
+	}
 	s.term.Close()
 	if t := s.tab; t != nil {
 		a.terms = slices.Delete(a.terms, i, i+1)
@@ -300,6 +321,10 @@ func (a *app) focusTerminal() {
 // closeTerminals hangs up every terminal, as the window closes.
 func (a *app) closeTerminals() {
 	for _, s := range a.terms {
+		if s.wsl != nil {
+			s.wsl.Close()
+			s.wsl = nil
+		}
 		s.term.Close()
 	}
 	a.terms, a.panelTerm = nil, nil

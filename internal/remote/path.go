@@ -1,11 +1,13 @@
 // Package remote reaches folders on other machines over SSH, with the
-// system's ssh command and nothing installed on the other side: one
+// system's ssh command and nothing installed on the other side, and, on
+// Windows, the folders of its WSL distributions through wsl.exe: one
 // connection to each host, which every command shares, and the files read
 // and written by small shell scripts run through it.
 //
-// The editor knows a remote file by a path of its own, /ssh:host/path,
-// which the path functions of Go take as any other: the folder of a file,
-// its name and paths relative to a folder come out as they should.
+// The editor knows a remote file by a platform-independent logical path of
+// its own, /ssh:host/path. Use the path helpers in this package for it rather
+// than filepath directly: a remote path is not a path on this machine, and
+// Windows would otherwise turn its slashes into backslashes.
 package remote
 
 import (
@@ -22,17 +24,44 @@ const prefix = "/ssh:"
 
 // Path returns the path the editor knows the file at p on host by.
 func Path(host, p string) string {
-	p = path.Clean("/" + p)
+	p = path.Clean("/" + strings.ReplaceAll(p, "\\", "/"))
 	if p == "/" {
 		return prefix + host
 	}
 	return prefix + host + p
 }
 
+// Clean returns p in the spelling used for paths the editor remembers.
+func Clean(p string) string {
+	if p == "" {
+		return ""
+	}
+	if host, rpath, ok := Split(p); ok {
+		return Path(host, rpath)
+	}
+	return filepath.Clean(p)
+}
+
+// Join joins path elements, using POSIX separators for a remote path and
+// the machine's separators otherwise.
+func Join(elem ...string) string {
+	if len(elem) == 0 {
+		return ""
+	}
+	if host, rpath, ok := Split(elem[0]); ok {
+		parts := []string{rpath}
+		for _, part := range elem[1:] {
+			parts = append(parts, strings.ReplaceAll(part, "\\", "/"))
+		}
+		return Path(host, path.Join(parts...))
+	}
+	return filepath.Join(elem...)
+}
+
 // Split returns the host of a remote path and the path on the host,
 // false for a path of this machine.
 func Split(p string) (host, rpath string, ok bool) {
-	rest, ok := strings.CutPrefix(filepath.ToSlash(p), prefix)
+	rest, ok := strings.CutPrefix(strings.ReplaceAll(filepath.ToSlash(p), "\\", "/"), prefix)
 	if !ok || rest == "" {
 		return "", "", false
 	}
@@ -47,6 +76,56 @@ func Split(p string) (host, rpath string, ok bool) {
 func Is(p string) bool {
 	_, _, ok := Split(p)
 	return ok
+}
+
+// IsAbs reports whether p is a remote path or an absolute path on this
+// machine. filepath.IsAbs does not recognise the editor's remote paths on
+// Windows.
+func IsAbs(p string) bool { return Is(p) || filepath.IsAbs(p) }
+
+// Dir returns the parent of p, preserving a remote path's logical spelling.
+func Dir(p string) string {
+	if Is(p) {
+		return path.Dir(strings.ReplaceAll(filepath.ToSlash(p), "\\", "/"))
+	}
+	return filepath.Dir(p)
+}
+
+// Base returns the last element of p, preserving the special host-root name
+// of a remote path (for example, Base("/ssh:box") is "ssh:box").
+func Base(p string) string {
+	if Is(p) {
+		return path.Base(strings.ReplaceAll(filepath.ToSlash(p), "\\", "/"))
+	}
+	return filepath.Base(p)
+}
+
+// Rel returns the path from root to p, with slashes, for paths on the same
+// machine or the same remote host.
+func Rel(root, p string) (string, error) {
+	rhost, rr, rremote := Split(root)
+	phost, pr, premote := Split(p)
+	if rremote || premote {
+		if !rremote || !premote || rhost != phost {
+			return "", errors.New("paths are on different hosts")
+		}
+		root, p = filepath.FromSlash(rr), filepath.FromSlash(pr)
+	}
+	rel, err := filepath.Rel(root, p)
+	if err != nil {
+		return "", err
+	}
+	return filepath.ToSlash(rel), nil
+}
+
+// Contains reports whether p is root or is below root. Local paths use the
+// platform's path rules; remote paths must belong to the same host.
+func Contains(root, p string) bool {
+	if root == p {
+		return true
+	}
+	rel, err := Rel(root, p)
+	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, "../") && !filepath.IsAbs(rel)
 }
 
 // HostOf returns the host of a remote path, "" for a path of this
@@ -105,12 +184,18 @@ func ParseURL(s string) (string, error) {
 	return Path(host, u.Path), nil
 }
 
-// CheckHost returns why host cannot name a machine to connect to: a name
-// of ~/.ssh/config, or [user@]host[:port].
+// CheckHost returns why host cannot name a machine to connect to: a
+// name of ~/.ssh/config, or [user@]host[:port], or a WSL distribution,
+// as wsl:Ubuntu.
 func CheckHost(host string) error {
 	switch {
 	case host == "":
 		return errors.New("enter a host")
+	case IsWSLHost(host):
+		if strings.ContainsAny(host, "\x00\r\n\t '\"`$;&|<>(){}*?!") {
+			return errors.New("a distribution name has no quotes")
+		}
+		return nil
 	case strings.HasPrefix(host, "-"):
 		return errors.New("a host cannot start with -")
 	case strings.ContainsAny(host, "/\\\x00\r\n\t '\"`$;&|<>(){}*?!#"):

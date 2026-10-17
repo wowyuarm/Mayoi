@@ -35,6 +35,9 @@ func (f *Forward) URL() string { return fmt.Sprintf("http://localhost:%d", f.Loc
 // Forward forwards port of the host, unless it is already, to the same
 // port of this machine when it is free, or else to another.
 func (c *Conn) Forward(port int) (*Forward, error) {
+	if IsWSLHost(c.Host) {
+		return nil, errors.New("WSL ports are on this machine's localhost already")
+	}
 	if port < 1 || port > 65535 {
 		return nil, errors.New("a port is a number from 1 to 65535")
 	}

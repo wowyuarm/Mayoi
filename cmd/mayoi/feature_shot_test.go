@@ -92,6 +92,7 @@ func featHarness(t *testing.T, dark bool, o featOpts) *harness {
 	w.Expanded = o.expanded
 	h := &fakeHost{folder: root}
 	a := newApp(h, s, w)
+	t.Cleanup(a.shutdown)
 	if o.w == 0 {
 		o.w, o.h = featW, featH
 	}

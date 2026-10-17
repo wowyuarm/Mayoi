@@ -271,6 +271,9 @@ func TestRemoteTerminalComesBack(t *testing.T) {
 func TestRemoteSaveConflict(t *testing.T) {
 	hs, c, dir := remoteHarness(t)
 	a := hs.a
+	// The saves here are the ones asked for, not the ones a second of
+	// quiet brings: a host's round trip can take longer than that second.
+	a.settings.AutoSave = false
 	a.openFile(hs.path("main.go"), true)
 	hs.untilLong("main.go to be read", func() bool {
 		d := a.activeEditor()
@@ -287,7 +290,7 @@ func TestRemoteSaveConflict(t *testing.T) {
 	change("theirs, longer than it was\n")
 	a.saveDoc(d.document, nil)
 	hs.untilLong("the question", func() bool { return a.confirm != nil })
-	if !strings.Contains(a.confirm.title, "main.go changed on "+c.Host) {
+	if !strings.Contains(a.confirm.title, "main.go changed on "+remote.DisplayHost(c.Host)) {
 		t.Fatalf("title %q", a.confirm.title)
 	}
 	hs.settle()

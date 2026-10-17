@@ -97,7 +97,7 @@ func TestConnectBoxCancel(t *testing.T) {
 	hs.settle()
 	a.chooseHost("slow.invalid")
 	hs.settle()
-	if a.remotePick.stage != pickConnecting || !hs.tt.HasText("Signing in to slow.invalid") {
+	if a.remotePick.stage != pickConnecting || !hs.tt.HasText("Connecting to slow.invalid") {
 		t.Fatalf("stage = %v: %q", a.remotePick.stage, hs.tt.Texts())
 	}
 	hs.tt.Key(0, ui.KeyEscape)

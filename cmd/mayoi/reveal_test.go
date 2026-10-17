@@ -49,11 +49,11 @@ func TestTabRevealsItsFileInTheExplorer(t *testing.T) {
 	}
 
 	rightClickTab(t, tt, "f79.txt")
-	if err := tt.ChooseMenuItem("Reveal in Finder"); err != nil {
+	if err := tt.ChooseMenuItem(revealLabel()); err != nil {
 		t.Fatalf("%v: %q", err, tt.Menu())
 	}
 	if !slices.Equal(hs.h.revealed, []string{path}) {
-		t.Errorf("revealed in the Finder %q", hs.h.revealed)
+		t.Errorf("revealed in the file manager %q", hs.h.revealed)
 	}
 }
 

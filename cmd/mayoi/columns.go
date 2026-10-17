@@ -749,8 +749,8 @@ func (a *app) rememberTabs() {
 	if a.tree != nil {
 		var open []string
 		for dir := range a.files.Open.All() {
-			if rel, err := filepath.Rel(a.root, dir); err == nil && rel != "." && !strings.HasPrefix(rel, "..") {
-				open = append(open, filepath.ToSlash(rel))
+			if rel, err := remote.Rel(a.root, dir); err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, "../") {
+				open = append(open, rel)
 			}
 		}
 		slices.Sort(open)
@@ -778,7 +778,7 @@ func (a *app) restoreExpanded(rels []string) {
 		return
 	}
 	for _, rel := range rels {
-		dir := filepath.Join(a.root, filepath.FromSlash(rel))
+		dir := remote.Join(a.root, rel)
 		// A remote folder is looked at as it is read.
 		if remote.Is(dir) {
 			a.files.Open.Add(dir)

@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func TestPaths(t *testing.T) {
 	if !ok || host != "me@box:2222" || rpath != "/home/me/proj/b.go" {
 		t.Fatalf("Split = %q %q %v", host, rpath, ok)
 	}
-	if root := Path("box", "/"); root != "/ssh:box" || filepath.Base(root) != "ssh:box" {
+	if root := Path("box", "/"); root != "/ssh:box" || Base(root) != "ssh:box" {
 		t.Fatalf("the root of a host is %q", root)
 	}
 	if _, rpath, _ := Split("/ssh:box"); rpath != "/" {
@@ -31,7 +32,7 @@ func TestPaths(t *testing.T) {
 			t.Errorf("%q is taken for remote", local)
 		}
 	}
-	if got := filepath.Dir(p); got != "/ssh:me@box:2222/home/me" {
+	if got := Dir(p); got != "/ssh:me@box:2222/home/me" {
 		t.Errorf("Dir = %q", got)
 	}
 	if got := On(p, "/home/me/proj/.git"); got != "/ssh:me@box:2222/home/me/proj/.git" {
@@ -45,6 +46,35 @@ func TestPaths(t *testing.T) {
 	}
 	if got := URL(p); got != "ssh://me@box:2222/home/me/proj" {
 		t.Errorf("URL = %q", got)
+	}
+}
+
+func TestLogicalPathsIgnoreMachineSeparators(t *testing.T) {
+	root := Path("box", "/home/me/project")
+	backslash := `\ssh:box\home\me\project`
+	if !Is(backslash) || !IsAbs(backslash) {
+		t.Fatalf("backslash path was not recognised: %q", backslash)
+	}
+	if got := Clean(backslash); got != root {
+		t.Errorf("Clean = %q, want %q", got, root)
+	}
+	if got := Join(backslash, "src", "main.go"); got != root+"/src/main.go" {
+		t.Errorf("Join = %q", got)
+	}
+	if got := Join(root, `src\main.go`); got != root+"/src/main.go" {
+		t.Errorf("Join with backslashes = %q", got)
+	}
+	if got := Dir(Join(backslash, "src", "main.go")); got != root+"/src" {
+		t.Errorf("Dir = %q", got)
+	}
+	if got := Base(backslash); got != "project" {
+		t.Errorf("Base = %q", got)
+	}
+	if got, err := Rel(backslash, Join(backslash, "src", "main.go")); err != nil || got != "src/main.go" {
+		t.Errorf("Rel = %q, %v", got, err)
+	}
+	if !Contains(backslash, Join(backslash, "src")) || Contains(backslash, Path("other", "/home/me/project/src")) {
+		t.Error("Contains confused remote roots")
 	}
 }
 
@@ -175,6 +205,12 @@ exec sh -c "$last"
 // TestFakeHost runs the commands with this machine's shell and tools, by
 // an ssh that runs them here: BSD's stat on macOS, GNU's on Linux.
 func TestFakeHost(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The fake ssh is a shell script; Windows runs a real ssh to real
+		// hosts only, by MAYOI_SSH_TEST_HOST.
+		t.Skip("the fake ssh is a shell script, which Windows cannot run")
+	}
+
 	bin := t.TempDir()
 	if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSH), 0o755); err != nil {
 		t.Fatal(err)

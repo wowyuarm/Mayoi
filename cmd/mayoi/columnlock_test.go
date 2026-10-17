@@ -209,6 +209,7 @@ func TestLockedColumnSessionRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	b := newApp(hs.h, a.settings, w)
+	t.Cleanup(b.shutdown)
 	tb := ui.NewTester(b.view, 1200, 760)
 	step(tb)
 	step(tb)
@@ -240,6 +241,7 @@ func TestLockedColumnRestoresEmptyWorkspace(t *testing.T) {
 		}
 		w.Column = 1
 		b := newApp(hs.h, a.settings, w)
+		t.Cleanup(b.shutdown)
 		tb := ui.NewTester(b.view, 1200, 760)
 		step(tb)
 		step(tb)

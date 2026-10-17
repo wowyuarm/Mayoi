@@ -8,6 +8,8 @@ import (
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
+
+	"mayoi/internal/remote"
 )
 
 func TestSplitPaths(t *testing.T) {
@@ -19,6 +21,14 @@ func TestSplitPaths(t *testing.T) {
 	}
 	if !slices.Equal(files, []string{filepath.Join(root, "main.go")}) {
 		t.Errorf("files %v", files)
+	}
+}
+
+func TestArgPathsKeepsRemotePaths(t *testing.T) {
+	for _, arg := range []string{"/ssh:box/home/me/project", `\ssh:box\home\me\project`} {
+		if got := argPaths([]string{arg}, "/work"); !slices.Equal(got, []string{arg}) {
+			t.Errorf("argPaths(%q) = %v", arg, got)
+		}
 	}
 }
 
@@ -35,8 +45,9 @@ func TestBlankWindow(t *testing.T) {
 	if a.blank() {
 		t.Error("a window with tabs to restore is blank")
 	}
+	// A folder is kept as the platform spells it.
 	w.Columns, w.Folder = nil, "/tmp/x/"
-	if a.blank() || a.folder() != "/tmp/x" {
+	if a.blank() || a.folder() != remote.Clean("/tmp/x") {
 		t.Errorf("a window of a folder: blank %v, folder %q", a.blank(), a.folder())
 	}
 }

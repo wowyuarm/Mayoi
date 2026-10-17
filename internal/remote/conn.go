@@ -50,7 +50,7 @@ type Info struct {
 	// nanos where it gives the time of a change to the nanosecond.
 	gnu, nanos bool
 	// The programs the host has.
-	Git, Rg, Inotify bool
+	Git, Rg, Inotify, Script bool
 }
 
 // Conn is the connection to a host: an ssh master process whose socket
@@ -245,7 +245,38 @@ func (c *Conn) Connect() {
 	c.ctx, c.cancel = ctx, cancel
 	c.mu.Unlock()
 	c.notify()
+	if IsWSLHost(c.Host) {
+		go c.wslDial(ctx)
+		return
+	}
 	go c.dial(ctx)
+}
+
+// wslDial connects to a WSL distribution: no process to keep, as an ssh
+// master is — the distribution answers or it does not — so asking it is
+// the whole of connecting.
+func (c *Conn) wslDial(ctx context.Context) {
+	fail := func(err error) {
+		c.mu.Lock()
+		if c.ctx == ctx {
+			c.state, c.err, c.cancel = Offline, err, nil
+		}
+		c.mu.Unlock()
+		c.notify()
+	}
+	info, err := wslProbe(ctx, c.Host)
+	if err != nil {
+		fail(err)
+		return
+	}
+	c.mu.Lock()
+	if c.ctx != ctx {
+		c.mu.Unlock()
+		return
+	}
+	c.state, c.info = Connected, info
+	c.mu.Unlock()
+	c.notify()
 }
 
 func (c *Conn) dial(ctx context.Context) {
@@ -372,6 +403,8 @@ done
 			info.Rg = true
 		case l == "have:inotifywait":
 			info.Inotify = true
+		case l == "have:script":
+			info.Script = true
 		}
 	}
 	return info, nil
@@ -409,12 +442,18 @@ func (c *Conn) Disconnect() {
 	}
 }
 
-// live returns the socket and the context of the connection, or
-// ErrOffline.
+// live returns the context of the connection and the socket of its ssh
+// master, "" for a WSL one, or ErrOffline.
 func (c *Conn) live() (string, context.Context, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.state != Connected || c.dir == "" {
+	if c.state != Connected {
+		return "", nil, ErrOffline
+	}
+	if IsWSLHost(c.Host) {
+		return "", c.ctx, nil
+	}
+	if c.dir == "" {
 		return "", nil, ErrOffline
 	}
 	return filepath.Join(c.dir, "s"), c.ctx, nil
@@ -455,6 +494,16 @@ func (c *Conn) command(ctx context.Context, sock string, stdin io.Reader, script
 	b.WriteString(script)
 	full := b.String()
 	head := strings.NewReader(strconv.Itoa(len(full)) + "\n" + full)
+	if sock == "" {
+		// A WSL host: wsl.exe runs the launcher in the distribution.
+		cmd := wslCommand(ctx, c.Host, launcher)
+		if stdin != nil {
+			cmd.Stdin = io.MultiReader(head, stdin)
+		} else {
+			cmd.Stdin = head
+		}
+		return cmd
+	}
 	cmd := exec.CommandContext(ctx, "ssh", c.clientArgs(sock, false, launcher)...)
 	if stdin != nil {
 		cmd.Stdin = io.MultiReader(head, stdin)
@@ -518,8 +567,12 @@ func (e *Error) Is(target error) bool {
 
 // TerminalCommand returns the ssh command of a terminal in dir on the
 // host, which signs in itself, in the terminal, when the connection is
-// not there.
+// not there. A WSL host has none: its terminals run through a
+// WSLTerminal of the connection instead.
 func (c *Conn) TerminalCommand(dir string) []string {
+	if IsWSLHost(c.Host) {
+		return nil
+	}
 	sock, err := c.socket()
 	if err != nil {
 		return nil

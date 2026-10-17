@@ -17,6 +17,7 @@ import (
 	"mayoi/internal/mon"
 	"mayoi/internal/settings"
 	"mayoi/locales"
+	"runtime"
 )
 
 // TestSigninDialog: the code shows until the sign-in is cancelled, by its
@@ -260,7 +261,8 @@ func TestTokenFile(t *testing.T) {
 	if got, err := c.loadToken(); err != nil || string(got) != "tok" {
 		t.Fatalf("loadToken() = %q, %v, want \"tok\"", got, err)
 	}
-	if fi, err := os.Stat(c.tokenFile); err != nil || fi.Mode().Perm() != 0o600 {
+	// Windows carries no permission bits.
+	if fi, err := os.Stat(c.tokenFile); err != nil || (runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600) {
 		t.Fatalf("the token file's mode = %v, %v, want 0600", fi.Mode().Perm(), err)
 	}
 	for range 2 {

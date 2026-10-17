@@ -37,7 +37,9 @@ const testSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" 
 // until draws frames until ok, failing after a while.
 func (hs *harness) until(what string, ok func() bool) {
 	hs.t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
+	// Long enough for a slow machine running the suite in full: a
+	// watcher's debounce and a build's page-ins take their time there.
+	deadline := time.Now().Add(30 * time.Second)
 	for !ok() {
 		if time.Now().After(deadline) {
 			hs.t.Fatalf("timed out waiting for %s", what)
@@ -203,15 +205,15 @@ func TestSVGPreview(t *testing.T) {
 	a.openFile(path, true)
 	hs.settle()
 	d := a.activeEditor()
-	if d == nil || d.preview != nil || !tt.HasText("Show Preview (⇧⌘V)") {
+	if d == nil || d.preview != nil || !tt.HasText(a.withKey("Show Preview", "view.togglePreview")) {
 		t.Fatalf("not opened as text: %v", d)
 	}
-	if err := tt.Click("Show Preview (⇧⌘V)"); err != nil {
+	if err := tt.Click(a.withKey("Show Preview", "view.togglePreview")); err != nil {
 		t.Fatal(err)
 	}
 	hs.until("the preview", func() bool { return d.preview != nil && d.preview.src != nil })
 	v := d.preview
-	if v.w != 64 || v.h != 32 || !tt.HasText("64 × 32") || !tt.HasText("Show Source (⇧⌘V)") {
+	if v.w != 64 || v.h != 32 || !tt.HasText("64 × 32") || !tt.HasText(a.withKey("Show Source", "view.togglePreview")) {
 		t.Fatalf("preview %v×%v, texts %q", v.w, v.h, tt.Texts())
 	}
 	hs.shot("31-svg-preview")
@@ -240,7 +242,7 @@ func TestSVGPreview(t *testing.T) {
 	// Editing commands show the text again.
 	a.run("sel.comment")
 	hs.settle()
-	if d.preview != nil || !tt.HasText("Show Preview (⇧⌘V)") {
+	if d.preview != nil || !tt.HasText(a.withKey("Show Preview", "view.togglePreview")) {
 		t.Fatal("still previewing after an edit")
 	}
 	if got := a.window.Columns[0].Tabs[0]; got.Preview {

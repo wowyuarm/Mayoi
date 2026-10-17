@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"testing"
 )
@@ -39,10 +40,12 @@ func TestCopyInto(t *testing.T) {
 		t.Fatalf("copyInto = %q, %v", to, err)
 	}
 	info, err := os.Stat(filepath.Join(to, "sub/run.sh"))
-	if err != nil || info.Mode().Perm() != 0o755 {
+	// Windows carries no permission bits to copy.
+	if err != nil || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o755) {
 		t.Fatalf("run.sh: %v %v", info, err)
 	}
-	if target, err := os.Readlink(filepath.Join(to, "link")); err != nil || target != "sub/run.sh" {
+	// Windows' symlinks keep the separator they were made with.
+	if target, err := os.Readlink(filepath.Join(to, "link")); err != nil || filepath.ToSlash(target) != "sub/run.sh" {
 		t.Errorf("link: %q %v", target, err)
 	}
 	// Into itself, or a folder within it: refused.

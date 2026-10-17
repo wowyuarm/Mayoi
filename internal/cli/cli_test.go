@@ -51,6 +51,11 @@ func TestScript(t *testing.T) {
 }
 
 func TestInstallAndUninstall(t *testing.T) {
+	// The mayoi command is a shell script that opens the app as macOS's
+	// open does; Windows has neither.
+	if runtime.GOOS == "windows" {
+		t.Skip("the mayoi command is a shell script for macOS and Linux")
+	}
 	dir := t.TempDir()
 	first, second := filepath.Join(dir, "first"), filepath.Join(dir, "second")
 	p, err := Install([]string{first, second}, "")

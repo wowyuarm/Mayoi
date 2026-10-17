@@ -94,6 +94,7 @@ type Tree struct {
 
 // NewTree opens the tree of root. post runs a function on the main thread.
 func NewTree(root string, post func(func())) *Tree {
+	root = remote.Clean(root)
 	t := &Tree{
 		Root: root, post: post,
 		children: map[string][]string{}, dirs: map[string]bool{root: true}, loading: map[string]bool{},
@@ -204,7 +205,7 @@ func (t *Tree) readAhead(dir string) {
 	}
 	var dirs []string
 	for _, k := range t.children[dir] {
-		if _, read := t.children[k]; read || !t.dirs[k] || t.loading[k] || Skipped(filepath.Base(k)) {
+		if _, read := t.children[k]; read || !t.dirs[k] || t.loading[k] || Skipped(remote.Base(k)) {
 			continue
 		}
 		if l, ok := t.ahead[k]; ok && time.Since(l.at) < aheadFresh {
@@ -318,7 +319,7 @@ func sortEntries(dir string, entries []vfs.Entry) ([]string, map[string]bool) {
 		if Hidden(e.Name) {
 			continue
 		}
-		p := filepath.Join(dir, e.Name)
+		p := remote.Join(dir, e.Name)
 		if e.Dir {
 			dirs[p] = true
 		}
@@ -331,7 +332,7 @@ func sortEntries(dir string, entries []vfs.Entry) ([]string, map[string]bool) {
 			}
 			return 1
 		}
-		return compareNames(filepath.Base(a), filepath.Base(b))
+		return compareNames(remote.Base(a), remote.Base(b))
 	})
 	return kids, dirs
 }
@@ -427,6 +428,7 @@ func (t *Tree) flush() {
 // itself.
 func (t *Tree) Watch(path string) {
 	if t.remote {
+		path = remote.Clean(path)
 		if _, ok := t.stamps[path]; !ok {
 			t.stamps[path] = nil
 		}
@@ -443,12 +445,13 @@ func (t *Tree) Watch(path string) {
 
 // Unwatch stops a remote tree statting a file, as its document closes.
 func (t *Tree) Unwatch(path string) {
-	delete(t.stamps, path)
+	delete(t.stamps, remote.Clean(path))
 }
 
 // Stamp has a remote tree take info as what it last saw of a file, as of
 // one the editor wrote, so that it does not report the change.
 func (t *Tree) Stamp(path string, info fs.FileInfo) {
+	path = remote.Clean(path)
 	if _, ok := t.stamps[path]; ok && info != nil {
 		t.stamps[path] = stampOf(info)
 	}
@@ -456,11 +459,11 @@ func (t *Tree) Stamp(path string, info fs.FileInfo) {
 
 // Rel returns path relative to the root, with slashes.
 func (t *Tree) Rel(path string) string {
-	rel, err := filepath.Rel(t.Root, path)
+	rel, err := remote.Rel(t.Root, path)
 	if err != nil {
 		return path
 	}
-	return filepath.ToSlash(rel)
+	return rel
 }
 
 // PollEvery is how often a remote tree looks for changes.
@@ -554,13 +557,7 @@ func (t *Tree) poll(full bool) {
 	if !notified {
 		dirs = t.shown()
 	}
-	files := make([]string, 0, len(t.stamps))
-	for p := range t.stamps {
-		// inotifywait tells of the files under the root.
-		if !notified || !strings.HasPrefix(p, t.Root+"/") {
-			files = append(files, p)
-		}
-	}
+	files := t.filesToPoll(notified)
 	if len(dirs) == 0 && len(files) == 0 {
 		return
 	}
@@ -583,6 +580,19 @@ func (t *Tree) poll(full bool) {
 			}
 		})
 	}()
+}
+
+// filesToPoll are the paths of the files a tree stats, in no order. While
+// inotifywait tells of the files under the root, notified leaves those
+// out: it watches them already, so a poll of them would tell nothing new.
+func (t *Tree) filesToPoll(notified bool) []string {
+	files := make([]string, 0, len(t.stamps))
+	for p := range t.stamps {
+		if !notified || !remote.Contains(t.Root, p) {
+			files = append(files, p)
+		}
+	}
+	return files
 }
 
 // took takes what a poll read: the directories that changed, and the

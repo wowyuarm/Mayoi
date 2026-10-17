@@ -22,7 +22,7 @@ const testKeys = `// as Cursor's, with ctrl+. for the prefix
 	{ "key": "d", "command": "deleteFile", "when": "filesExplorerFocus && !inputFocus" },
 	{ "key": "cmd+1", "command": "workbench.action.toggleSidebarVisibility" },
 	{ "key": "cmd+1", "command": "-workbench.action.focusFirstEditorGroup" },
-	{ "key": "cmd+b", "command": "workbench.action.files.saveAll" },
+	{ "key": "cmdorctrl+b", "command": "workbench.action.files.saveAll" },
 ]
 `
 
@@ -47,7 +47,8 @@ func TestKeymapChordInEditor(t *testing.T) {
 
 	tt.Key(ui.Ctrl, ui.KeyPeriod)
 	hs.settle()
-	if !tt.HasText("(⌃.) was pressed. Waiting for the next key…") {
+	waiting := "(" + capsText(chordCaps([]keymap.Stroke{{Mods: ui.Ctrl, Key: ui.KeyPeriod}})) + ") was pressed. Waiting for the next key…"
+	if !tt.HasText(waiting) {
 		t.Errorf("the status bar does not wait for the chord: %q", tt.Texts())
 	}
 	// The keys of the chord come with their text, which types nothing.
@@ -57,7 +58,7 @@ func TestKeymapChordInEditor(t *testing.T) {
 	if got := d.buf.String(); got != "apple\nfig\npear" {
 		t.Fatalf("sorted %q", got)
 	}
-	if len(a.chord) > 0 || tt.HasText("(⌃.) was pressed. Waiting for the next key…") {
+	if len(a.chord) > 0 || tt.HasText(waiting) {
 		t.Error("the chord is still waiting")
 	}
 
@@ -122,17 +123,16 @@ func TestKeymapOverridesShortcuts(t *testing.T) {
 		if cmd.id == "view.sidebar" && a.menuAccel(cmd) != "" && ui.Cmd == ui.Super {
 			t.Errorf("Toggle Sidebar keeps %s, which the file binds", a.menuAccel(cmd))
 		}
-		if cmd.id == "file.save" && a.menuAccel(cmd) != "CmdOrCtrl+S" {
-			t.Errorf("Save lost its keys")
+		if cmd.id == "file.save" && a.menuAccel(cmd) != cmd.accel {
+			t.Errorf("Save lost its keys: %q, not %q", a.menuAccel(cmd), cmd.accel)
 		}
 	}
 	// The palette shows the file's keys.
 	for _, e := range a.paletteEntries() {
-		if e.id == "sel.sortAsc" && !slices.Equal(e.caps, []string{"⌃.", "E", "S"}) {
-			t.Errorf("Sort Lines Ascending shows %q", e.caps)
-		}
-		if e.id == "file.saveAll" && !slices.Equal(e.caps, []string{"⌘", "B"}) {
-			t.Errorf("Save All shows %q", e.caps)
+		for _, cmd := range a.commands() {
+			if cmd.id == e.id && !slices.Equal(e.caps, a.commandCaps(cmd)) {
+				t.Errorf("%s shows %q, not %q", e.id, e.caps, a.commandCaps(cmd))
+			}
 		}
 	}
 }

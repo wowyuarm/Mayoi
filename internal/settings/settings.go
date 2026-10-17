@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+
+	"mayoi/internal/remote"
 )
 
 // Settings are what Mayoi remembers between launches: the preferences,
@@ -369,6 +371,7 @@ func Load(path string) *Settings {
 	if moved {
 		s.migrate(old)
 	}
+	s.normalizePaths()
 	s.layOut(layout)
 	if moved {
 		s.Flush()
@@ -424,6 +427,50 @@ func (s *Settings) normalize() {
 	// The themes were appearances once.
 	if s.Appearance == "matrix" || s.Appearance == "claude" {
 		s.Theme, s.Appearance = s.Appearance, ""
+	}
+}
+
+// normalizePaths keeps paths in state as the same logical strings on every
+// platform. In particular, Windows may have read an older remote path with
+// backslashes from state.json.
+func (s *Settings) normalizePaths() {
+	seen := map[string]bool{}
+	recent := s.Recent[:0]
+	for _, dir := range s.Recent {
+		dir = remote.Clean(dir)
+		if !seen[dir] {
+			seen[dir] = true
+			recent = append(recent, dir)
+		}
+	}
+	s.Recent = recent
+	cleanSession := func(ses *Session) {
+		if ses == nil {
+			return
+		}
+		for ci := range ses.Columns {
+			for ti := range ses.Columns[ci].Tabs {
+				ses.Columns[ci].Tabs[ti].File = remote.Clean(ses.Columns[ci].Tabs[ti].File)
+			}
+		}
+		for i := range ses.Review {
+			ses.Review[i].Path = remote.Clean(ses.Review[i].Path)
+		}
+	}
+	for _, w := range s.Windows {
+		w.Folder = remote.Clean(w.Folder)
+		cleanSession(&w.Session)
+	}
+	if s.Sessions != nil {
+		sessions := make(map[string]*Session, len(s.Sessions))
+		for dir, ses := range s.Sessions {
+			dir = remote.Clean(dir)
+			cleanSession(ses)
+			if _, exists := sessions[dir]; !exists {
+				sessions[dir] = ses
+			}
+		}
+		s.Sessions = sessions
 	}
 }
 
@@ -521,7 +568,8 @@ func (s *Settings) Stash(w *Window) {
 	if w.Folder == "" {
 		return
 	}
-	dir := filepath.Clean(w.Folder)
+	s.normalizePaths()
+	dir := remote.Clean(w.Folder)
 	if !slices.Contains(s.Recent, dir) {
 		return
 	}
@@ -544,7 +592,8 @@ func (s *Settings) Stash(w *Window) {
 // TakeSession returns the session kept of dir, which is no longer kept
 // once a window has it, or nil for none.
 func (s *Settings) TakeSession(dir string) *Session {
-	dir = filepath.Clean(dir)
+	s.normalizePaths()
+	dir = remote.Clean(dir)
 	ses := s.Sessions[dir]
 	if ses != nil {
 		delete(s.Sessions, dir)
@@ -623,6 +672,8 @@ func writeFile(path string, data []byte) {
 // AddRecent puts dir first of the recent folders, of which it keeps ten,
 // and lets go of the sessions of those no longer recent.
 func (s *Settings) AddRecent(dir string) {
+	s.normalizePaths()
+	dir = remote.Clean(dir)
 	s.Recent = slices.DeleteFunc(s.Recent, func(d string) bool { return d == dir })
 	s.Recent = slices.Insert(s.Recent, 0, dir)
 	if len(s.Recent) > 10 {
@@ -639,13 +690,15 @@ func (s *Settings) AddRecent(dir string) {
 // on the disk now, which stay in the list for when they come back, as a
 // drive plugged in again.
 func (s *Settings) RecentExcept(dir string) []string {
+	s.normalizePaths()
+	dir = remote.Clean(dir)
 	var out []string
 	for _, d := range s.Recent {
 		if d == dir {
 			continue
 		}
 		// A remote folder is looked at as it opens.
-		if strings.HasPrefix(d, "/ssh:") {
+		if remote.Is(d) {
 			out = append(out, d)
 		} else if info, err := os.Stat(d); err == nil && info.IsDir() {
 			out = append(out, d)
