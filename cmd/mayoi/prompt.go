@@ -54,7 +54,7 @@ func (a *app) promptView(c *ui.Context) {
 				}
 				if pr.err != "" {
 					in.Error(pr.err)
-					ui.Text(c, pr.err).FontSize(12).TextColor(p.danger)
+					ui.Text(c, pr.err).FontSize(12).TextColor(p.dangerFg)
 				}
 				if in.Changed() {
 					pr.err = ""
@@ -139,7 +139,7 @@ func (a *app) confirmView(c *ui.Context) {
 					ch := cf.choices[min(max(cf.choice, 0), len(cf.choices)-1)]
 					col := p.muted
 					if ch.danger {
-						col = p.danger
+						col = p.dangerFg
 					}
 					ui.Text(c, ch.message).FontSize(12.5).TextColor(col).ClipX()
 				}

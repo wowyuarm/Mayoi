@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"os"
 	"strings"
 	"testing"
@@ -318,22 +317,6 @@ func TestThemeMenu(t *testing.T) {
 	}
 }
 
-// contrast is the WCAG contrast ratio of two opaque colors.
-func contrast(x, y ui.Color) float64 {
-	lum := func(c ui.Color) float64 {
-		ch := func(v uint8) float64 {
-			f := float64(v) / 255
-			if f <= 0.03928 {
-				return f / 12.92
-			}
-			return math.Pow((f+0.055)/1.055, 2.4)
-		}
-		return 0.2126*ch(c.R) + 0.7152*ch(c.G) + 0.0722*ch(c.B)
-	}
-	a, b := lum(x)+0.05, lum(y)+0.05
-	return max(a, b) / min(a, b)
-}
-
 // A button's label reads on its face, the accent's and danger's, at the
 // 4.5:1 of WCAG's AA in every theme, and under the pointer, a moment, at
 // least at the 3:1 AA asks of large or bold text.
@@ -356,5 +339,26 @@ func TestButtonContrast(t *testing.T) {
 				t.Errorf("%s: %s reads at %.2f:1", name, pair.what, r)
 			}
 		}
+	}
+}
+
+// The colors of Git's changes and of danger read as text at 4.5:1 on the
+// chrome, the editor and the panel, in every theme, as a file's name in
+// Source Control does on a light window.
+func TestStatusTextContrast(t *testing.T) {
+	pals := map[string]*palette{"light": lightPal, "dark": darkPal, "matrix": matrixPal, "claude light": claudeLightPal, "claude dark": claudeDarkPal,
+		"qoder light": qoderLightPal, "qoder dark": qoderDarkPal}
+	for name, p := range pals {
+		for what, fg := range map[string]ui.Color{"modified": p.modifiedFg, "added": p.addedFg, "removed": p.removedFg, "danger": p.dangerFg} {
+			for _, back := range []ui.Color{p.chrome, p.editor, p.panel} {
+				if r := contrast(fg, back); r < 4.5 {
+					t.Errorf("%s: %s reads at %.2f:1", name, what, r)
+				}
+			}
+		}
+	}
+	// A color that reads already is kept.
+	if darkPal.modifiedFg != darkPal.modified {
+		t.Error("the dark window's modified changed, though it reads")
 	}
 }

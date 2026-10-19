@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -15,6 +14,7 @@ import (
 
 	"mayoi/internal/highlight"
 	"mayoi/internal/keymap"
+	"mayoi/internal/mon"
 	"mayoi/internal/remote"
 	"mayoi/internal/settings"
 	"mayoi/internal/workspace"
@@ -66,6 +66,7 @@ type host interface {
 	// recentChanged shows the recent folders anew, in the menus, once
 	// they change.
 	recentChanged()
+	menuChanged()
 	// fontChanged draws every window anew, in the font the settings
 	// have now.
 	fontChanged()
@@ -86,6 +87,11 @@ type host interface {
 	syncInfo() syncInfo
 	syncPicture() *ui.Bitmap
 	syncConflictResolved()
+	// ai is a client of Mon's AI gateway, as the account signed in, nil
+	// while signed out. aiSignedOut says Mon refused its token: the
+	// account was signed out elsewhere.
+	ai() *mon.Client
+	aiSignedOut()
 	// With project tabs, stepProject shows the project by steps along the
 	// rail, showProject the one at i, the last for -1, and closeProject
 	// closes the window's, as the window closes when it is its only one.
@@ -110,6 +116,34 @@ type app struct {
 	// vimReg is what vim mode put on the clipboard last, which tells
 	// whether a paste of the same text pastes lines.
 	vimReg vimRegister
+	// vimLine is vim mode's command line, vimSearch the pattern searched
+	// last, vimHist the searches and the commands typed, and vimMsg what
+	// a command said.
+	vimLine   vimLine
+	vimSearch vimSearch
+	vimHist   [2][]string
+	vimMsg    vimMessage
+	vimCount  vimCounted
+	// vimRegs are vim mode's registers but the unnamed one, which is the
+	// clipboard. vimRec is the register recorded into, 0 while none is,
+	// and vimRecKeys the keys typed since; vimPlayed is the register played
+	// last, which @@ plays again. vimPlaying is set while keys play, as
+	// many deep as registers play registers, and vimBudget is how many more
+	// they may type. vimFailed is set as a command fails, which ends the
+	// keys playing.
+	vimRegs    map[rune]vimRegister
+	vimRec     rune
+	vimRecKeys []rune
+	vimPlayed  rune
+	vimPlaying int
+	vimBudget  int
+	vimFailed  bool
+	// vimLastEx is the command run last after :, which @: runs again, and
+	// vimLastSub what followed :s, which & does again. vimGlobalOn is set
+	// while :g runs its command.
+	vimLastEx   string
+	vimLastSub  string
+	vimGlobalOn bool
 
 	// queue holds the functions other goroutines post for the main thread,
 	// which the next frame runs.
@@ -135,6 +169,8 @@ type app struct {
 	// which is done again at most every remoteIndexEvery.
 	indexed time.Time
 	files   ui.OutlineState[string]
+	// crumbs is the box a folder of the breadcrumbs opens.
+	crumbs  crumbsPicker
 	fileRow int
 	// filesView is the explorer's list, which focusFiles has take the
 	// keyboard as it next shows.
@@ -144,6 +180,7 @@ type app struct {
 	// file it should choose once its row shows.
 	treeSynced, selectInTree string
 	git                      gitState
+	repositories             repositoryState
 	commitTools              commitTools
 	scm                      scmState
 
@@ -245,10 +282,11 @@ type app struct {
 	// strokes of a chord of them typed so far. keyFocus is the place the
 	// keyboard is in as the view was built, placeNone where the window
 	// takes their keys, and keyTerm the terminal that took a key last.
-	keys     *keymap.Map
-	chord    []keymap.Stroke
-	keyFocus keyPlace
-	keyTerm  *session
+	keys        *keymap.Map
+	chord       []keymap.Stroke
+	keyFocus    keyPlace
+	cutInEditor bool
+	keyTerm     *session
 	// held is the key the keymap took last, until it is let go of.
 	held *ui.Key
 	// chain are the commands of runCommands still to run, which stop at
@@ -399,6 +437,7 @@ func (a *app) openFolder(dir string) {
 	a.files.List.Selected = &a.fileRow
 	a.index, a.indexStale = nil, true
 	a.ignored, a.ignoredStale = nil, true
+	a.resetRepositories()
 	a.git = gitState{}
 	a.resetSearch()
 	a.window.Folder = dir
@@ -447,6 +486,7 @@ func (a *app) closeFolder() {
 			a.tree.Close()
 		}
 		a.detachRemote()
+		a.resetRepositories()
 		a.root, a.tree, a.index, a.git = "", nil, nil, gitState{}
 		a.resetSearch()
 		a.closed = nil
@@ -474,7 +514,7 @@ func (a *app) saveDoc(d *document, then func()) {
 	}
 	saved := func() {
 		d.diskGone, d.autoSave.failed = false, false
-		a.git.stale = true
+		a.repositoryForPath(d.path).git.stale = true
 		a.rememberTabs()
 		if then != nil {
 			then()
@@ -527,6 +567,11 @@ func (a *app) saveAll() {
 // diskChanged follows files changed on disk: an open document without
 // changes of its own shows the file's new text.
 func (a *app) diskChanged(changed, removed []string) {
+	for _, path := range append(slices.Clone(changed), removed...) {
+		if remote.Base(path) == ".gitmodules" {
+			a.repositories.dirty = true
+		}
+	}
 	a.indexStale, a.ignoredStale = true, true
 	a.diffsOnDisk(append(changed, removed...))
 	a.searchAgain(append(changed, removed...))
@@ -658,7 +703,7 @@ func (a *app) isIgnored(path string) bool {
 	if len(a.ignored) == 0 {
 		return false
 	}
-	for p := path; len(p) > len(a.root); p = filepath.Dir(p) {
+	for p := path; len(p) > len(a.root); p = remote.Dir(p) {
 		if a.ignored[p] {
 			return true
 		}

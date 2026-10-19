@@ -39,6 +39,7 @@ func railFixture(t testing.TB, dirs ...string) (*frame, []*desktop, *ui.Tester) 
 		// none.
 		h := &desktop{m: m}
 		h.a = newApp(&fakeHost{}, s, w)
+		t.Cleanup(h.a.shutdown)
 		f.add(h)
 		hs = append(hs, h)
 	}
@@ -179,6 +180,7 @@ func TestFolderKeepsItsLayout(t *testing.T) {
 	s.Forget(w)
 	x := s.NewWindow()
 	a := newApp(&fakeHost{folder: root}, s, x)
+	t.Cleanup(a.shutdown)
 	a.openSession(root)
 	if x.SidebarView != "git" || x.SidebarWidth != 320 {
 		t.Fatalf("layout %+v", x.Layout)
@@ -192,6 +194,7 @@ func TestUnshownProjectKeepsItsSession(t *testing.T) {
 	w := s.NewWindow()
 	w.Columns = []settings.Column{{Tabs: []settings.Tab{{File: "/tmp/a.go"}}, Weight: 1}}
 	a := newApp(&fakeHost{}, s, w)
+	t.Cleanup(a.shutdown)
 	a.keepSession()
 	a.park()
 	if len(w.Columns) != 1 || len(w.Columns[0].Tabs) != 1 {
@@ -207,6 +210,7 @@ func TestProjectTabsOpenFoldersInTabs(t *testing.T) {
 	s.ProjectTabs = true
 	h := &fakeHost{}
 	a := newApp(h, s, s.NewWindow())
+	t.Cleanup(a.shutdown)
 	a.switchFolder(root)
 	if a.root != root || len(h.windows) != 0 {
 		t.Fatalf("no folder: folder %q, windows %v", a.root, h.windows)
@@ -537,6 +541,90 @@ func TestRailReorders(t *testing.T) {
 	}
 	if !slices.Equal(f.m.s.Rail, ids()) {
 		t.Errorf("rail kept as %v, shown as %v", f.m.s.Rail, ids())
+	}
+}
+
+// railDragTo drags the square of from with the pointer to (x, y), as a
+// person does, and lets the move it posts run.
+func railDragTo(tt *ui.Tester, from string, x, y float32) error {
+	r, ok := tt.Find(from)
+	if !ok {
+		return fmt.Errorf("no square %q", from)
+	}
+	x0, y0 := r.X+r.W/2, r.Y+r.H/2
+	tt.Press(x0, y0)
+	step(tt)
+	for i := 1; i <= 4; i++ {
+		f := float32(i) / 4
+		tt.Move(x0+(x-x0)*f, y0+(y-y0)*f)
+		step(tt)
+	}
+	step(tt)
+	tt.Release(x, y)
+	for range 3 {
+		step(tt)
+	}
+	return nil
+}
+
+// Dragged with the pointer, a square goes before the one it is dropped
+// on, not to the end, and past the last one to the end.
+func TestRailDragsSquares(t *testing.T) {
+	// Named so that only the rail shows the names of the projects not
+	// shown.
+	var dirs []string
+	for _, name := range []string{"railalpha", "railbeta", "railgamma"} {
+		dir := filepath.Join(t.TempDir(), name)
+		if err := os.Mkdir(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		dirs = append(dirs, dir)
+	}
+	f, hs, tt := railFixture(t, dirs...)
+	f.active = hs[2]
+	step(tt)
+	order := func() []*desktop { return slices.Clone(f.tabs) }
+	r, _ := tt.Find("railalpha")
+	if err := railDragTo(tt, "railbeta", r.X+r.W/2, r.Y+r.H/2); err != nil {
+		t.Fatal(err)
+	}
+	if got := order(); !slices.Equal(got, []*desktop{hs[1], hs[0], hs[2]}) {
+		t.Fatalf("dropped on the first: %v, want the second before it", got)
+	}
+	// Below the squares, on the rail itself.
+	if err := railDragTo(tt, "railbeta", r.X+r.W/2, 600); err != nil {
+		t.Fatal(err)
+	}
+	if got := order(); !slices.Equal(got, []*desktop{hs[0], hs[2], hs[1]}) {
+		t.Fatalf("dropped past the last: %v, want it at the end", got)
+	}
+}
+
+// A picture dragged from the sidebar onto a square shows in it, and
+// leaves the rail's order as it was.
+func TestRailTakesPictureFromSidebar(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "railalpha")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	shown := workspaceFixture(t)
+	writePNG(t, filepath.Join(shown, "railpic.png"), 16, 16)
+	f, hs, tt := railFixture(t, shown, dir)
+	f.m.icons = filepath.Join(t.TempDir(), "project-icons")
+	for range 200 {
+		step(tt)
+		if _, ok := tt.Find("railpic.png"); ok {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	r, _ := tt.Find("railalpha")
+	if err := railDragTo(tt, "railpic.png", r.X+r.W/2, r.Y+r.H/2); err != nil {
+		t.Fatal(err)
+	}
+	settleIcon(t, f, tt, dir)
+	if !slices.Equal(f.tabs, hs) {
+		t.Errorf("the rail is reordered: %v", f.tabs)
 	}
 }
 

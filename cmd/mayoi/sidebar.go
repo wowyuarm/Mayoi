@@ -65,49 +65,54 @@ func (a *app) sidebar(c *ui.Context) {
 				return
 			}
 		})
-		if a.root == "" {
-			a.noFolder(c)
-			return
-		}
-		if scm {
-			a.scmView(c)
-			return
-		}
-		if search {
-			a.searchView(c)
-			return
-		}
-		// The folder's row, with the explorer's actions while the pointer
-		// is over the sidebar or the tree has the keyboard: on the title's
-		// row, they would leave the title no room.
-		ui.Row(c).Height(24).Padding(0, 6, 0, 16).Gap(2).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, strings.ToUpper(remote.Base(a.root))).FontSize(11).FontWeight(700).LetterSpacing(0.4).
-				TextColor(p.text).SingleLine().Grow(1)
-			if !hovered && !a.files.List.FocusWithin(c) {
+		// The view chosen fades in as the switches change it.
+		pane := ui.Column(c.Key("view:" + view)).Grow(1).MinHeight(0)
+		pane.Opacity(pane.Keyframes("in", []ui.Keyframe{{Value: 0}, {At: 150 * time.Millisecond, Value: 1, Ease: ui.EaseOut}}))
+		pane.Children(func() {
+			if a.root == "" {
+				a.noFolder(c)
 				return
 			}
-			if a.iconButton(c, iconFilePlus, locales.NewFileEllipsis(), false).Clicked() {
-				a.askNewEntry(a.targetDir(), false)
+			if scm {
+				a.scmView(c)
+				return
 			}
-			if a.iconButton(c, iconFolderPlus, locales.NewFolderEllipsis(), false).Clicked() {
-				a.askNewEntry(a.targetDir(), true)
+			if search {
+				a.searchView(c)
+				return
 			}
-			if a.iconButton(c, iconRefresh, locales.RefreshExplorer(), false).Clicked() {
-				a.tree.Refresh()
-				a.indexStale = true
+			// The folder's row, with the explorer's actions while the pointer
+			// is over the sidebar or the tree has the keyboard: on the title's
+			// row, they would leave the title no room.
+			ui.Row(c).Height(24).Padding(0, 6, 0, 16).Gap(2).AlignItems(ui.Center).Children(func() {
+				ui.Text(c, strings.ToUpper(remote.Base(a.root))).FontSize(11).FontWeight(700).LetterSpacing(0.4).
+					TextColor(p.text).SingleLine().Grow(1)
+				if !hovered && !a.files.List.FocusWithin(c) {
+					return
+				}
+				if a.iconButton(c, iconFilePlus, locales.NewFileEllipsis(), false).Clicked() {
+					a.askNewEntry(a.targetDir(), false)
+				}
+				if a.iconButton(c, iconFolderPlus, locales.NewFolderEllipsis(), false).Clicked() {
+					a.askNewEntry(a.targetDir(), true)
+				}
+				if a.iconButton(c, iconRefresh, locales.RefreshExplorer(), false).Clicked() {
+					a.tree.Refresh()
+					a.indexStale = true
+				}
+				if a.iconButton(c, iconCollapse, locales.CollapseFolders(), false).Clicked() {
+					a.files.Open.Clear()
+				}
+			})
+			if t := a.tree; t.Loaded(a.root) && len(t.Children(a.root)) == 0 {
+				a.emptyFolder(c)
 			}
-			if a.iconButton(c, iconCollapse, locales.CollapseFolders(), false).Clicked() {
-				a.files.Open.Clear()
+			if a.conn != nil && !a.tree.Loaded(a.root) {
+				a.remoteTreeWaits(c)
+				return
 			}
+			a.fileTree(c)
 		})
-		if t := a.tree; t.Loaded(a.root) && len(t.Children(a.root)) == 0 {
-			a.emptyFolder(c)
-		}
-		if a.conn != nil && !a.tree.Loaded(a.root) {
-			a.remoteTreeWaits(c)
-			return
-		}
-		a.fileTree(c)
 	})
 }
 
@@ -116,7 +121,7 @@ func (a *app) sidebar(c *ui.Context) {
 func (a *app) emptyFolder(c *ui.Context) {
 	p := a.pal
 	ui.Column(c.Key("empty-folder")).Padding(28, 20, 8, 20).Gap(8).AlignItems(ui.Center).Shrink(0).Children(func() {
-		ui.Box(c).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center).Children(func() {
+		popUp(ui.Box(c.Key("badge")).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center)).Children(func() {
 			ui.Icon(c, iconFolderOpen).FontSize(20).TextColor(p.muted)
 		})
 		ui.Text(c, locales.FolderEmpty()).FontSize(13).FontWeight(600).TextColor(p.text).Margin(4, 0, 0, 0)
@@ -155,6 +160,10 @@ func fitTitle(c *ui.Context, title, short string, room float32) string {
 	return short
 }
 
+// switchMark is the identity of the mark under the sidebar's switch of
+// the view shown, which goes from one switch to another.
+type switchMark struct{}
+
 // sidebarSwitch is a button at the top of the sidebar that shows a view
 // of it, with a count of what it has when count is more than 0.
 func (a *app) sidebarSwitch(c *ui.Context, icon *ui.SVG, label string, on bool, count int, show func()) {
@@ -164,21 +173,29 @@ func (a *app) sidebarSwitch(c *ui.Context, icon *ui.SVG, label string, on bool, 
 	b := ui.ButtonBase(c.Key(label)).Size(26, 24).Radius(5).Justify(ui.Center).AlignItems(ui.Center).Label(label)
 	col := p.muted
 	if on {
-		b.Background(p.active)
 		col = p.text
 	} else if b.Hovered() {
 		b.Background(p.hover)
 		col = p.text
 	}
+	b.Transition(hoverFade)
+	pressPose(b)
 	b.Children(func() {
+		if on {
+			// The mark of the view shown slides from the switch before.
+			ui.Box(c.Key("on")).Absolute().Left(0).Right(0).Top(0).Bottom(0).Radius(5).Background(p.active).
+				Transition(ui.ElementTransition{Animation: &ui.Snappy, Match: switchMark{}})
+		}
 		ui.Icon(c, icon).FontSize(14).TextColor(col)
 		if count > 0 {
 			label := fmt.Sprint(count)
 			if count > 99 {
 				label = "99+"
 			}
-			ui.Text(c, label).Absolute().Top(-2).Right(-3).FontSize(9).FontWeight(600).Padding(0, 3).Radius(6).
-				MinWidth(13).TextAlign(ui.Center).Background(p.fill).TextColor(p.fillText)
+			// The count rolls to a new one, as a counter's digits do.
+			ui.Text(c.Key("count"), label).Absolute().Top(-2).Right(-3).FontSize(9).FontWeight(600).Padding(0, 3).Radius(6).
+				MinWidth(13).TextAlign(ui.Center).Background(p.fill).TextColor(p.fillText).
+				ContentTransition(ui.ContentTransition{Numeric: true}).Transition(dotPop)
 		}
 	})
 	if b.Clicked() {
@@ -190,7 +207,7 @@ func (a *app) noFolder(c *ui.Context) {
 	p := a.pal
 	// As source control shows a folder without a repository.
 	ui.Column(c).Padding(28, 20, 16, 20).Gap(8).AlignItems(ui.Center).Children(func() {
-		ui.Box(c).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center).Children(func() {
+		popUp(ui.Box(c.Key("badge")).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center)).Children(func() {
 			ui.Icon(c, iconFolderOpen).FontSize(20).TextColor(p.muted)
 		})
 		ui.Text(c, locales.NoFolderOpen()).FontSize(13).FontWeight(600).TextColor(p.text).Margin(4, 0, 0, 0)
@@ -317,9 +334,9 @@ func (a *app) fileTree(c *ui.Context) {
 				action = func() { a.newTerminalIn(path) }
 			}
 			m.Separator()
-			if _, changed := a.git.entries[path]; changed && !isDir {
+			if _, changed := a.repositoryForPath(path).git.entries[path]; changed && !isDir {
 				if m.Item(locales.CmdGitOpenChanges()).Chosen() {
-					action = func() { a.showChanges(diffTarget{path: path, any: true}, true) }
+					action = func() { a.repositoryForPath(path).showChanges(diffTarget{path: path, any: true}, true) }
 				}
 				m.Separator()
 			}
@@ -371,13 +388,17 @@ func (a *app) fileTree(c *ui.Context) {
 			// that has changes.
 			var letter byte
 			if isDir {
-				letter = a.git.dirs[path]
-			} else if e, ok := a.git.entries[path]; ok {
+				for _, ctx := range a.rootRepositoryList() {
+					if next := ctx.git.dirs[path]; letterRank(next) > letterRank(letter) {
+						letter = next
+					}
+				}
+			} else if e, ok := a.repositoryForPath(path).git.entries[path]; ok {
 				letter = e.Letter()
 			}
 			switch i := a.docIndex(path); {
 			case i >= 0 && a.docs[i].dirty():
-				label.TextColor(p.modified)
+				label.TextColor(p.modifiedFg)
 			case ignored:
 				label.TextColor(p.faint)
 			case letter != 0:
@@ -615,10 +636,16 @@ func (a *app) askNewEntry(dir string, folder bool) {
 	}}
 }
 
+// hasSlash reports whether a name has a separator of folders in it: a
+// slash, which is one on every system, or Windows' backslash there.
+func hasSlash(name string) bool {
+	return strings.ContainsAny(name, "/"+string(filepath.Separator))
+}
+
 func (a *app) askRename(path string) {
 	a.prompt = &prompt{title: locales.RenameTitle(), hint: a.relOrPath(path), value: remote.Base(path), done: func(name string) string {
 		name = strings.TrimSpace(name)
-		if name == "" || strings.ContainsRune(name, filepath.Separator) {
+		if name == "" || hasSlash(name) {
 			return locales.EnterNameNoSlashes()
 		}
 		to := remote.Join(remote.Dir(path), name)
@@ -752,17 +779,17 @@ func (a *app) relOrPath(path string) string {
 }
 
 // gitColor is the color of a file of a letter of Git's: changed, added,
-// removed or in conflict.
+// removed or in conflict, as text.
 func gitColor(p *palette, letter byte) ui.Color {
 	switch letter {
 	case 'A', 'U':
-		return p.added
+		return p.addedFg
 	case 'D':
-		return p.removed
+		return p.removedFg
 	case 'C':
-		return p.danger
+		return p.dangerFg
 	}
-	return p.modified
+	return p.modifiedFg
 }
 
 // mix blends from toward to by t.

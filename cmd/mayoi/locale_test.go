@@ -12,6 +12,7 @@ import (
 // Every language labels every command, the same commands as English.
 func TestCommandsInEveryLanguage(t *testing.T) {
 	a := newApp(&fakeHost{}, settings.Default(), settings.Default().NewWindow())
+	t.Cleanup(a.shutdown)
 	var ids []string
 	for _, cmd := range a.commandsIn(locales.In("en")) {
 		ids = append(ids, cmd.id)
@@ -40,6 +41,7 @@ func TestCommandsInEveryLanguage(t *testing.T) {
 // catalogs.
 func TestLocaleCommands(t *testing.T) {
 	a := newApp(&fakeHost{}, settings.Default(), settings.Default().NewWindow())
+	t.Cleanup(a.shutdown)
 	var got []string
 	for _, cmd := range a.commands() {
 		if tag, ok := strings.CutPrefix(cmd.id, localeCommand); ok {
@@ -56,6 +58,7 @@ func TestLocaleCommands(t *testing.T) {
 // "zh-Hans", and the system's when they name none.
 func TestLocaleOn(t *testing.T) {
 	a := newApp(&fakeHost{}, settings.Default(), settings.Default().NewWindow())
+	t.Cleanup(a.shutdown)
 	for _, tc := range []struct {
 		setting, tag string
 		on           bool
@@ -79,6 +82,7 @@ func TestLocaleOn(t *testing.T) {
 func TestSetLocale(t *testing.T) {
 	h := &fakeHost{}
 	a := newApp(h, settings.Default(), settings.Default().NewWindow())
+	t.Cleanup(a.shutdown)
 	a.run(localeCommand + "ja")
 	if a.settings.Locale != "ja" || h.locale != "ja" {
 		t.Errorf("after choosing Japanese: settings %q, host %q", a.settings.Locale, h.locale)

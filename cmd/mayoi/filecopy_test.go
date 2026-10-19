@@ -40,11 +40,11 @@ func TestCopyInto(t *testing.T) {
 		t.Fatalf("copyInto = %q, %v", to, err)
 	}
 	info, err := os.Stat(filepath.Join(to, "sub/run.sh"))
-	// Windows carries no permission bits to copy.
-	if err != nil || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o755) {
+	// Windows has no permission bits to copy.
+	if err != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0o755 {
 		t.Fatalf("run.sh: %v %v", info, err)
 	}
-	// Windows' symlinks keep the separator they were made with.
+	// Windows' links keep backslashes.
 	if target, err := os.Readlink(filepath.Join(to, "link")); err != nil || filepath.ToSlash(target) != "sub/run.sh" {
 		t.Errorf("link: %q %v", target, err)
 	}

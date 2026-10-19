@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 
@@ -39,7 +40,7 @@ type codeFont struct {
 
 func newCodeFont(p settings.Prefs) codeFont {
 	f := codeFont{
-		family: p.FontFamily, size: p.FontSize, weight: p.FontWeight, features: strings.Join(p.FontFeatures, ","),
+		family: monoFallback(p.FontFamily), size: p.FontSize, weight: p.FontWeight, features: strings.Join(p.FontFeatures, ","),
 		lineHeight: p.LineHeight, lineH: float32(int(p.FontSize*p.LineHeight + 0.5)),
 	}
 	w, _ := ui.ShapeText(strings.Repeat("0", 64), f.font(), 0).Size()
@@ -52,8 +53,26 @@ func newCodeFont(p settings.Prefs) codeFont {
 
 // is reports whether the font is the one the preferences choose.
 func (f codeFont) is(p settings.Prefs) bool {
-	return f.charW != 0 && f.family == p.FontFamily && f.size == p.FontSize && f.weight == p.FontWeight &&
+	return f.charW != 0 && f.family == monoFallback(p.FontFamily) && f.size == p.FontSize && f.weight == p.FontWeight &&
 		f.features == strings.Join(p.FontFeatures, ",") && f.lineHeight == p.LineHeight
+}
+
+// monoFallback is a font family list that ends in the system's monospaced
+// font, so that a family the system lacks, as a font named in the settings
+// but not installed, falls back to a monospaced font rather than to the
+// system's proportional one. A list that names a generic family already
+// is kept.
+func monoFallback(family string) string {
+	for _, f := range strings.Split(family, ",") {
+		switch strings.ToLower(strings.Trim(strings.TrimSpace(f), `"'`)) {
+		case "monospace", "ui-monospace", "system-ui", "sans-serif", "serif", "ui-serif", "ui-sans-serif":
+			return family
+		}
+	}
+	if strings.TrimSpace(family) == "" {
+		return "monospace"
+	}
+	return family + ", monospace"
 }
 
 func (f codeFont) font() ui.Font {
@@ -127,12 +146,19 @@ func (a *app) editorView(c *ui.Context, d *editor) {
 		// Back in sight, where it was.
 		d.hidden, d.pinFrame, d.resync, d.shownFrame = false, 0, true, a.frame
 		d.vscroll.Y = d.hiddenY
-	case d.pinFrame != 0 && a.frame > d.pinFrame:
+	case d.pinFrame != 0 && a.frame > d.pinFrame+1:
 		d.pinFrame = 0
+	case d.pinFrame != 0 && a.frame > d.pinFrame:
+		// Every build of the frame after: a frame that animates builds the
+		// view again, after the area laid out where it was put back.
 		d.vscroll.Y = d.pinY
 	}
+
 	if !a.settings.Vim {
 		vimReset(d)
+		if a.vimLine.d == d {
+			a.vimCloseLine(false)
+		}
 	}
 	// What was typed since the last frame, for undo.
 	d.observe()
@@ -174,8 +200,9 @@ func (a *app) editorView(c *ui.Context, d *editor) {
 		d.resync = d.resync || !d.caretSeen
 		jump := d.pending != nil
 		if r := d.pending; r != nil {
+			// A jump asked for goes where it goes: no pin puts it back.
 			area.SetTextSelection(r[0], r[1])
-			d.pending, d.resync, d.parked = nil, false, -1
+			d.pending, d.resync, d.parked, d.pinFrame = nil, false, -1, 0
 		}
 		if d.resync {
 			// The area scrolls to its caret when it is given one, and when
@@ -299,6 +326,9 @@ func (a *app) editorView(c *ui.Context, d *editor) {
 			}
 		}
 		matches := a.visibleMatches(d, first, last)
+		if matches == nil {
+			matches = a.vimMatches(d, snap, first, last)
+		}
 		deco := a.decorate(d, snap, first, last)
 		d.git.Refresh(d.path, d.buf.Snapshot(), a.post)
 		marks := d.git.Lines
@@ -337,6 +367,30 @@ func (a *app) editorView(c *ui.Context, d *editor) {
 			}
 			block = &runeRect{line: l, x0: x0, x1: x1}
 		}
+		// While an operator waits for its motion, the block is half as
+		// high, as vim's cursor is.
+		halfBlock := vimKeys && d.vim.operatorPending()
+		// The text yanked lights up and fades.
+		var flash []runeRect
+		var flashK float32
+		if since := time.Since(d.vim.flashAt); vimKeys && since < vimFlashFor && !c.Preferences().ReduceMotion {
+			c.AnimationFrame()
+			flashK = 1 - float32(since)/float32(vimFlashFor)
+			from, to := d.vim.flash[0], min(d.vim.flash[1], snap.Len())
+			for l := max(first, snap.LineAt(from)); l <= min(last, snap.LineAt(to)); l++ {
+				s, e := snap.LineRange(l)
+				a0, a1 := max(from, s), min(to, e)
+				if a1 < a0 || l > snap.LineAt(from) && a1 == s && to <= s {
+					continue
+				}
+				x0 := f.width(snap.Slice(s, a0))
+				x1 := f.width(snap.Slice(s, a1))
+				if to > e {
+					x1 += f.charW / 2 // and its newline
+				}
+				flash = append(flash, runeRect{line: l, x0: x0, x1: max(x1, x0+f.charW/2)})
+			}
+		}
 		// rowsAt finds where the lines in view wrap, as this frame laid
 		// them out, and lineY places line i's first row.
 		var wr *wrapRows
@@ -368,9 +422,17 @@ func (a *app) editorView(c *ui.Context, d *editor) {
 				pt.Fill(ui.Rect{X: r.X, Y: y, W: r.W, H: lineHeight(caretLine)}, p.line, 0)
 			}
 			shape.paint(pt, func(i int, x0, x1 float32, fn func(y, x0, x1 float32)) { place(r, i, x0, x1, fn) }, lineH, selCol)
+			for _, fl := range flash {
+				place(r, fl.line, fl.x0, fl.x1, func(y, x0, x1 float32) {
+					pt.Fill(ui.Rect{X: x0 - 1, Y: y + 1, W: x1 - x0 + 2, H: lineH - 2}, p.accent.Alpha(0.32*flashK), 3)
+				})
+			}
 			if block != nil {
 				place(r, block.line, block.x0, block.x1, func(y, x0, x1 float32) {
 					box := ui.Rect{X: x0, Y: y, W: x1 - x0, H: lineH}
+					if halfBlock {
+						box.Y, box.H = y+lineH/2, lineH/2
+					}
 					if focused {
 						pt.Fill(box, p.cursor, 1)
 					} else {

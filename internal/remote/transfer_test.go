@@ -19,6 +19,7 @@ func connectFake(t *testing.T) *Conn {
 	t.Helper()
 	host := os.Getenv("MAYOI_SSH_TEST_HOST")
 	if host == "" {
+		needsShell(t)
 		host = "fake.invalid"
 		bin := t.TempDir()
 		if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSH), 0o755); err != nil {
@@ -163,6 +164,7 @@ func TestForward(t *testing.T) {
 
 	host := os.Getenv("MAYOI_SSH_TEST_HOST")
 	if host == "" {
+		needsShell(t)
 		host = "fake-forward.invalid"
 		bin := t.TempDir()
 		if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSHW), 0o755); err != nil {

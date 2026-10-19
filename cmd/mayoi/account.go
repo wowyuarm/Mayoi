@@ -317,11 +317,14 @@ func (c *cloud) run(manual bool, job func(context.Context) (cloudsync.Result, er
 // first sync needs to know.
 func (c *cloud) done(res cloudsync.Result, err error, manual bool) {
 	m := c.m
-	if err == nil || errors.Is(err, cloudsync.ErrNeedsChoice) {
+	if err == nil || errors.Is(err, cloudsync.ErrNeedsChoice) || errors.Is(err, cloudsync.ErrStale) {
 		c.failure, c.failures, c.retryAt = "", 0, time.Time{}
 	}
 	switch {
 	case errors.Is(err, errQuitting):
+	case errors.Is(err, cloudsync.ErrStale):
+		// The settings kept changing as it synced: the push of the last
+		// change syncs them.
 	case errors.Is(err, cloudsync.ErrNeedsChoice):
 		if c.asked && !manual {
 			return
@@ -641,7 +644,14 @@ func (l cloudLocal) Read() (cloudsync.Snapshot, error) {
 		return f.snap, nil
 	}
 	var s cloudsync.Snapshot
-	l.c.onMain(func() { s.Settings = l.c.m.s.Prefs.Synced() })
+	l.c.onMain(func() {
+		m := l.c.m
+		// A save of settings.json the watcher has yet to tell of.
+		if p, ok := m.s.Edited(); ok {
+			m.reload(p)
+		}
+		s.Settings = m.s.Prefs.Synced()
+	})
 	data, err := os.ReadFile(l.keysPath())
 	if err != nil && !os.IsNotExist(err) {
 		return s, err
@@ -650,42 +660,58 @@ func (l cloudLocal) Read() (cloudsync.Snapshot, error) {
 	return s, nil
 }
 
-func (l cloudLocal) Apply(s cloudsync.Snapshot, conflict string) error {
+// Apply checks and applies on the main thread, where the person changes
+// the settings, so that none of their changes falls between the two.
+func (l cloudLocal) Apply(read, s cloudsync.Snapshot, conflict string) error {
 	if l.c.quitting.Load() {
 		return errQuitting
 	}
 	var err error
-	var keepKeys bool
 	l.c.onMain(func() {
 		m := l.c.m
-		var p = m.s.Prefs
-		_, keepKeys = p.SyncKept()
+		p := m.s.Prefs
+		_, keepKeys := p.SyncKept()
+		path := l.keysPath()
+		old, rerr := os.ReadFile(path)
+		if rerr != nil && !os.IsNotExist(rerr) {
+			err = rerr
+			return
+		}
+		if q, ok := m.s.Edited(); ok {
+			// Saved since it was read: the next read has it.
+			m.reload(q)
+			err = cloudsync.ErrStale
+			return
+		}
+		if !(cloudsync.Snapshot{Settings: p.Synced(), Keybindings: read.Keybindings}).Equal(read) ||
+			!keepKeys && string(old) != read.Keybindings {
+			err = cloudsync.ErrStale
+			return
+		}
 		if p, err = p.WithSynced(s.Settings); err != nil {
 			return
 		}
 		m.reload(p)
 		m.s.Flush()
+		if keepKeys {
+			return
+		}
+		if conflict != "" {
+			if err = settings.WriteFile(filepath.Join(filepath.Dir(path), conflictFile), []byte(conflict)); err != nil {
+				return
+			}
+		}
+		switch {
+		case rerr == nil && string(old) == s.Keybindings:
+		case s.Keybindings == "":
+			if rerr == nil {
+				err = os.Remove(path)
+			}
+		default:
+			err = settings.WriteFile(path, []byte(s.Keybindings))
+		}
 	})
-	if err != nil || keepKeys {
-		return err
-	}
-	path := l.keysPath()
-	if conflict != "" {
-		if err := writeAtomic(filepath.Join(filepath.Dir(path), conflictFile), []byte(conflict)); err != nil {
-			return err
-		}
-	}
-	old, rerr := os.ReadFile(path)
-	switch {
-	case rerr == nil && string(old) == s.Keybindings:
-	case s.Keybindings == "":
-		if rerr == nil {
-			return os.Remove(path)
-		}
-	default:
-		return writeAtomic(path, []byte(s.Keybindings))
-	}
-	return nil
+	return err
 }
 
 func (l cloudLocal) IsDefault(s cloudsync.Snapshot) bool {
@@ -705,16 +731,6 @@ func (l cloudLocal) Kept() (keys []string, keybindings bool) {
 	}
 	l.c.onMain(func() { keys, keybindings = l.c.m.s.Prefs.SyncKept() })
 	return keys, keybindings
-}
-
-// writeAtomic writes data to path through a file beside it, so that a
-// watcher never reads half of it.
-func writeAtomic(path string, data []byte) error {
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
 }
 
 // inFront runs fn on the app of the window focused last, before its next
@@ -765,6 +781,22 @@ func (h *desktop) signOut() {
 func (h *desktop) syncNow() {
 	if h.m.cloud != nil {
 		h.m.cloud.syncNow()
+	}
+}
+
+func (h *desktop) ai() *mon.Client {
+	c := h.m.cloud
+	if c.account() == "" || c.client.Token == "" {
+		return nil
+	}
+	client := *c.client
+	return &client
+}
+
+func (h *desktop) aiSignedOut() {
+	if c := h.m.cloud; c.account() != "" {
+		c.forget()
+		h.m.toast(locales.SyncSessionEnded())
 	}
 }
 

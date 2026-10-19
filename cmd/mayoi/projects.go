@@ -434,19 +434,33 @@ func railGround(p *palette) ui.Color {
 // railDrag is a project's square dragged along the rail.
 type railDrag struct{ h *desktop }
 
+// railTake is what a square takes: another square, or a picture dragged
+// from the sidebar. An element takes one type of value, the one it asked
+// for last, so a square asks for both as one.
+type railTake interface{ railTake() }
+
+func (railDrag) railTake() {}
+func (dragItem) railTake() {}
+
 // railDrop moves the square dropped on e before the project before, at
 // the end for nil, and opens the folders dropped there from another app.
 // A picture dropped on the square of before, from another app or the
 // sidebar, shows in it.
 func (f *frame) railDrop(e ui.Element, a *app, before *desktop) {
-	if it, ok := ui.Drop[railDrag](e); ok {
-		a.post(func() { f.move(it.h, before) })
-	}
 	var dir string
-	if before != nil {
+	if before == nil {
+		if it, ok := ui.Drop[railDrag](e); ok {
+			a.post(func() { f.move(it.h, nil) })
+		}
+	} else {
 		dir = before.a.folder()
-		if it, ok := ui.Drop[dragItem](e); ok && it.file != nil && isIconFile(it.file.path) {
-			a.post(func() { f.setProjectIcon(a, dir, it.file.path) })
+		switch it, _ := ui.Drop[railTake](e); it := it.(type) {
+		case railDrag:
+			a.post(func() { f.move(it.h, before) })
+		case dragItem:
+			if it.file != nil && isIconFile(it.file.path) {
+				a.post(func() { f.setProjectIcon(a, dir, it.file.path) })
+			}
 		}
 	}
 	if paths := e.DroppedFiles(); paths != nil {
@@ -522,7 +536,7 @@ func railName(dir string) (name, where string) {
 	if dir == "" {
 		return locales.RailUntitled(), locales.RailNoFolder()
 	}
-	return filepath.Base(dir), shortenHome(dir)
+	return remote.Base(dir), shortenHome(dir)
 }
 
 // railTab is a project's square on the rail, which shows it, with a pill
@@ -556,9 +570,9 @@ func (f *frame) railTab(c *ui.Context, a *app, h *desktop, i int, label string) 
 		case remote.Connected:
 			conn, connCol = locales.RemoteConnectedTo(host), p.muted
 		case remote.Connecting:
-			conn, connCol = locales.RemoteConnectingTip(host), p.modified
+			conn, connCol = locales.RemoteConnectingTip(host), p.modifiedFg
 		default:
-			conn, connCol = locales.RemoteDisconnectedTip(host), p.danger
+			conn, connCol = locales.RemoteDisconnectedTip(host), p.dangerFg
 		}
 	}
 	var keys []string
@@ -587,12 +601,14 @@ func (f *frame) railTab(c *ui.Context, a *app, h *desktop, i int, label string) 
 		Label(name).Description(where).Drag(railDrag{h})
 	f.railTip(c, a, b, name, where, keys, dirty, alert, conn, connCol)
 	f.railDrop(b, a, h)
-	_, over := ui.DragOver[railDrag](b)
-	// A picture dragged from the sidebar, or anything from another app,
-	// which may be one: it would show on this square.
-	pic := b.FileDragOver() && f.canSetIcon(dir)
-	if it, ok := ui.DragOver[dragItem](b); ok && it.file != nil && isIconFile(it.file.path) && f.canSetIcon(dir) {
-		pic = true
+	// Another square, or a picture dragged from the sidebar or anything
+	// from another app, which may be one: it would show on this square.
+	over, pic := false, b.FileDragOver() && f.canSetIcon(dir)
+	switch it, _ := ui.DragOver[railTake](b); it := it.(type) {
+	case railDrag:
+		over = true
+	case dragItem:
+		pic = pic || it.file != nil && isIconFile(it.file.path) && f.canSetIcon(dir)
 	}
 	hovered, pressed, dragged := b.Hovered(), b.Pressed(), b.Dragging()
 	pill, fill := float32(0), float32(0.14)

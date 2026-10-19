@@ -1,5 +1,6 @@
 # Tests Mayoi on Linux, with the Git, GTK and fonts of Ubuntu 22.04 and
-# 24.04, as pushes to main and pull requests come.
+# 24.04, and on macOS and Windows, as pushes to main and pull requests
+# come.
 name: Test
 
 on:
@@ -27,4 +28,26 @@ jobs:
       - name: Install GTK and fonts
         run: sudo apt-get update && sudo apt-get install -y libgtk-3-0 fonts-dejavu-core
       - run: go vet ./...
-      - run: go test -short ./...
+      - run: go test -short -timeout 30m ./...
+
+  # macOS and Windows draw with their own system's text, with nothing to
+  # install.
+  native:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest }
+          - { name: Windows, os: windows-latest }
+    steps:
+      # The files as they are in the repository, with LF: the fixtures the
+      # tests read compare as they were written.
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test -short -timeout 30m ./...

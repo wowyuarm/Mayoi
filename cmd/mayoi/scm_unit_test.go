@@ -2,6 +2,7 @@ package main
 
 import (
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -113,9 +114,10 @@ func TestStickyHeaderPushedUp(t *testing.T) {
 }
 
 func TestTreeRows(t *testing.T) {
-	root := "/r"
-	es := []git.Entry{
-		{Path: "/r/a/b/c.go"}, {Path: "/r/a/b/d.go"}, {Path: "/r/a/e.go"}, {Path: "/r/main.go"}, {Path: "/r/x/y/z/w.go"},
+	root := filepath.FromSlash("/r")
+	var es []git.Entry
+	for _, p := range []string{"/r/a/b/c.go", "/r/a/b/d.go", "/r/a/e.go", "/r/main.go", "/r/x/y/z/w.go"} {
+		es = append(es, git.Entry{Path: filepath.FromSlash(p)})
 	}
 	show := func(rows []scmRow) string {
 		var out []string
@@ -144,6 +146,58 @@ func TestTreeRows(t *testing.T) {
 	odd := []git.Entry{{Path: "/elsewhere/x.go"}}
 	if got, want := show(treeRows(nil, groupChanges, odd, root, nil)), "x.go"; got != want {
 		t.Errorf("outside the root\n%s, want\n%s", got, want)
+	}
+	// A work tree at the top of the disk, as C:\ or /, has its folders
+	// as any other.
+	top := filepath.VolumeName(root) + string(filepath.Separator)
+	es = []git.Entry{{Path: filepath.Join(top, "a", "b.go")}, {Path: filepath.Join(top, "c.go")}}
+	if got, want := show(treeRows(nil, groupChanges, es, top, nil)), "a/| b.go|c.go"; got != want {
+		t.Errorf("at the top of the disk\n%s, want\n%s", got, want)
+	}
+	es = []git.Entry{{Path: filepath.FromSlash("/other/d/e.go")}}
+	if got, want := show(treeRows(nil, groupChanges, es, root, nil)), "e.go"; got != want {
+		t.Errorf("outside the root\n%s, want\n%s", got, want)
+	}
+	// A folder of a remote work tree is of its host's spelling.
+	remote := []git.Entry{{Path: "/ssh:box/home/me/p/a/b.go"}, {Path: "/ssh:box/home/me/p/c.go"}}
+	if got, want := show(treeRows(nil, groupChanges, remote, "/ssh:box/home/me/p", nil)), "a/| b.go|c.go"; got != want {
+		t.Errorf("remote\n%s, want\n%s", got, want)
+	}
+}
+
+func TestInFolder(t *testing.T) {
+	sep := string(filepath.Separator)
+	dir := filepath.FromSlash("/r/a")
+	for p, want := range map[string]bool{
+		dir:                      false,
+		dir + sep + "b":          true,
+		dir + "b" + sep + "c":    false,
+		filepath.FromSlash("/r"): false,
+		sep + "x":                false,
+	} {
+		if got := inFolder(dir, p); got != want {
+			t.Errorf("inFolder(%q, %q) = %v", dir, p, got)
+		}
+	}
+	if !inFolder(sep, sep+"x") || inFolder(sep, sep) {
+		t.Error("the top of the disk holds its folders, not itself")
+	}
+	// Windows' names of folders are one in any case of their letters.
+	if got := inFolder(`C:\Proj`, `c:\proj\a.go`); got != (runtime.GOOS == "windows") {
+		t.Errorf("inFolder in other letters = %v", got)
+	}
+	// A remote folder holds its files and the folders in it, and no
+	// folder of another host.
+	for p, want := range map[string]bool{
+		"/ssh:box/home/me/p/a.go":   true,
+		"/ssh:box/home/me/p/d/b.go": true,
+		"/ssh:box/home/me/p":        false,
+		"/ssh:box/home/me/q/a.go":   false,
+		"/ssh:other/home/me/p/a":    false,
+	} {
+		if got := inFolder("/ssh:box/home/me/p", p); got != want {
+			t.Errorf("inFolder remote(%q) = %v", p, got)
+		}
 	}
 }
 

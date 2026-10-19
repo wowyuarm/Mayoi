@@ -174,6 +174,7 @@ func TestShotRemoteWindow(t *testing.T) {
 		w := s.NewWindow()
 		w.Folder = remote.Path(host, "/srv/app")
 		a := newApp(&fakeHost{}, s, w)
+		t.Cleanup(a.shutdown)
 		tt := ui.NewTester(a.view, 1200, 760)
 		hs := &harness{t: t, a: a, h: &fakeHost{}, tt: tt, root: w.Folder}
 		t.Cleanup(a.shutdown)

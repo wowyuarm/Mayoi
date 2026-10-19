@@ -13,7 +13,8 @@ https://github.com/user-attachments/assets/673e7907-2b2c-4ed6-9093-1ba9633cd61c
 
 - **Editor:** tabs, Chroma syntax highlighting, indent guides, sticky scroll, breadcrumbs and word wrap
 - **Smart editing:** auto-indent, auto-closing brackets and quotes, line commands, and per-tab undo
-- **Vim mode:** normal, insert and visual modes, with motions, operators, text objects, counts and `.`
+- **Vim mode:** normal, insert and visual modes, with motions, operators, text objects, counts and `.`, registers,
+  macros, marks, search, and `:` commands as `:s`, `:g` and `:normal`
 - **Columns:** split the editor side by side and drag tabs between columns
 - **Explorer:** a live file tree that follows the disk and dims Git-ignored files
 - **Quick open:** fuzzy file search, go to line (`:42`), go to symbol (`@`) and a command palette (`>`, ⇧⌘P)
@@ -34,6 +35,7 @@ https://github.com/user-attachments/assets/673e7907-2b2c-4ed6-9093-1ba9633cd61c
 - **Auto save,** and every window reopened as you left it, with its columns, tabs and carets
 - **Settings:** JSON files applied as you save them, with the code's and the terminal's fonts, weight, ligatures and
   line height, and keyboard shortcuts in VS Code's format (see [docs/SETTINGS.md](docs/SETTINGS.md))
+- **AI commit messages:** signed in, write the commit message from the changes with Mon's AI gateway
 - **Settings sync:** sign in with GitHub or Google, and your settings and keyboard shortcuts follow you between machines
 
 See [docs/FEATURES.md](docs/FEATURES.md) for the details, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for a tour of the

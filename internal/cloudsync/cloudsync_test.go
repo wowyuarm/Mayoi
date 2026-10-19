@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -91,6 +92,9 @@ type fakeLocal struct {
 	// keep and keepKeys are what stays on the machine.
 	keep     []string
 	keepKeys bool
+	// beforeApply runs before an Apply, as the person changing a setting
+	// as a sync runs.
+	beforeApply func()
 }
 
 func (l *fakeLocal) Read() (Snapshot, error) {
@@ -99,7 +103,14 @@ func (l *fakeLocal) Read() (Snapshot, error) {
 	return out, nil
 }
 
-func (l *fakeLocal) Apply(s Snapshot, conflict string) error {
+func (l *fakeLocal) Apply(read, s Snapshot, conflict string) error {
+	if hook := l.beforeApply; hook != nil {
+		l.beforeApply = nil
+		hook()
+	}
+	if !l.s.Equal(read) {
+		return ErrStale
+	}
 	for _, k := range l.keep {
 		delete(s.Settings, k)
 		if v, ok := l.s.Settings[k]; ok {
@@ -279,6 +290,57 @@ func TestSyncRetriesAConflict(t *testing.T) {
 	}
 	if st := e.State(); st.Version != f.version {
 		t.Errorf("version = %d, want %d", st.Version, f.version)
+	}
+}
+
+func TestAChangeAsItSyncsStays(t *testing.T) {
+	f := &fakeMon{}
+	l := &fakeLocal{s: Snapshot{Settings: settingsOf("fontSize", "13", "theme", `"claude"`), Keybindings: "[0]"}}
+	e := newEngine(t, f, l)
+	ctx := context.Background()
+	if _, err := e.Sync(ctx, Ask); err != nil {
+		t.Fatal(err)
+	}
+	f.save(Snapshot{Settings: settingsOf("fontSize", "13", "theme", `"qoder"`), Keybindings: "[0]"})
+	// The person changes the font size and the shortcuts after the sync
+	// read them, before it applies the account's theme.
+	l.beforeApply = func() {
+		l.s.Settings["fontSize"] = json.RawMessage("16")
+		l.s.Keybindings = "[1]"
+	}
+	res, err := e.Sync(ctx, Ask)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Snapshot{Settings: settingsOf("fontSize", "16", "theme", `"qoder"`), Keybindings: "[1]"}
+	if !res.Applied || !res.Pushed || !l.s.Equal(want) || !f.snapshot(t).Equal(want) || !e.State().Base.Equal(want) {
+		t.Errorf("result %+v, local %+v, account %+v", res, l.s, f.snapshot(t))
+	}
+}
+
+func TestSyncGivesUpOnSettingsThatKeepChanging(t *testing.T) {
+	f := &fakeMon{}
+	l := &fakeLocal{s: Snapshot{Settings: settingsOf("fontSize", "13")}}
+	e := newEngine(t, f, l)
+	ctx := context.Background()
+	if _, err := e.Sync(ctx, Ask); err != nil {
+		t.Fatal(err)
+	}
+	f.save(Snapshot{Settings: settingsOf("fontSize", "13", "vim", "true")})
+	size := 13
+	var change func()
+	change = func() {
+		size++
+		l.s.Settings["fontSize"] = json.RawMessage(fmt.Sprint(size))
+		l.beforeApply = change
+	}
+	l.beforeApply = change
+	puts := f.puts
+	if _, err := e.Sync(ctx, Ask); !errors.Is(err, ErrStale) {
+		t.Fatalf("err = %v, want ErrStale", err)
+	}
+	if l.applies != 0 || f.puts != puts {
+		t.Errorf("applies %d, puts %d: a stale sync changed something", l.applies, f.puts-puts)
 	}
 }
 

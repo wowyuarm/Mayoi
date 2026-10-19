@@ -15,6 +15,200 @@ needs a `## <version>` section here, or its build fails.
   Explorer, search, Git, recent folders, sessions and command-line opens;
   paths saved with Windows separators are read back correctly.
 
+## 0.11.1
+
+- On Windows, the Undo, Discard and Reset dialogs and the repository
+  headers name a submodule with `/`, as `packages/module`, like the other
+  systems.
+- A project's square dragged along the rail goes where it is dropped
+  again, before the square under the pointer, not always at the end.
+
+## 0.11.0
+
+- Settings sync no longer undoes a change to `settings.json` or
+  `keybindings.json` made as it syncs, from a menu or by saving the file:
+  it merges the change with the account's and syncs it. A save of
+  `settings.json` no longer loses to the settings' own write of a moment
+  before.
+- Windows: a file opened from quick open, or by vim's `:e`, is the file
+  the Explorer shows, with backslashes, rather than a second tab of it
+  that the Explorer could not reveal.
+- Windows: renaming refuses a name with `/` in it, as it does one with
+  `\`, rather than moving the file into a folder of that name.
+- Windows: the Markdown preview finds an image or link that starts with
+  `/` in the repository's root, as on macOS, and shows one given as a
+  whole path, as `C:\pictures\art.png`.
+- Windows: Source Control's tree of changes keeps its folders for a work
+  tree at the top of a disk, as `D:\`, rather than listing every file
+  at its top.
+- Windows: a file given to `mayoi` in other letters than its folder's,
+  as `c:\proj\a.go` for `C:\Proj`, opens in that folder's window.
+- Windows: a terminal is named after its shell, `pwsh`, `powershell` or
+  `cmd`, rather than "shell".
+- Windows: the repository picker finds a repository typed with `/`, as
+  `packages/module`, as well as with `\`.
+- The home folder shortens to `~` only for itself and the folders in it,
+  not for a folder whose name begins the same, as `/Users/me2`; on
+  Windows, whatever the case of its letters.
+- The Windows fixes follow @wowyuarm's port of Mayoi to Windows (#40),
+  and the tests now run on macOS and Windows too.
+- The Markdown preview's column is half as wide again, 120 digits
+  rather than 80, so tables and images have room in a wide pane while
+  lines stay short enough to read; a narrower pane still fits it.
+- Vim mode records macros: `qa` records the keys typed into register
+  `a` until `q`, with the status bar saying so, and `@a` plays them,
+  `3@a` three times, `@@` again and `@:` the last command. A macro stops
+  where a motion fails, as in vim.
+- Vim mode has registers: `"a` to `"z` yank, delete and paste on their
+  own, `"A` appends, `"0` holds the last yank, `"1` to `"9` the last
+  deletes of lines, `"_` keeps nothing, and `".`, `":` and `"/` what was
+  typed, run and searched last. `:reg` shows them.
+- Vim mode has marks, `ma` then `'a` or `` `a ``, which move with the
+  text as it changes, and a jump list: `''` goes back, and ⌃O and ⌃I go
+  back and forward through the places `G`, `%`, searches and marks
+  jumped from. `:marks` lists them.
+- Vim mode adds `:normal` to type keys over a range of lines, `:g` and
+  `:v` to run a command on the lines that match or do not, `:m` and `:t`
+  to move and copy lines, `:pu`, and `&` and `g&` to repeat the last
+  `:s`. `:g` and `:normal` undo as one step.
+- Vim mode adds `it` and `at` for the text in tags, `[( [{ ]) ]}` to go
+  to the bracket that holds the cursor, and `gp` and `gP`.
+- In vim mode a count before an insert types its text as many times, as
+  `3ix` and `2o` do, and `.` repeats it so; `r` and Enter leaves the
+  cursor where vim does.
+- In vim mode, ⌃W and ⌃U delete the word and the line before the caret
+  in insert mode, on macOS.
+- In vim mode `ma` sets a mark, where before `m` was dropped and `a`
+  started inserting.
+- Vim mode's search highlights draw from what the last frame found
+  while nothing changed, rather than searching the lines in view every
+  frame.
+
+- In vim mode the cursor is half a block while an operator, as `d`,
+  waits for its motion, and the text yanked lights up for a moment.
+- Vim mode searches: `/` and `?` open a command line over the bottom
+  of the editor, which moves to the first match as you type, highlights
+  every one and counts them; `n`, `N`, `*` and `#` search again, a
+  search is a motion as in `d/end`, and the status bar says when a
+  search went round the end or found nothing. Patterns are vim's.
+- Vim mode's `:` runs commands: `:w`, `:q`, `:wq`, `:x`, a line number,
+  `:s` and `:%s` over a range or the selection, `:d`, `:y`, `:j`,
+  `:sort`, `:noh`, `:e`, `:vs` and more, with ↑ and ↓ for the commands
+  typed before.
+- Vim mode adds `gv`, `gi`, `gJ`, `H M L`, `zz zt zb`, ⌃A and ⌃X to add
+  to a number, and `ZZ` and `ZQ`.
+- Vim mode does as vim does in more places: `2D` and `d}` take whole
+  lines rather than leave a blank one, `$` in visual mode takes the end
+  of the line, `di(` and `ci[` find the next brackets along the line
+  when the cursor is outside any, `da"` takes the space before the
+  quotes when none follows, `di{` over lines leaves the cursor on the
+  closing brace, and a paste over lines leaves it on their first.
+- Vim mode's `ip` and `ap` take a paragraph, `r` and Enter breaks the
+  line, `3V` and `3v` select as many lines or characters, and `.`
+  repeats a change made in visual mode, as `Vj>`, over as much text.
+- In vim mode, `p` over a selection yanks what it replaces, as vim does,
+  and `P` keeps the register; with nothing to paste, the selection goes.
+- Esc after `o`, `O`, `S` or `cc` with nothing typed takes back the
+  indent, rather than leave a line of spaces.
+- Vim mode's keys work on keyboards of other scripts, as Cyrillic, from
+  where a US keyboard has them.
+- Find, quick open and the command palette shake their heads when
+  Return finds nothing to go to, as a Mac's password field does.
+- The find box goes back up as it fades out when closed, as do the peek
+  of a change and the box of a review comment.
+- The fields of find and search fade their accent border in and out as
+  they take and leave the keyboard.
+- The rows of quick open, the command palette and the pickers, the
+  buttons of Source Control, its commit button and branch, the buttons
+  of diffs and reviews, and the sync panel fade their hovers rather than
+  blink, and their small buttons sink as they are pressed.
+- The buttons that show only under the pointer, as those of a group of
+  changes or the Explorer's folder row, fade in and out.
+- The line along a splitter shows once the pointer rests on it, and
+  fades, rather than flashing as the pointer crosses it; a drag shows it
+  at once.
+- The badges of an empty folder, of no folder, of a folder with no
+  repository and of No Changes pop in, so a commit that leaves nothing
+  to commit ends with a check.
+- Switching between Explorer, Search and Source Control fades the view
+  in.
+- The counts of Source Control's groups roll to their new numbers.
+- Tabs move: a new tab grows in, a closed one folds away while the
+  others slide over, the line over the tab shown slides to the next one,
+  the cross fades in under the pointer, and the dot of unsaved changes
+  pops in. Terminal chips in the panel grow and fold the same way.
+- Buttons, tabs, breadcrumbs, the status bar and the welcome page fade
+  their hover colors in and out rather than blink, and icon buttons sink
+  a little as they are pressed.
+- The mark under the sidebar's view switches slides to the view chosen,
+  and the mark of the row chosen in quick open, the command palette and
+  the pickers slides as the arrow keys move it.
+- Chevrons turn as their sections, folders and the replace fields open
+  and close, rather than swap.
+- Counts roll to their new numbers: the changes on the Source Control
+  switch, and find's match count, down when going back.
+- The Vim badge fades between its modes' colors, and the name of the
+  branch, the preview's icon and the name in the title bar cross-fade as
+  they change.
+- The welcome page's logo, Start and Recent rise in one after another.
+- Going back to a wrapped file's tab no longer jumps it up the file at
+  times; it shows where it was left.
+- The box in the middle of the title bar no longer leaves a gap after a
+  short name, as a terminal's `zsh`, before the folder.
+- The welcome page's rows are all one height, with keys or without, so
+  Start and Recent keep one rhythm.
+- In Vim mode, the status bar shows the mode as a badge, colored by
+  mode: plain in normal mode, the accent color in insert mode, and amber in visual
+  mode, in place of `-- NORMAL --`.
+- The command palette and the welcome page's Command Palette… row show a
+  ⌘ icon instead of a chevron, and the welcome page's logo lines up with
+  the icons of the rows below it.
+- With more than six recent folders, the welcome page ends its list with
+  More…, which opens Open Recent (⌃R) to show the rest.
+- Source Control's message box starts one line high and grows with the
+  message, up to eight lines; a hint that wraps in a narrow sidebar shows
+  whole.
+- Cut with no selection cuts the caret's entire line,
+  and can be undone in one step.
+- Splitting a diff to the right no longer closes the window (#20, #39).
+- Quick open and the command palette match a run of letters together:
+  `git` lights up the whole of **Git** in "Git: Fetch", rather than its
+  last t, and such names rank higher.
+- The Markdown preview draws a line under the largest headings and mutes
+  quotes, as GitHub does.
+- The welcome page gives Quick Open an icon of its own, apart from Find in
+  Files.
+- **Breadcrumb folders:** click a folder in the breadcrumbs to browse its
+  files in a tree below it, without the sidebar. Its folders open in
+  place, and the file you choose shows in that column; the arrows, Enter
+  and Esc work too. It works for files outside the folder and on SSH
+  hosts, and leaves the Explorer as it was (#38).
+- In light themes, the names of changed, added and deleted files, and
+  error messages, are drawn darker so they meet WCAG AA contrast (4.5:1);
+  the gutter marks keep their brighter colors.
+- A `fontFamily` that isn't installed falls back to the system's
+  monospaced font, not to its proportional one; so does
+  `terminalFontFamily`.
+- The breadcrumbs of a file outside the folder no longer start with an
+  empty segment, and show the home folder as `~`.
+- Typing in a long file highlights with less work: only the lines near the
+  edit go to the lexer, not the rest of the file, and a keystroke within a
+  line updates the colors in place rather than copying those of every line.
+
+- **Submodules in Source Control:** each initialized submodule, nested ones
+  and those of linked worktrees too, lists its own changes to stage and
+  commit. A picker in the commits header and the status bar shows another
+  repository's history, or, on Auto, the one of the active file.
+- **AI commit messages:** signed in to your mon.sorrycc.dev account, the ✨
+  button at the corner of Source Control's message box writes the commit
+  message from the staged changes, or from every change when nothing is
+  staged, in the style of the last commits. It streams into the box, and a
+  second click stops it; text already in the box goes along as notes.
+  **Git: Write Commit Message with AI** in the command palette does the same,
+  and the `aiModel` setting picks another of Mon's models.
+- **Mayoi → Sign In…** is the new name of **Sign In to Sync Settings…**, as
+  the account now does more than sync.
+
 ## 0.10.0
 
 - Remote folders: while inotifywait watches a folder on its host, a file

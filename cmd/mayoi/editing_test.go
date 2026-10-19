@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"mayoi/locales"
+
+	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -42,6 +45,115 @@ func expectSel(t *testing.T, d *editor, anchor, caret int) {
 	if d.sel != [2]int{anchor, caret} {
 		t.Fatalf("selection %v, want [%d %d]", d.sel, anchor, caret)
 	}
+}
+
+func cutFromMenu(t *testing.T, hs *harness) {
+	t.Helper()
+	a := hs.a
+	m := a.menu(false, func(id string, _ *mygo.Window) { a.run(id) })
+	for _, menu := range m.Items() {
+		if menu.Label != locales.MenuEdit() {
+			continue
+		}
+		for _, item := range menu.Submenu {
+			if item.Role == mygo.RoleCut {
+				hs.tt.Command("cut")
+				return
+			}
+			if item.Label == locales.CmdEditCut() && item.Role == "" && item.Click != nil {
+				item.Click(item, nil)
+				return
+			}
+		}
+	}
+	t.Fatal("no editor Cut menu command")
+}
+
+func TestCutCurrentLine(t *testing.T) {
+	for _, menu := range []bool{false, true} {
+		for _, tc := range []struct {
+			name, text, want, clipboard string
+			caret                       int
+		}{
+			{"first", "one\ntwo\nthree", "two\nthree", "one\n", 1},
+			{"middle", "one\ntwo\nthree", "one\nthree", "two\n", 5},
+			{"last", "one\ntwo", "one", "two\n", 5},
+			{"single", "one", "", "one\n", 1},
+			{"blank", "one\n\ntwo", "one\ntwo", "\n", 4},
+			{"trailing blank", "one\n", "one", "\n", 4},
+			{"unicode", "一行\n迷い 😀\n末行", "一行\n末行", "迷い 😀\n", 5},
+		} {
+			t.Run(fmt.Sprintf("%s/menu=%v", tc.name, menu), func(t *testing.T) {
+				hs, d := editHarness(t, "cut.txt", tc.text)
+				hs.place(d, tc.caret, tc.caret)
+				if menu {
+					cutFromMenu(t, hs)
+					hs.settle()
+				} else {
+					hs.key(ui.Cmd, ui.KeyX)
+				}
+				expectText(t, d, tc.want)
+				if got := hs.tt.Clipboard(); got != tc.clipboard {
+					t.Fatalf("clipboard %q, want %q", got, tc.clipboard)
+				}
+				hs.key(ui.Cmd, ui.KeyZ)
+				expectText(t, d, tc.text)
+				expectSel(t, d, tc.caret, tc.caret)
+				hs.key(ui.Cmd|ui.Shift, ui.KeyZ)
+				expectText(t, d, tc.want)
+			})
+		}
+	}
+}
+
+func TestCutKeepsSelectionAndReadOnlyBehavior(t *testing.T) {
+	for _, menu := range []bool{false, true} {
+		for _, tc := range []struct {
+			name, text, want, clipboard string
+			selection                   [2]int
+			locked                      bool
+		}{
+			{"selection", "one\ntwo", "oe\ntwo", "n", [2]int{1, 2}, false},
+			{"backward selection", "one\ntwo", "oe\ntwo", "n", [2]int{2, 1}, false},
+			{"empty", "", "", "keep", [2]int{}, false},
+			{"read only", "one\ntwo", "one\ntwo", "keep", [2]int{1, 1}, true},
+		} {
+			t.Run(fmt.Sprintf("%s/menu=%v", tc.name, menu), func(t *testing.T) {
+				hs, d := editHarness(t, "cut.txt", tc.text)
+				hs.place(d, tc.selection[0], tc.selection[1])
+				if tc.locked {
+					d.loadErr = fmt.Errorf("read-only test document")
+				}
+				hs.settle()
+				hs.tt.SetClipboard("keep")
+				if menu {
+					cutFromMenu(t, hs)
+					hs.settle()
+				} else {
+					hs.key(ui.Cmd, ui.KeyX)
+				}
+				expectText(t, d, tc.want)
+				if got := hs.tt.Clipboard(); got != tc.clipboard {
+					t.Fatalf("clipboard %q, want %q", got, tc.clipboard)
+				}
+			})
+		}
+	}
+}
+
+func TestCutMenuPreservesTextFields(t *testing.T) {
+	hs, d := editHarness(t, "cut.txt", "one\ntwo")
+	hs.a.openQuick("")
+	hs.settle()
+	hs.tt.Type("needle")
+	hs.settle()
+	hs.key(ui.Cmd, ui.KeyA)
+	cutFromMenu(t, hs)
+	hs.settle()
+	if hs.a.quick.query != "" || hs.tt.Clipboard() != "needle" {
+		t.Fatalf("text field cut: query %q, clipboard %q", hs.a.quick.query, hs.tt.Clipboard())
+	}
+	expectText(t, d, "one\ntwo")
 }
 
 func TestTabIndents(t *testing.T) {

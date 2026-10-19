@@ -801,10 +801,7 @@ func (a *app) pickRow(c *ui.Context, i int, key string, icon *ui.SVG, label []ui
 	}
 	row := ui.ButtonBase(c.Key(key)).Height(pickRowH).Padding(0, 10).Gap(10).Radius(6).Justify(ui.Start).AlignItems(ui.Center).Label(text)
 	sel := i == r.sel
-	switch {
-	case sel:
-		row.Background(p.active)
-	case row.Hovered():
+	if !sel && row.Hovered() {
 		row.Background(p.hover)
 	}
 	if sel && r.moved {
@@ -813,7 +810,9 @@ func (a *app) pickRow(c *ui.Context, i int, key string, icon *ui.SVG, label []ui
 	if row.Clicked() {
 		a.post(func() { choose(i) })
 	}
+	row.Transition(hoverFade)
 	row.Children(func() {
+		a.pickMark(c, sel, "remote")
 		col := p.muted
 		if sel {
 			col = p.accent

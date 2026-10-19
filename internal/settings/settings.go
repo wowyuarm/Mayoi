@@ -40,6 +40,11 @@ type Settings struct {
 	// prefsWritten is called, on a goroutine of its own, each time the
 	// settings write a change of the preferences to their file.
 	prefsWritten func()
+	// seq counts the encodings of the settings, which wmu writes in turn:
+	// wrote is the seq of the last written, before which none lands.
+	seq   uint64
+	wmu   sync.Mutex
+	wrote uint64
 }
 
 // State is what Mayoi keeps itself, not what a person chooses: the
@@ -151,6 +156,9 @@ type Prefs struct {
 	// Locale is the language Mayoi shows, as "en", "zh-Hans" or "ja", or ""
 	// for the one the system's languages prefer.
 	Locale string `json:"locale,omitempty"`
+	// AIModel is the model of Mon's AI gateway that writes commit
+	// messages, "" for Mayoi's choice.
+	AIModel string `json:"aiModel,omitempty"`
 	// SyncIgnored is what settings sync leaves on this machine: keys of
 	// the preferences, "settings.json" for all of them, and
 	// "keybindings.json" for the keyboard shortcuts.
@@ -315,9 +323,10 @@ type Tab struct {
 	// the changes of every file, against that. Layout is the diff's, as
 	// the settings' DiffLayout; Split is what an older version kept for
 	// "split". "commit:" and a hash is the changes of that commit.
-	Diff   string `json:"diff,omitempty"`
-	Layout string `json:"layout,omitempty"`
-	Split  bool   `json:"split,omitempty"`
+	Diff     string `json:"diff,omitempty"`
+	RepoRoot string `json:"repoRoot,omitempty"` // relative to the workspace; empty is its root repository
+	Layout   string `json:"layout,omitempty"`
+	Split    bool   `json:"split,omitempty"`
 	// Full is set for a diff showing every unchanged line.
 	Full bool `json:"full,omitempty"`
 	// Sel is the selection of a file's editor, its caret at Sel[1], and
@@ -354,6 +363,8 @@ func Load(path string) *Settings {
 	if err == nil {
 		json.Unmarshal(data, &s.Prefs)
 		json.Unmarshal(data, &old)
+		// The file as read is no edit of the person's to take again.
+		s.written = data
 	}
 	moved := false
 	if state, serr := os.ReadFile(s.statePath); serr == nil {
@@ -615,7 +626,9 @@ func (s *Settings) Changed() {
 		s.timer.Stop()
 	}
 	prefs, state := s.Encode()
-	s.timer = time.AfterFunc(400*time.Millisecond, func() { s.write(prefs, state) })
+	s.seq++
+	seq := s.seq
+	s.timer = time.AfterFunc(400*time.Millisecond, func() { s.write(seq, prefs, state) })
 }
 
 // Flush saves the settings now, as the app quits.
@@ -628,8 +641,10 @@ func (s *Settings) Flush() {
 		s.timer.Stop()
 	}
 	prefs, state := s.Encode()
+	s.seq++
+	seq := s.seq
 	s.mu.Unlock()
-	s.write(prefs, state)
+	s.write(seq, prefs, state)
 }
 
 // Encode is the preferences as the settings' file keeps them, and the
@@ -641,32 +656,59 @@ func (s *Settings) Encode() (prefs, state []byte) {
 }
 
 // write writes the files that changed since the settings last wrote
-// them: most changes are of the state only.
-func (s *Settings) write(prefs, state []byte) {
+// them, as of seq: most changes are of the state only. One of an older
+// encoding than the last written, as a timer that fired as Flush ran,
+// writes nothing.
+func (s *Settings) write(seq uint64, prefs, state []byte) {
+	s.wmu.Lock()
+	if seq < s.wrote {
+		s.wmu.Unlock()
+		return
+	}
+	s.wrote = seq
 	s.mu.Lock()
 	samePrefs, sameState := bytes.Equal(prefs, s.written), bytes.Equal(state, s.stateWritten)
 	s.written, s.stateWritten = prefs, state
+	fn := s.prefsWritten
 	s.mu.Unlock()
 	if !samePrefs {
-		writeFile(s.path, prefs)
-		s.mu.Lock()
-		fn := s.prefsWritten
-		s.mu.Unlock()
-		if fn != nil {
-			fn()
-		}
+		WriteFile(s.path, prefs)
 	}
 	if !sameState && s.statePath != "" {
-		writeFile(s.statePath, state)
+		WriteFile(s.statePath, state)
+	}
+	s.wmu.Unlock()
+	// Outside wmu, as fn may wait for the main thread, which may wait to
+	// write.
+	if !samePrefs && fn != nil {
+		fn()
 	}
 }
 
-func writeFile(path string, data []byte) {
-	os.MkdirAll(filepath.Dir(path), 0o755)
-	tmp := path + ".tmp"
-	if os.WriteFile(tmp, data, 0o644) == nil {
-		os.Rename(tmp, path)
+// WriteFile writes data to path through a file of its own beside it, so
+// that a watcher never reads half of it, nor two writers' halves.
+func WriteFile(path string, data []byte) error {
+	dir := filepath.Dir(path)
+	os.MkdirAll(dir, 0o755)
+	f, err := os.CreateTemp(dir, filepath.Base(path)+".*.tmp")
+	if err != nil {
+		return err
 	}
+	tmp := f.Name()
+	_, err = f.Write(data)
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err == nil {
+		err = os.Chmod(tmp, 0o644)
+	}
+	if err == nil {
+		err = os.Rename(tmp, path)
+	}
+	if err != nil {
+		os.Remove(tmp)
+	}
+	return err
 }
 
 // AddRecent puts dir first of the recent folders, of which it keeps ten,
@@ -774,22 +816,47 @@ func (s *Settings) Watch(changed func(Prefs)) (stop func(), err error) {
 // edited reads the preferences of the file, unless the settings wrote it
 // as it is or it does not parse.
 func (s *Settings) edited() (Prefs, bool) {
+	_, p, ok := s.read()
+	return p, ok
+}
+
+// Edited returns the preferences of the file as a person saved it, which
+// Watch may not have told of yet, and takes the file as read: Watch then
+// tells of it only as it changes again. ok is false for a file the
+// settings wrote as it is, or that does not parse.
+func (s *Settings) Edited() (p Prefs, ok bool) {
+	if s.path == "" {
+		return Prefs{}, false
+	}
+	// Not as a write lands, whose file this would take for the person's.
+	s.wmu.Lock()
+	defer s.wmu.Unlock()
+	data, p, ok := s.read()
+	if ok {
+		s.mu.Lock()
+		s.written = data
+		s.mu.Unlock()
+	}
+	return p, ok
+}
+
+func (s *Settings) read() ([]byte, Prefs, bool) {
 	data, err := os.ReadFile(s.path)
 	if err != nil {
-		return Prefs{}, false
+		return nil, Prefs{}, false
 	}
 	s.mu.Lock()
 	ours := bytes.Equal(data, s.written)
 	s.mu.Unlock()
 	if ours {
-		return Prefs{}, false
+		return nil, Prefs{}, false
 	}
 	f := Default()
 	if json.Unmarshal(data, &f.Prefs) != nil {
-		return Prefs{}, false
+		return nil, Prefs{}, false
 	}
 	f.normalize()
-	return f.Prefs, true
+	return data, f.Prefs, true
 }
 
 // OnPrefsWritten calls fn, on a goroutine of its own, each time the

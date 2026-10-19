@@ -71,6 +71,7 @@ func (a *app) transferStatus(c *ui.Context, text func(string) ui.Element) {
 	if b.Hovered() {
 		b.Background(p.hover)
 	}
+	b.Transition(hoverFade)
 	b.Children(func() {
 		ui.Spinner(c).Size(11, 11)
 		text(label)

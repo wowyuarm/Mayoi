@@ -202,15 +202,19 @@ fi
 exec sh -c "$last"
 `
 
+// needsShell skips a test whose fake ssh is a shell script where there is
+// no shell to run it, on Windows.
+func needsShell(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("the fake ssh is a shell script")
+	}
+}
+
 // TestFakeHost runs the commands with this machine's shell and tools, by
 // an ssh that runs them here: BSD's stat on macOS, GNU's on Linux.
 func TestFakeHost(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		// The fake ssh is a shell script; Windows runs a real ssh to real
-		// hosts only, by MAYOI_SSH_TEST_HOST.
-		t.Skip("the fake ssh is a shell script, which Windows cannot run")
-	}
-
+	needsShell(t)
 	bin := t.TempDir()
 	if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSH), 0o755); err != nil {
 		t.Fatal(err)

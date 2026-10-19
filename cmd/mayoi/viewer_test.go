@@ -181,6 +181,7 @@ func TestImageTabsMoveAndRestore(t *testing.T) {
 
 	// The next start opens it again.
 	b := newApp(&fakeHost{folder: hs.root}, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	tt := ui.NewTester(b.view, 1200, 760)
 	deadline := time.Now().Add(5 * time.Second)
 	for (b.activeViewer() == nil || b.activeViewer().src == nil) && time.Now().Before(deadline) {
@@ -257,6 +258,7 @@ func TestSVGPreview(t *testing.T) {
 	// The next start shows it as it was.
 	a.saveAll()
 	b := newApp(&fakeHost{folder: hs.root}, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	bt := ui.NewTester(b.view, 1200, 760)
 	step(bt)
 	step(bt)

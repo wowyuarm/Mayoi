@@ -132,43 +132,45 @@ func TestStateMovesToItsFile(t *testing.T) {
 // A window that closes keeps its folder's session while the folder is a
 // recent one, which the next window of the folder takes.
 func TestSessions(t *testing.T) {
+	// Folders as the system spells them, with backslashes on Windows.
+	x, y := filepath.FromSlash("/tmp/x"), filepath.FromSlash("/tmp/y")
 	s := Default()
-	s.AddRecent("/tmp/x")
+	s.AddRecent(x)
 	w := s.NewWindow()
-	w.Folder = "/tmp/x/"
-	w.Columns = []Column{{Tabs: []Tab{{File: "/tmp/x/a.go", Sel: [2]int{3, 5}}}}}
+	w.Folder = x + string(filepath.Separator)
+	w.Columns = []Column{{Tabs: []Tab{{File: filepath.Join(x, "a.go"), Sel: [2]int{3, 5}}}}}
 	w.Expanded = []string{"internal"}
 	s.Forget(w)
-	if len(s.Windows) != 0 || s.Sessions[remote.Clean("/tmp/x")] == nil {
+	if len(s.Windows) != 0 || s.Sessions[x] == nil {
 		t.Fatalf("windows %d, sessions %v", len(s.Windows), s.Sessions)
 	}
-	ses := s.TakeSession("/tmp/x")
+	ses := s.TakeSession(x)
 	if ses == nil || ses.Columns[0].Tabs[0].Sel != [2]int{3, 5} || ses.Expanded[0] != "internal" || len(s.Sessions) != 0 {
 		t.Fatalf("taken %+v, left %v", ses, s.Sessions)
 	}
 	// Not a recent folder, or a window with nothing to keep.
 	other := s.NewWindow()
-	other.Folder = "/tmp/y"
+	other.Folder = y
 	other.Columns = w.Columns
 	s.Forget(other)
-	if s.Sessions["/tmp/y"] != nil {
+	if s.Sessions[y] != nil {
 		t.Error("kept the session of a folder not recent")
 	}
 	s.Stash(w)
-	empty := &Window{Folder: "/tmp/x", Session: Session{Columns: []Column{{}}}}
+	empty := &Window{Folder: x, Session: Session{Columns: []Column{{}}}}
 	s.Stash(empty)
-	if s.Sessions["/tmp/x"] != nil {
+	if s.Sessions[x] != nil {
 		t.Error("an empty window kept its folder's session")
 	}
 	// Folders no longer recent, and clearing them, let theirs go.
 	s.Stash(w)
 	for i := range 10 {
-		s.AddRecent(filepath.Join("/tmp/z", string(rune('a'+i))))
+		s.AddRecent(filepath.Join(filepath.FromSlash("/tmp/z"), string(rune('a'+i))))
 	}
 	if len(s.Sessions) != 0 {
 		t.Errorf("kept %v", s.Sessions)
 	}
-	s.AddRecent("/tmp/x")
+	s.AddRecent(x)
 	s.Stash(w)
 	s.ClearRecent()
 	if s.Sessions != nil {
@@ -438,5 +440,45 @@ func TestOnPrefsWritten(t *testing.T) {
 	case <-written:
 		t.Error("a change of the state told of the preferences")
 	default:
+	}
+}
+
+// TestAnOlderWriteNeverLandsLast: a write of an older encoding, as a
+// timer that fired as Flush ran, leaves the newer one's file.
+func TestAnOlderWriteNeverLandsLast(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	s := Load(path)
+	s.FontSize = 14
+	old, oldState := s.Encode()
+	s.FontSize = 15
+	s.Flush()
+	s.write(0, old, oldState)
+	if p, ok := s.edited(); ok {
+		t.Fatalf("the file is not the settings' own: %+v", p)
+	}
+	q := Load(path)
+	if q.FontSize != 15 {
+		t.Errorf("font size %v, want 15", q.FontSize)
+	}
+	if tmps, _ := filepath.Glob(path + ".*.tmp"); len(tmps) != 0 {
+		t.Errorf("left %v", tmps)
+	}
+}
+
+// TestEdited: a save of the file is the person's once, until it changes
+// again.
+func TestEdited(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	s := Load(path)
+	s.Flush()
+	if _, ok := s.Edited(); ok {
+		t.Fatal("its own write is an edit")
+	}
+	os.WriteFile(path, []byte(`{"fontSize": 18}`), 0o644)
+	if p, ok := s.Edited(); !ok || p.FontSize != 18 {
+		t.Fatalf("edit %v, %v", p.FontSize, ok)
+	}
+	if _, ok := s.Edited(); ok {
+		t.Error("an edit taken is an edit again")
 	}
 }

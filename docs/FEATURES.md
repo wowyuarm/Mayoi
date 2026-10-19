@@ -50,6 +50,7 @@ Closing a changed file saves it without asking. Untitled files wait for ⌘S. Tu
 - Enter keeps the indent, and indents one more level after an opening bracket.
 - Brackets and quotes close themselves, wrap a selection, and are stepped over when typed again.
 - Commands comment lines, move, copy and delete lines, and insert a line above or below.
+- Cut (⌘X) cuts the selection, or the entire line at the caret when nothing is selected. Undo restores it in one step.
 - Home goes to the first non-blank character of the line.
 - The status bar shows the file's indentation and line endings, and you can change either from there.
 
@@ -58,19 +59,45 @@ Closing a changed file saves it without asking. Untitled files wait for ⌘S. Tu
 **View → Vim Mode** edits with vim's keys. Each tab has its own mode, shown in the status bar, and starts in normal
 mode, where the caret is a block.
 
-- **Motions:** `h j k l`, `w b e ge` and `W B E gE`, `0 ^ $ g_`, `gg G`, `f F t T` with `;` and `,`, `%`, `{ }`, Enter
-  and `-`. Arrows, Home and End move too. A count goes before any of them.
+- **Motions:** `h j k l`, `w b e ge` and `W B E gE`, `0 ^ $ g_`, `gg G`, `H M L`, `f F t T` with `;` and `,`, `%`,
+  `{ }`, `[( [{ ]) ]}`, Enter and `-`. Arrows, Home and End move too. A count goes before any of them.
 - **Operators:** `d c y`, `> <`, `gc` to comment, and `g~ gu gU` for case. They take a motion or a text object (`iw
-  aw iW aW`, `i" a"` and the other quotes, `i( a(`, `i[`, `i{`, `i<`), or apply to lines when typed twice, as `dd`.
-- **Commands:** `x X D C Y s S r J ~ p P o O`, `i a I A` to insert, `u` and ⌃R to undo and redo, `.` to repeat the
-  last change, ⌃D ⌃U ⌃F ⌃B to scroll by half a view or a view, and ⌃E ⌃Y by a line.
-- **Visual mode:** `v` selects characters and `V` lines. A selection made with the mouse is one too. Motions extend it,
-  `o` swaps its ends, and operators, `r`, `J`, `~ u U` and `p` act on it.
+  aw iW aW`, `i" a"` and the other quotes, `i( a(`, `i[`, `i{`, `i<`, `it at` for tags, `ip ap`), or apply to lines
+  when typed twice,
+  as `dd`.
+- **Commands:** `x X D C Y s S r J gJ ~ p P gp gP o O`, `i a I A gi` to insert, as many times as a count before them,
+  as `3ix`, `u` and ⌃R to undo and redo, `.` to repeat
+  the last change, ⌃A and ⌃X to add to a number and take from it, ⌃D ⌃U ⌃F ⌃B to scroll by half a view or a view, ⌃E
+  ⌃Y by a line, and `zz zt zb` to put the cursor's line in the middle, at the top or at the bottom.
+- **Registers:** `"a` to `"z` before a command yank and delete into a register of their own, and paste from it; `"A`
+  appends to it. `"0` holds the last yank, `"1` to `"9` the last deletes of lines, `"-` the last small delete, `"_`
+  keeps nothing, `".` the text inserted last, `":` the last command and `"/` the last search. `:reg` shows them.
+- **Macros:** `qa` records the keys typed into register `a`, with the status bar saying so, until `q`. `@a` plays them,
+  `3@a` three times, `@@` the register played last, and `@:` the last command. A macro stops where a motion fails, as
+  in vim.
+- **Marks and jumps:** `ma` sets a mark, `'a` goes to its line and `` `a `` to it, and the marks move with the text as
+  it changes. `''` goes back to where the cursor jumped from. Jumps, as `G`, `%`, a search or a mark, are kept: ⌃O goes
+  back through them and ⌃I (Tab) forward again. `:marks` lists the marks.
+- **Visual mode:** `v` selects characters and `V` lines, and `gv` the last selection again. A selection made with the
+  mouse is one too. Motions extend it, `o` swaps its ends, and operators, `r`, `J`, `~ u U` and `p` act on it.
+- **Search:** `/` and `?` open a line over the bottom of the editor. The cursor goes to the first match as you type,
+  every match is highlighted, and the line counts them. Return searches, Esc goes back, and ↑ ↓ go through the
+  searches before. `n N` search again, `* #` search for the word under the cursor, and a search is a motion too, as in
+  `d/end`. Patterns are vim's, with `\( \) \| \+ \< \>`, or `\v` for the rest; case is ignored unless the pattern has a
+  capital, or `\C`. The matches show until Esc in normal mode, or `:noh`.
+- **Commands after `:`:** `:w`, `:q`, `:wq`, `:x`, `:wa`, `:qa`, a line number as `:42`, `:s/old/new/g` with `%`, a
+  range as `2,10` or that of the selection, `& \1 \n` in the replacement, `:d`, `:y`, `:j`, `:> :<`, `:sort` (with
+  `!`, `i`, `n` and `u`), `:m` and `:t` to move and copy lines, `:pu` to put a register, `:normal` to type keys on
+  every line of a range, `:g/pattern/command` and `:v` for the lines that match or do not, `&` and `g&` to repeat the
+  last `:s`, `:noh`, `:e file`, `:vs` and `:bn :bp`. A mark's line, as `'a`, is an address too. `ZZ` saves and closes,
+  and `ZQ` closes. `:g`, `:normal` over lines and `:%s` undo as one step.
 
 Esc, ⌃[ or ⌃C leaves insert mode. A change and the text typed after it undo as one step. Yanking, deleting and pasting
-use the system clipboard, and a yank of whole lines pastes as lines. In normal mode, ⌃R redoes rather than opening
+use the system clipboard unless a register is named, and a yank of whole lines pastes as lines. Where Control is not
+the key of shortcuts, ⌃W and ⌃U delete the word and the line before the caret in insert mode. In normal mode, ⌃R redoes rather than opening
 recent folders. ⌘ shortcuts work as usual in every mode. Punctuation keys are read as a US keyboard types them. On
-Windows and Linux, ⌃F, ⌃B and ⌃R stay Find, Toggle Sidebar and Open Recent in normal mode, unless `vimCtrlKeys` is on.
+Windows and Linux, ⌃F, ⌃B, ⌃R and ⌃O stay Find, Toggle Sidebar, Open Recent and Open in normal mode, and ⌃A and ⌃X
+Select All and Cut, unless `vimCtrlKeys` is on.
 
 ### Undo
 
@@ -86,6 +113,8 @@ reloading from disk can all be undone. Undoing back to the saved text marks the 
   elsewhere.
 - Sticky scroll pins the lines that open the blocks in view to the top, and breadcrumbs name the blocks around the
   caret. Click either to jump there.
+- A folder in the breadcrumbs, clicked, shows its files in a tree below it, apart from the Explorer's: open its
+  folders, and choose a file to show it in that column, with the mouse or the arrows and Enter.
 
 ### Git
 
@@ -115,6 +144,11 @@ tree, with a count of them. Files are grouped as merge changes, staged changes, 
 - Write a message and press ⌘↵ or the commit button, which says what it will do: **Commit**, **Commit All** when nothing
   is staged (Mayoi asks before staging everything), or **Amend Commit**. Changed files save first. Past 50 characters
   the summary line shows its length, in a warning color past 72.
+- Signed in to your [Mon](https://mon.sorrycc.dev) account, the ✨ button at the corner of the message box has AI write
+  the message from the staged changes, or from every change when nothing is staged, in the style of the branch's last
+  commits. The message streams into the box; click the button again to stop. Text already in the box goes along as
+  notes to follow. **Git: Write Commit Message with AI** in the command palette does the same. It uses Mon's AI gateway
+  and your account's daily limit; the `aiModel` setting picks another of its models.
 - The arrow beside the commit button has **Commit & Push**, **Amend Last Commit** (which fills in the last message) and
   **Undo Last Commit**, which takes the commit back but keeps its changes staged and its message in the box.
 - The **⋯** menu by the title has the commit commands, stage, unstage and discard all, fetch, pull and push, Refresh,
@@ -124,6 +158,30 @@ tree, with a count of them. Files are grouped as merge changes, staged changes, 
   button, and when a push or a pull is done.
 - A clean work tree says so, and offers to push or pull when the branch is ahead of its upstream or behind it.
 - A folder outside a repository gets an **Initialize Repository** button.
+
+### Submodules and repository selection
+
+Initialized submodules, including nested submodules, appear as separate,
+collapsible sections in Source Control. Each section shows its branch or detached
+HEAD, staged changes and working changes. Clean repositories use only a header
+row; repositories with changes show their own commit message and button.
+Staging, unstaging, discarding and committing apply to that section's repository. A submodule commit
+updates the parent's submodule entry; stage and commit that reference separately.
+Uninitialized submodules remain entries in the parent until initialized externally.
+
+With multiple repositories, the lower part of Source Control shows the selected
+repository's commit graph. The repository button in its header and in the status
+bar opens a searchable picker with repository names and paths. **Auto** follows
+the active file or diff; choosing a repository keeps its history selected as you
+open other files. Each repository keeps its history selection, scrolling and
+loaded page count. Diff tabs stay bound to the repository they were opened for.
+The status bar picker replaces its folder item, so the root is not listed twice.
+Destructive confirmation dialogs name their target repository, including in Auto
+mode. Saved diff repository paths are relative to the workspace.
+Discovery skips repositories without `.gitmodules` and refreshes on Git metadata
+or `.gitmodules` changes, rather than enumerating indexes on a timer.
+Opening a worktree containing submodules uses the same behavior; other worktrees
+are opened separately as before.
 
 ### Commits
 
@@ -528,7 +586,7 @@ the words selected, or the caret's.
 
 ## Settings sync
 
-**Mayoi → Sign In to Sync Settings…** (**Help** on Linux and Windows, and the command palette's **Account** commands)
+**Mayoi → Sign In…** (**Help** on Linux and Windows, and the command palette's **Account** commands)
 signs in to your [Mon](https://mon.sorrycc.dev) account, with GitHub or Google. Mayoi shows a short code and opens the
 browser to approve it. Your preferences and `keybindings.json` then sync between your machines: a change saves to the
 account a couple of seconds after you make it, and Mayoi gets the account's changes as it starts and as it comes to the

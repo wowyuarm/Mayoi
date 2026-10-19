@@ -1,7 +1,10 @@
 package main
 
 import (
+	"mayoi/locales"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -57,26 +60,66 @@ type vimState struct {
 	insAt, insLen int
 	// replay is set while . makes the last change again.
 	replay bool
+	// flash is the text yanked last, which shows for a moment from
+	// flashAt: runes from up to to.
+	flash   [2]int
+	flashAt time.Time
+	// lastInsert is where insert mode was left last, which gi inserts at.
+	lastInsert int
+	// indented is set while an insert goes on in a line that o, O, S or
+	// cc gave the indent of the line it opened at, which Esc takes back
+	// when nothing else was typed.
+	indented bool
 	// viewH is how high the editor was in the last frame, which ⌃D and
 	// ⌃F scroll by.
 	viewH float32
+	// lastVisual is the selection of visual mode last left, which gv
+	// selects again and '< and '> are the lines of.
+	lastVisual vimVisualArea
+	// reg is the register of the command running, 0 for the unnamed one.
+	reg rune
+	// insRepeat is how many times more the text of the insert going on is
+	// typed as it ends, as 3i does; on lines of their own after o and O.
+	insRepeat int
+	insLines  bool
+	// jumps are where the cursor jumped from, as G and searches do, which
+	// ⌃O goes back through and ⌃I forward: jumpAt is the one gone back to,
+	// len(jumps) when none is.
+	jumps  []int
+	jumpAt int
 }
 
-// label is what the status bar shows of the state.
-func (v *vimState) label() string {
-	s := "-- " + v.mode.String() + " --"
-	if len(v.keys) > 0 {
-		var b strings.Builder
-		for _, r := range v.keys {
-			if r < ' ' {
-				b.WriteString("^" + string(r+'@'))
-			} else {
-				b.WriteRune(r)
-			}
-		}
-		s += "  " + b.String()
+// vimVisualArea is a selection of visual mode: its ends and its mode.
+type vimVisualArea struct {
+	anchor, cursor int
+	mode           vimMode
+}
+
+// vimFlashFor is how long the text yanked shows.
+const vimFlashFor = 280 * time.Millisecond
+
+// operatorPending reports whether an operator typed waits for its motion,
+// as the cursor shows: half a block.
+func (v *vimState) operatorPending() bool {
+	if len(v.keys) == 0 || v.mode != vimNormal {
+		return false
 	}
-	return s
+	c, st := parseVim(v.keys, v.mode)
+	return st == vimMore && c.op != ""
+}
+
+// pending is the keys of a command typed so far, as the status bar shows
+// them after the mode: a control key as ^ and its letter.
+func (v *vimState) pending() string {
+	var b strings.Builder
+	for _, r := range v.keys {
+		if r < ' ' {
+			b.WriteString("^" + string(r+'@'))
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // vimRegister is the text vim mode yanked last, and whether it is lines.
@@ -94,8 +137,16 @@ type vimCmd struct {
 	// key is the motion, the text object or the command, "line" for an
 	// operator typed twice, as dd.
 	key string
-	// arg is the character of f, F, t, T and r.
+	// arg is the character of f, F, t, T and r, the mark of m, ' and `,
+	// and the register of q and @.
 	arg rune
+	// reg is the register typed before the command, as "a; 0 for none.
+	reg rune
+	// visual is the mode of a change made in visual mode, which . makes
+	// again over as many lines below the cursor, down to column col, or
+	// as many runes after it on one line: span.
+	visual    vimMode
+	span, col int
 }
 
 const (
@@ -107,7 +158,15 @@ const (
 var vimOps = map[string]bool{"d": true, "c": true, "y": true, ">": true, "<": true, "gc": true, "g~": true, "gu": true, "gU": true}
 
 // vimActions are the keys of normal mode that do something themselves.
-const vimActions = "xXDCYpPoOJsS~u.iaIAvV\x04\x15\x06\x02\x05\x19\x12\x7f"
+const vimActions = "xXDCYpPoOJsS~u.iaIAvV:&\t\x0f\x04\x15\x06\x02\x05\x19\x12\x7f\x01\x18"
+
+// vimPairActions are the commands of normal mode of two keys, after a g,
+// a z or a Z.
+var vimPairActions = map[string]bool{
+	"gv": true, "gi": true, "gJ": true, "gp": true, "gP": true, "g&": true,
+	"zz": true, "zt": true, "zb": true, "z.": true, "z\r": true, "z-": true,
+	"ZZ": true, "ZQ": true,
+}
 
 // vimVisualActions are the keys of visual mode that do something to the
 // selection, or with it.
@@ -115,6 +174,7 @@ var vimVisualActions = map[string]bool{
 	"d": true, "x": true, "X": true, "D": true, "y": true, "Y": true, "c": true, "s": true, "C": true, "S": true,
 	"R": true, ">": true, "<": true, "~": true, "u": true, "U": true, "J": true, "p": true, "P": true,
 	"gc": true, "g~": true, "gu": true, "gU": true, "o": true, "v": true, "V": true, "\x1b": true,
+	":": true, "zz": true, "zt": true, "zb": true, "z.": true, "z\r": true, "z-": true,
 }
 
 // parseVim reads the keys typed in a mode as a command: whole, begun, or
@@ -131,6 +191,20 @@ func parseVim(keys []rune, mode vimMode) (vimCmd, int) {
 		return n
 	}
 	n1 := count()
+	if i < len(keys) && keys[i] == '"' {
+		// A register, as "a, then perhaps a count.
+		if i+1 == len(keys) {
+			return c, vimMore
+		}
+		if !vimRegisterName(keys[i+1]) {
+			return c, vimBad
+		}
+		c.reg = keys[i+1]
+		i += 2
+		if n := count(); n > 0 {
+			n1 = max(n1, 1) * n
+		}
+	}
 	c.count = n1
 	if i == len(keys) {
 		return c, vimMore
@@ -138,7 +212,7 @@ func parseVim(keys []rune, mode vimMode) (vimCmd, int) {
 	k := keys[i]
 	i++
 	name := string(k)
-	if k == 'g' {
+	if k == 'g' || k == 'z' || k == 'Z' {
 		if i == len(keys) {
 			return c, vimMore
 		}
@@ -159,6 +233,8 @@ func parseVim(keys []rune, mode vimMode) (vimCmd, int) {
 			}
 			c.key, c.arg = name, keys[i]
 			return c, vimDone
+		case k == 'z' || k == 'Z':
+			return c, vimBad
 		}
 		return parseMotion(c, keys, i, k, name, true)
 	}
@@ -185,14 +261,30 @@ func parseVim(keys []rune, mode vimMode) (vimCmd, int) {
 		if i == len(keys) {
 			return c, vimMore
 		}
-		if keys[i] < ' ' {
+		if keys[i] < ' ' && keys[i] != '\r' {
 			return c, vimBad
 		}
 		c.key, c.arg = name, keys[i]
 		return c, vimDone
-	case len(name) == 1 && strings.ContainsRune(vimActions, k):
+	case name == "m", name == "q", name == "@":
+		// A mark set, a register recorded into, or one played.
+		if i == len(keys) {
+			return c, vimMore
+		}
+		r := keys[i]
+		switch {
+		case name == "m" && !vimMarkName(r, true),
+			name == "q" && !(r < utf8.RuneSelf && (unicode.IsLetter(r) || unicode.IsDigit(r) || r == '"')),
+			name == "@" && !(vimRegisterName(r) || r == '@'):
+			return c, vimBad
+		}
+		c.key, c.arg = name, r
+		return c, vimDone
+	case len(name) == 1 && strings.ContainsRune(vimActions, k), vimPairActions[name]:
 		c.key = name
 		return c, vimDone
+	case k == 'z' || k == 'Z':
+		return c, vimBad
 	}
 	return parseMotion(c, keys, i, k, name, false)
 }
@@ -202,7 +294,7 @@ func parseVim(keys []rune, mode vimMode) (vimCmd, int) {
 func parseMotion(c vimCmd, keys []rune, i int, k rune, name string, objects bool) (vimCmd, int) {
 	switch k {
 	case 'h', 'j', 'k', 'l', 'w', 'W', 'b', 'B', 'e', 'E', '0', '^', '$', 'G', '%', '{', '}', ';', ',',
-		'\r', '-', '+', '_', ' ', '\b':
+		'\r', '-', '+', '_', ' ', '\b', 'H', 'M', 'L', 'n', 'N', '*', '#', '/', '?':
 		c.key = string(k)
 		return c, vimDone
 	case 'g':
@@ -218,15 +310,25 @@ func parseMotion(c vimCmd, keys []rune, i int, k rune, name string, objects bool
 			c.key = name
 			return c, vimDone
 		}
-	case 'f', 'F', 't', 'T':
+	case 'f', 'F', 't', 'T', '\'', '`':
 		if i == len(keys) {
 			return c, vimMore
 		}
-		if keys[i] < ' ' {
+		if keys[i] < ' ' || (k == '\'' || k == '`') && !vimMarkName(keys[i], false) {
 			return c, vimBad
 		}
 		c.key, c.arg = string(k), keys[i]
 		return c, vimDone
+	case '[', ']':
+		// To the bracket that holds the cursor: [( [{ ]) ]}.
+		if i == len(keys) {
+			return c, vimMore
+		}
+		switch name := string(k) + string(keys[i]); name {
+		case "[(", "[{", "])", "]}":
+			c.key = name
+			return c, vimDone
+		}
 	case 'i', 'a':
 		if !objects {
 			break
@@ -234,7 +336,7 @@ func parseMotion(c vimCmd, keys []rune, i int, k rune, name string, objects bool
 		if i == len(keys) {
 			return c, vimMore
 		}
-		if strings.ContainsRune("wW\"'`()b[]{}B<>", keys[i]) {
+		if strings.ContainsRune("wWpt\"'`()b[]{}B<>", keys[i]) {
 			c.key = string(k) + string(keys[i])
 			return c, vimDone
 		}
@@ -260,6 +362,12 @@ func (c vimCmd) next(mode vimMode) vimMode {
 			return vimInsert
 		case "o":
 			return mode
+		case "ip", "ap":
+			return vimVisualLine
+		case ":":
+			return vimNormal
+		case "zz", "zt", "zb", "z.", "z\r", "z-":
+			return mode
 		}
 		if vimVisualActions[c.key] || c.key == "r" {
 			return vimNormal
@@ -279,6 +387,8 @@ func (c vimCmd) next(mode vimMode) vimMode {
 		return vimVisual
 	case "V":
 		return vimVisualLine
+	case "gi":
+		return vimInsert
 	}
 	return vimNormal
 }
@@ -290,7 +400,8 @@ func (c vimCmd) changes() bool {
 		return c.op != "y"
 	}
 	switch c.key {
-	case "x", "\x7f", "X", "D", "C", "s", "S", "r", "J", "p", "P", "~", "o", "O", "i", "a", "I", "A":
+	case "x", "\x7f", "X", "D", "C", "s", "S", "r", "J", "gJ", "p", "P", "gp", "gP", "~", "o", "O", "i", "a", "I", "A",
+		"gi", "&", "g&", "\x01", "\x18":
 		return true
 	}
 	return false
@@ -302,6 +413,11 @@ func (c vimCmd) changes() bool {
 // and Open Recent.
 func vimRune(ev ui.InputEvent, allCtrl bool) (rune, bool) {
 	m, k := ev.Mods, ev.Key
+	if k == ui.KeyUnknown {
+		// A layout of another script, as Cyrillic: the key where a US
+		// keyboard has it, as vim's commands are learnt.
+		k = ev.PhysicalKey
+	}
 	if m&(ui.Alt|ui.Super) != 0 {
 		return 0, false
 	}
@@ -309,7 +425,7 @@ func vimRune(ev ui.InputEvent, allCtrl bool) (rune, bool) {
 		// Only the keys of vim's commands: the others stay the
 		// platform's, where Control is the key of shortcuts.
 		switch k {
-		case ui.KeyF, ui.KeyB, ui.KeyR:
+		case ui.KeyF, ui.KeyB, ui.KeyR, ui.KeyA, ui.KeyX, ui.KeyO:
 			if !allCtrl {
 				return 0, false
 			}
@@ -400,15 +516,7 @@ func (a *app) vimKey(d *editor, ev ui.InputEvent) bool {
 		return false
 	}
 	if v.mode == vimInsert {
-		// ⌃C as well where it is not Copy.
-		esc := ev.Mods == 0 && ev.Key == ui.KeyEscape ||
-			ev.Mods == ui.Ctrl && (ev.Key == ui.KeyBracketLeft || ev.Key == ui.KeyC && ui.Cmd != ui.Ctrl)
-		if !esc {
-			return false
-		}
-		v.mode = vimNormal
-		a.queueEdit(d, a.vimEndInsert)
-		return true
+		return a.vimInsertKey(d, ev)
 	}
 	r, ok := vimRune(ev, a.vimCtrl())
 	if !ok {
@@ -426,30 +534,115 @@ func (a *app) vimKey(d *editor, ev ui.InputEvent) bool {
 			}
 		})
 	}
+	a.vimTake(d, r)
+	return true
+}
+
+// vimInsertKey takes the keys of insert mode that are vim's rather than
+// typing: Esc, and where Control is not the key of shortcuts, ⌃W and ⌃U.
+func (a *app) vimInsertKey(d *editor, ev ui.InputEvent) bool {
+	ctrl := ev.Mods == ui.Ctrl && ui.Cmd != ui.Ctrl
+	switch {
+	case ev.Mods == 0 && ev.Key == ui.KeyEscape, ev.Mods == ui.Ctrl && ev.Key == ui.KeyBracketLeft,
+		ctrl && ev.Key == ui.KeyC:
+		// ⌃C as well where it is not Copy.
+		a.vimRecordInsert(d)
+		d.vim.mode = vimNormal
+		a.queueEdit(d, a.vimEndInsert)
+		return true
+	case ctrl && (ev.Key == ui.KeyW || ev.Key == ui.KeyU):
+		word := ev.Key == ui.KeyW
+		a.queueEdit(d, func(d *editor) { vimDeleteBack(d, word) })
+		return true
+	}
+	return false
+}
+
+// vimDeleteBack deletes the word before the caret, as ⌃W does in insert
+// mode, or the line before it back to its indent, as ⌃U does; at the
+// start of a line, the line break.
+func vimDeleteBack(d *editor, word bool) {
+	snap := d.buf.Snapshot()
+	caret := min(d.sel[0], d.sel[1], snap.Len())
+	if d.sel[0] != d.sel[1] || caret == 0 {
+		return
+	}
+	t := newVText(snap)
+	ls, _ := snap.LineRange(snap.LineAt(caret))
+	from := caret - 1
+	switch {
+	case caret == ls:
+	case word:
+		from = caret
+		for from > ls && vimSpace(t.at(from-1)) {
+			from--
+		}
+		if from > ls {
+			c := vimClass(t.at(from-1), false)
+			for from > ls && vimClass(t.at(from-1), false) == c {
+				from--
+			}
+		}
+	default:
+		from = firstNonBlank(snap, snap.LineAt(caret))
+		if from >= caret {
+			from = ls
+		}
+	}
+	d.edit([2]int{from, from}, textEdit{from, caret, ""})
+}
+
+// vimTake takes a key of normal or visual mode, as vim names it.
+func (a *app) vimTake(d *editor, r rune) {
+	v := &d.vim
+	if r == 'q' && a.vimRec != 0 && len(v.keys) == 0 {
+		a.vimStopRecording()
+		return
+	}
+	a.vimRecord(r)
+	if r == '\x1b' && v.mode == vimNormal && len(v.keys) == 0 && a.vimSearch.show {
+		// Esc with nothing typed stops showing the matches of the search.
+		a.vimSearch.show = false
+		a.invalidate()
+		return
+	}
 	v.keys = append(v.keys, r)
 	cmd, st := parseVim(v.keys, v.mode)
 	switch st {
 	case vimMore:
-		return true
+		return
 	case vimBad:
 		v.keys = v.keys[:0]
-		return true
+		a.vimFailed = true
+		return
 	}
 	v.keys = v.keys[:0]
-	mode := v.mode
-	next := cmd.next(mode)
-	v.mode = next
-	a.queueEdit(d, func(d *editor) {
-		if mode.visual() {
-			a.vimVisualRun(d, cmd, mode, next)
-		} else {
-			a.vimNormalRun(d, cmd, next)
+	switch cmd.key {
+	case "q":
+		a.vimRec, a.vimRecKeys = cmd.arg, nil
+		a.invalidate()
+		return
+	case "@":
+		a.vimPlay(d, cmd)
+		return
+	case "/", "?":
+		a.vimOpenLine(d, rune(cmd.key[0]), cmd, "")
+		return
+	case ":":
+		text := ""
+		if v.mode.visual() {
+			// Over the lines selected, as vim writes them.
+			v.lastVisual = vimVisualArea{v.anchor, v.cursor, v.mode}
+			v.mode = vimNormal
+			vimPut(d, vimClamp(d.buf.Snapshot(), v.cursor))
+			text = "'<,'>"
+		} else if cmd.count > 0 {
+			text = ".,.+" + strconv.Itoa(cmd.count-1)
 		}
-		if next == vimNormal {
-			vimSettle(d)
-		}
-	})
-	return true
+		a.vimOpenLine(d, ':', vimCmd{}, text)
+		return
+	}
+	a.vimRunCmd(d, cmd, v.mode)
 }
 
 // vimReset leaves vim mode's state, as vim mode is turned off.
@@ -499,7 +692,8 @@ func vimSettle(d *editor) {
 // the moving end of the selection in visual mode.
 func vimCursor(d *editor, snap ui.TextSnapshot) int {
 	if d.vim.mode.visual() {
-		return vimClamp(snap, d.vim.cursor)
+		// Past the last rune of a line too, after $.
+		return min(max(d.vim.cursor, 0), snap.Len())
 	}
 	return vimClamp(snap, d.sel[1])
 }
@@ -768,6 +962,31 @@ func (a *app) vimMotion(d *editor, t *vtext, cur int, key string, arg rune, coun
 		text := snap.Slice(s, e)
 		to := s + utf8.RuneCountInString(strings.TrimRight(text, " \t")) - 1
 		return vimTarget{to: max(to, s), inclusive: true}, true
+	case "n", "N", "*", "#":
+		return a.vimSearchMotion(d, snap, cur, key, cnt)
+	case "'", "`":
+		at, ok := vimMarkAt(d, snap, arg)
+		if !ok {
+			a.vimSay(locales.VimMarkNotSet(string(arg)), true)
+			return vimTarget{}, false
+		}
+		if key == "'" {
+			return vimTarget{to: firstNonBlank(snap, snap.LineAt(at)), linewise: true}, true
+		}
+		return vimTarget{to: at}, true
+	case "[(", "[{", "])", "]}":
+		return vimUnmatched(t, cur, key, cnt)
+	case "H", "M", "L":
+		top, bottom := a.vimLinesInView(d, snap)
+		tl := top + cnt - 1
+		switch key {
+		case "M":
+			tl = (top + bottom) / 2
+		case "L":
+			tl = bottom - (cnt - 1)
+		}
+		tl = min(max(tl, top), bottom, last)
+		return vimTarget{to: firstNonBlank(snap, max(tl, 0)), linewise: true}, true
 	case "G", "gg":
 		tl := last
 		if key == "gg" {
@@ -827,8 +1046,7 @@ func (a *app) vimMotion(d *editor, t *vtext, cur int, key string, arg rune, coun
 		return vimTarget{to: to}, to != cur
 	}
 	if len(key) == 2 && (key[0] == 'i' || key[0] == 'a') {
-		from, to, ok := vimObject(t, cur, key, cnt)
-		return vimTarget{from: from, to: to, object: true}, ok
+		return vimObject(t, cur, key, cnt)
 	}
 	return vimTarget{}, false
 }
@@ -889,8 +1107,75 @@ var vimBrackets = map[byte][2]rune{
 	'<': {'<', '>'}, '>': {'<', '>'},
 }
 
-// vimObject finds the runes of a text object around cur: from up to to.
-func vimObject(t *vtext, cur int, key string, cnt int) (from, to int, ok bool) {
+// vimObject finds a text object around cur: its runes from up to to,
+// which are whole lines for a paragraph, and for a block over lines.
+func vimObject(t *vtext, cur int, key string, cnt int) (vimTarget, bool) {
+	cnt = max(cnt, 1)
+	if key[1] == 'p' {
+		return vimParagraph(t.snap, cur, key[0] == 'a', cnt)
+	}
+	from, to, ok := vimObjectRunes(t, cur, key, cnt)
+	if !ok {
+		return vimTarget{}, false
+	}
+	tg := vimTarget{from: from, to: to, object: true}
+	if _, bracket := vimBrackets[key[1]]; bracket && key[0] == 'i' && to > from &&
+		t.at(from-1) == '\n' && t.at(to-1) == '\n' {
+		tg.linewise = true
+	}
+	return tg, true
+}
+
+// vimParagraph finds the lines of ip and ap: a run of lines with text, or
+// of blank ones, and for ap the blank lines after it, or else before it.
+func vimParagraph(snap ui.TextSnapshot, cur int, around bool, cnt int) (vimTarget, bool) {
+	last := vimLast(snap)
+	blank := func(l int) bool {
+		s, e := snap.LineRange(l)
+		return strings.TrimSpace(snap.Slice(s, e)) == ""
+	}
+	line := snap.LineAt(cur)
+	l1 := line
+	for l1 > 0 && blank(l1-1) == blank(line) {
+		l1--
+	}
+	l2 := line - 1
+	for k := range cnt {
+		if l2 >= last {
+			if k == 0 {
+				break
+			}
+			return vimTarget{}, false
+		}
+		// A run, and with ap the run after it, of the other kind.
+		runs := 1
+		if around {
+			runs = 2
+		}
+		for range runs {
+			if l2 >= last {
+				break
+			}
+			kind := blank(l2 + 1)
+			for l2 < last && blank(l2+1) == kind {
+				l2++
+			}
+		}
+	}
+	if around && !blank(line) && blank(l2) == blank(line) {
+		// No blank lines after the paragraph: those before it go.
+		for l1 > 0 && blank(l1-1) {
+			l1--
+		}
+	}
+	from, _ := snap.LineRange(l1)
+	_, to := snap.LineRange(l2)
+	return vimTarget{from: from, to: min(to+1, snap.Len()), object: true, linewise: true}, true
+}
+
+// vimObjectRunes finds the runes of a text object around cur: from up to
+// to.
+func vimObjectRunes(t *vtext, cur int, key string, cnt int) (from, to int, ok bool) {
 	snap := t.snap
 	inner := key[0] == 'i'
 	ls, le := snap.LineRange(snap.LineAt(cur))
@@ -948,14 +1233,27 @@ func vimObject(t *vtext, cur int, key string, cnt int) (from, to int, ok bool) {
 				if inner {
 					return q1 + 1, q2, true
 				}
-				e := q2 + 1
+				// The space after the quotes, or else that before them,
+				// unless it is the line's indent.
+				s, e := q1, q2+1
 				for e < le && vimSpace(t.at(e)) {
 					e++
 				}
-				return q1, e, true
+				if e == q2+1 {
+					for s > ls && vimSpace(t.at(s-1)) {
+						s--
+					}
+					if s == ls {
+						s = q1
+					}
+				}
+				return s, e, true
 			}
 		}
 		return 0, 0, false
+	}
+	if key[1] == 't' {
+		return vimTag(snap, cur, inner, cnt)
 	}
 	pair, isBracket := vimBrackets[key[1]]
 	if !isBracket {
@@ -986,6 +1284,15 @@ func vimObject(t *vtext, cur int, key string, cnt int) (from, to int, ok bool) {
 	}
 	for k := 1; k < cnt && o >= 0; k++ {
 		o = back(o - 1)
+	}
+	if o < 0 && cnt == 1 {
+		// Outside any: the next along the line, as vim does.
+		for j := cur + 1; j < le; j++ {
+			if t.at(j) == open {
+				o = j
+				break
+			}
+		}
 	}
 	if o < 0 {
 		return 0, 0, false
@@ -1030,8 +1337,9 @@ type vimRange struct {
 	l1, l2     int
 }
 
-// vimYank puts the text of a range on the clipboard.
-func (a *app) vimYank(snap ui.TextSnapshot, r vimRange) {
+// vimYank puts the text of a range in the register of the command, which
+// del says deletes it.
+func (a *app) vimYank(d *editor, snap ui.TextSnapshot, r vimRange, del bool) {
 	var text string
 	if r.linewise {
 		s, _ := snap.LineRange(r.l1)
@@ -1040,8 +1348,7 @@ func (a *app) vimYank(snap ui.TextSnapshot, r vimRange) {
 	} else {
 		text = snap.Slice(r.start, r.end)
 	}
-	a.vimReg = vimRegister{text, r.linewise}
-	a.services.WriteClipboard(text)
+	a.vimStore(d.vim.reg, text, r.linewise, del)
 }
 
 // vimClip is the clipboard's text, and whether it pastes as lines: as
@@ -1069,7 +1376,11 @@ func (a *app) vimOperate(d *editor, t *vtext, cur int, c vimCmd) {
 			if c.op == "c" {
 				d.vim.mode, d.vim.recording = vimNormal, false
 			}
+			a.vimFailed = true
 			return
+		case tg.object && tg.linewise:
+			r = vimRange{linewise: true, l1: snap.LineAt(tg.from), l2: snap.LineAt(max(tg.to-1, tg.from))}
+			cur = tg.from // where y leaves the cursor
 		case tg.object:
 			r = vimRange{start: tg.from, end: tg.to}
 		case tg.linewise:
@@ -1079,10 +1390,40 @@ func (a *app) vimOperate(d *editor, t *vtext, cur int, c vimCmd) {
 			r = vimRange{start: min(cur, tg.to), end: max(cur, tg.to)}
 			if tg.inclusive {
 				r.end = min(r.end+1, t.n)
+			} else if l := snap.LineAt(r.end); r.end > r.start && l > snap.LineAt(r.start) {
+				if s, _ := snap.LineRange(l); s == r.end {
+					// An exclusive motion to the start of a line stops at
+					// the end of the line before, and takes whole lines
+					// from the indent of the first.
+					_, r.end = snap.LineRange(l - 1)
+					if r.start <= firstNonBlank(snap, snap.LineAt(r.start)) {
+						r = vimRange{linewise: true, l1: snap.LineAt(r.start), l2: l - 1}
+					}
+				}
+			}
+			if c.op == "d" {
+				r = vimDeleteLines(snap, r)
 			}
 		}
 	}
 	a.vimApply(d, c.op, r, cur)
+}
+
+// vimDeleteLines is the range d deletes: whole lines when it goes over
+// lines from their indent to their end, as vim does, rather than leave a
+// blank line.
+func vimDeleteLines(snap ui.TextSnapshot, r vimRange) vimRange {
+	if r.linewise || r.end <= r.start {
+		return r
+	}
+	l1, l2 := snap.LineAt(r.start), snap.LineAt(r.end)
+	if l1 == l2 || r.start > firstNonBlank(snap, l1) {
+		return r
+	}
+	if _, e := snap.LineRange(l2); strings.TrimSpace(snap.Slice(r.end, e)) != "" {
+		return r
+	}
+	return vimRange{linewise: true, l1: l1, l2: l2}
 }
 
 // vimApply applies an operator to a range, with the cursor at cur.
@@ -1096,7 +1437,9 @@ func (a *app) vimApply(d *editor, op string, r vimRange, cur int) {
 	}
 	switch op {
 	case "y":
-		a.vimYank(snap, r)
+		a.vimYank(d, snap, r, false)
+		// What was yanked lights up for a moment, as it goes.
+		d.vim.flash, d.vim.flashAt = [2]int{r.start, min(r.end, snap.Len())}, time.Now()
 		caret := r.start
 		if r.linewise {
 			caret = cur
@@ -1106,7 +1449,7 @@ func (a *app) vimApply(d *editor, op string, r vimRange, cur int) {
 		}
 		vimPut(d, caret)
 	case "d":
-		a.vimYank(snap, r)
+		a.vimYank(d, snap, r, true)
 		if !r.linewise {
 			if r.end > r.start {
 				d.edit([2]int{r.start, r.start}, textEdit{r.start, r.end, ""})
@@ -1123,7 +1466,7 @@ func (a *app) vimApply(d *editor, op string, r vimRange, cur int) {
 		after := d.buf.Snapshot()
 		vimPut(d, firstNonBlank(after, min(r.l1, vimLast(after))))
 	case "c":
-		a.vimYank(snap, r)
+		a.vimYank(d, snap, r, true)
 		at := r.start
 		if r.linewise {
 			// The lines go, but for the indent of the first.
@@ -1135,6 +1478,10 @@ func (a *app) vimApply(d *editor, op string, r vimRange, cur int) {
 			d.edit([2]int{at, at}, textEdit{at, r.end, ""})
 		}
 		a.vimStartInsert(d, at, edited)
+		d.vim.indented = r.linewise && at > r.start
+		if d.vim.replay && d.vim.indented {
+			vimDropIndent(d)
+		}
 	case ">", "<", "gc":
 		s, _ := snap.LineRange(r.l1)
 		_, e := snap.LineRange(r.l2)
@@ -1183,6 +1530,7 @@ func toggleCase(s string) string {
 // again, it types the text of the last insert instead.
 func (a *app) vimStartInsert(d *editor, at int, edited bool) {
 	v := &d.vim
+	v.indented = false
 	if v.replay {
 		if v.lastText != "" {
 			if edited {
@@ -1190,9 +1538,12 @@ func (a *app) vimStartInsert(d *editor, at int, edited bool) {
 			}
 			n := utf8.RuneCountInString(v.lastText)
 			d.edit([2]int{at + n, at + n}, textEdit{at, at, v.lastText})
+			d.hist.group = groupJoin
+			vimRepeatInsert(d, v.lastText)
 			d.hist.group = groupNone
-			at += n - 1
+			at = d.sel[1] - 1
 		}
+		v.insRepeat = 0
 		vimPut(d, at)
 		return
 	}
@@ -1210,20 +1561,75 @@ func (a *app) vimStartInsert(d *editor, at int, edited bool) {
 func (a *app) vimEndInsert(d *editor) {
 	d.observe()
 	v := &d.vim
+	if v.indented {
+		vimDropIndent(d)
+	}
 	snap := d.buf.Snapshot()
-	if v.recording {
-		v.recording, v.lastText = false, ""
-		grown := snap.Len() - v.insLen
-		if caret := d.sel[1]; grown > 0 && caret >= v.insAt && caret <= v.insAt+grown && v.insAt+grown <= snap.Len() {
-			v.lastText = snap.Slice(v.insAt, v.insAt+grown)
+	typed := ""
+	if grown := snap.Len() - v.insLen; grown > 0 {
+		if caret := d.sel[1]; caret >= v.insAt && caret <= v.insAt+grown && v.insAt+grown <= snap.Len() {
+			typed = snap.Slice(v.insAt, v.insAt+grown)
 		}
+	}
+	if v.recording {
+		v.recording, v.lastText = false, typed
+	}
+	if typed != "" {
+		if a.vimRegs == nil {
+			a.vimRegs = map[rune]vimRegister{}
+		}
+		a.vimRegs['.'] = vimRegister{text: typed}
+	}
+	if v.insRepeat > 0 {
+		vimRepeatInsert(d, typed)
+		snap = d.buf.Snapshot()
 	}
 	d.hist.group, d.hist.typing = groupNone, false
 	c := min(d.sel[0], d.sel[1], snap.Len())
+	v.lastInsert = c
 	if s, _ := snap.LineRange(snap.LineAt(c)); c > s {
 		c--
 	}
 	vimPut(d, vimClamp(snap, c))
+}
+
+// vimRepeatInsert types text again as many times more as the command
+// that started the insert asked, after the caret, or after o and O, its
+// line again below it.
+func vimRepeatInsert(d *editor, text string) {
+	v := &d.vim
+	times := v.insRepeat
+	v.insRepeat = 0
+	if times <= 0 || text == "" {
+		return
+	}
+	snap := d.buf.Snapshot()
+	at := min(d.sel[1], snap.Len())
+	body := strings.Repeat(text, times)
+	if v.insLines {
+		s, e := snap.LineRange(snap.LineAt(at))
+		at, body = e, strings.Repeat("\n"+snap.Slice(s, e), times)
+	}
+	end := at + utf8.RuneCountInString(body)
+	d.edit([2]int{end, end}, textEdit{at, at, body})
+}
+
+// vimDropIndent takes back the indent that o, O, S or cc gave a line
+// when nothing was typed after it, as vim does, rather than leave a line
+// of blanks.
+func vimDropIndent(d *editor) {
+	d.vim.indented = false
+	snap := d.buf.Snapshot()
+	caret := min(d.sel[1], snap.Len())
+	s, e := snap.LineRange(snap.LineAt(caret))
+	if caret != e || e == s || strings.TrimSpace(snap.Slice(s, e)) != "" {
+		return
+	}
+	if d.hist.group == groupNone {
+		d.hist.group = groupJoin
+		defer func() { d.hist.group = groupNone }()
+	}
+	d.edit([2]int{s, s}, textEdit{s, e, ""})
 }
 
 // vimNormalRun runs a command of normal mode, which leaves the editor in
@@ -1244,6 +1650,12 @@ func (a *app) vimNormalRun(d *editor, c vimCmd, next vimMode) {
 		v.last, v.hasLast, v.lastText = c, true, ""
 		v.recording = next == vimInsert
 	}
+	v.reg, v.insRepeat, v.insLines = c.reg, 0, false
+	switch c.key {
+	case "i", "a", "I", "A", "o", "O":
+		// What is typed is typed as many times, as 3ix does.
+		v.insRepeat, v.insLines = cnt-1, c.key == "o" || c.key == "O"
+	}
 	if c.op != "" {
 		a.vimOperate(d, t, cur, c)
 		return
@@ -1257,25 +1669,49 @@ func (a *app) vimNormalRun(d *editor, c vimCmd, next vimMode) {
 		if cur > ls {
 			a.vimApply(d, "d", vimRange{start: max(ls, cur-cnt), end: cur}, cur)
 		}
-	case "D", "C":
+	case "D":
 		_, e := snap.LineRange(min(line+cnt-1, last))
-		op := map[string]string{"D": "d", "C": "c"}[c.key]
-		a.vimApply(d, op, vimRange{start: cur, end: e}, cur)
+		a.vimApply(d, "d", vimDeleteLines(snap, vimRange{start: cur, end: e}), cur)
+	case "C":
+		_, e := snap.LineRange(min(line+cnt-1, last))
+		a.vimApply(d, "c", vimRange{start: cur, end: e}, cur)
 	case "s":
 		a.vimApply(d, "c", vimRange{start: cur, end: min(cur+cnt, le)}, cur)
 	case "S":
 		a.vimApply(d, "c", vimRange{linewise: true, l1: line, l2: min(line+cnt-1, last)}, cur)
 	case "Y":
 		a.vimApply(d, "y", vimRange{linewise: true, l1: line, l2: min(line+cnt-1, last)}, cur)
-	case "p", "P":
-		a.vimPaste(d, cur, c.key == "P", cnt)
+	case "p", "P", "gp", "gP":
+		a.vimPaste(d, cur, c.key == "P" || c.key == "gP", len(c.key) == 2, cnt)
 	case "o", "O":
 		vimPut(d, cur)
 		insertLine(d, c.key == "O")
+		after := d.buf.Snapshot()
+		s, _ := after.LineRange(after.LineAt(d.sel[1]))
+		indented := d.sel[1] > s
 		a.vimStartInsert(d, d.sel[1], true)
+		v.indented = indented
+		if v.replay && indented {
+			vimDropIndent(d)
+		}
 	case "J":
 		vimJoin(d, line, max(cnt, 2))
 	case "r":
+		if c.arg == '\r' {
+			// The runes give way to a line break, the cursor on the line
+			// after it.
+			// The line after it starts at the indent of the line, as
+			// with autoindent.
+			// The cursor goes on the last rune of the indent, as vim's does.
+			if le > ls && cur+cnt <= le {
+				rest := snap.Slice(cur+cnt, le)
+				indent := leading(snap.Slice(ls, cur))
+				trim := utf8.RuneCountInString(rest) - utf8.RuneCountInString(strings.TrimLeft(rest, " \t"))
+				at := cur + 1 + max(utf8.RuneCountInString(indent)-1, 0)
+				d.edit([2]int{at, at}, textEdit{cur, cur + cnt + trim, "\n" + indent})
+			}
+			return
+		}
 		if le > ls && cur+cnt <= le {
 			d.edit([2]int{cur + cnt - 1, cur + cnt - 1}, textEdit{cur, cur + cnt, strings.Repeat(string(c.arg), cnt)})
 		}
@@ -1300,6 +1736,19 @@ func (a *app) vimNormalRun(d *editor, c vimCmd, next vimMode) {
 			return
 		}
 		rc := v.last
+		if rc.visual != vimNormal {
+			// Over as much text as the change in visual mode was.
+			v.anchor, v.cursor = cur, min(cur+rc.span, max(le-1, ls))
+			if rc.visual == vimVisualLine {
+				v.cursor, _ = snap.LineRange(min(line+rc.span, last))
+			} else if rc.col >= 0 {
+				v.cursor = vimAtCol(snap, min(line+rc.span, last), rc.col)
+			}
+			v.replay = true
+			a.vimVisualRun(d, rc, rc.visual, vimNormal)
+			v.replay = false
+			return
+		}
 		if c.count > 0 {
 			rc.count, v.last.count = c.count, c.count
 		}
@@ -1316,13 +1765,62 @@ func (a *app) vimNormalRun(d *editor, c vimCmd, next vimMode) {
 		a.vimStartInsert(d, le, false)
 	case "v", "V":
 		v.anchor, v.cursor = cur, cur
+		if c.count > 1 {
+			// As many runes, or lines, as the count.
+			if c.key == "v" {
+				v.cursor = min(cur+c.count-1, max(le-1, ls))
+			} else {
+				v.cursor, _ = snap.LineRange(min(line+c.count-1, last))
+			}
+		}
 		a.vimShowVisual(d, next)
 	case "\x04", "\x15", "\x06", "\x02", "\x05", "\x19":
 		a.vimScroll(d, snap, cur, c.key, c.count)
-	default:
-		if tg, ok := a.vimMotion(d, t, cur, c.key, c.arg, c.count, ""); ok && !tg.object {
-			vimPut(d, tg.to)
+	case "zz", "zt", "zb", "z.", "z\r", "z-":
+		a.vimScrollTo(d, snap, line, c.key)
+		if c.key == "z." || c.key == "z\r" || c.key == "z-" {
+			vimPut(d, firstNonBlank(snap, line))
 		}
+	case "gv":
+		if lv := v.lastVisual; lv.mode.visual() {
+			v.anchor, v.cursor = lv.anchor, lv.cursor
+			a.vimShowVisual(d, next)
+		}
+	case "gi":
+		a.vimStartInsert(d, min(v.lastInsert, snap.Len()), false)
+	case "gJ":
+		vimJoinRaw(d, line, max(cnt, 2))
+	case "\x01", "\x18":
+		by := cnt
+		if c.key == "\x18" {
+			by = -cnt
+		}
+		vimIncrement(d, snap, cur, by)
+	case "ZZ":
+		a.vimEx(d, "x")
+	case "ZQ":
+		a.vimEx(d, "q")
+	case "m":
+		vimSetMark(d, c.arg, cur)
+	case "\x0f":
+		a.vimJumpBy(d, cur, -cnt)
+	case "\t":
+		a.vimJumpBy(d, cur, cnt)
+	case "&", "g&":
+		a.vimRepeatSub(d, cur, c.key == "g&")
+	default:
+		tg, ok := a.vimMotion(d, t, cur, c.key, c.arg, c.count, "")
+		if !ok {
+			a.vimFailed = true
+			return
+		}
+		if tg.object {
+			return
+		}
+		if vimJumps(c.key) && tg.to != cur {
+			vimPushJump(d, cur)
+		}
+		vimPut(d, tg.to)
 	}
 }
 
@@ -1365,10 +1863,124 @@ func (a *app) vimScroll(d *editor, snap ui.TextSnapshot, cur int, key string, co
 	vimPut(d, vimAtCol(snap, to, v.want))
 }
 
-// vimPaste pastes the clipboard cnt times after the cursor, or before:
-// lines below its line or above.
-func (a *app) vimPaste(d *editor, cur int, before bool, cnt int) {
-	text, linewise := a.vimClip()
+// vimScrollTo scrolls the editor so that line shows at the middle of the
+// view, for zz and z., at its top, for zt and z Enter, or at its bottom,
+// for zb and z-.
+func (a *app) vimScrollTo(d *editor, snap ui.TextSnapshot, line int, key string) {
+	lineH := a.font.lineH
+	if lineH <= 0 || d.vim.viewH <= 0 {
+		return
+	}
+	g := a.geometry(d, snap.LineCount())
+	top := editorPadY + g.top(line)
+	h := g.top(line+1) - g.top(line)
+	if line+1 >= snap.LineCount() {
+		h = lineH
+	}
+	// Under the lines that stick at the top, as far as they go.
+	stuck := float32(len(d.sticky)) * lineH
+	y := top - stuck
+	switch key {
+	case "zz", "z.":
+		y = top - (d.vim.viewH-h)/2
+	case "zb", "z-":
+		y = top + h + editorPadY - d.vim.viewH
+	}
+	y = max(0, y)
+	if d.vscroll.MaxY > 0 {
+		y = min(y, d.vscroll.MaxY)
+	}
+	d.vscroll.Y = y
+	a.invalidate()
+}
+
+// vimLinesInView are the first and the last lines whole in view, which H
+// and L go to.
+func (a *app) vimLinesInView(d *editor, snap ui.TextSnapshot) (top, bottom int) {
+	g := a.geometry(d, snap.LineCount())
+	if a.font.lineH <= 0 || d.vim.viewH <= 0 {
+		return 0, vimLast(snap)
+	}
+	top, bottom = a.linesInView(g, d.vscroll.Y, d.vim.viewH)
+	stuck := float32(len(d.sticky)) * a.font.lineH
+	for top < bottom && editorPadY+g.top(top) < d.vscroll.Y+stuck {
+		top++ // under the lines that stick, or cut at the top
+	}
+	for bottom > top && editorPadY+g.top(bottom+1) > d.vscroll.Y+d.vim.viewH {
+		bottom-- // cut at the bottom
+	}
+	return top, min(bottom, vimLast(snap))
+}
+
+// vimIncrement adds by to the number under the cursor, or the first
+// after it on its line, as ⌃A and ⌃X do: decimal, with its minus, or hex
+// after 0x. The cursor goes to its last digit.
+func vimIncrement(d *editor, snap ui.TextSnapshot, cur, by int) {
+	ls, le := snap.LineRange(snap.LineAt(cur))
+	runes := []rune(snap.Slice(ls, le))
+	digit := func(i int) bool { return i >= 0 && i < len(runes) && unicode.IsDigit(runes[i]) }
+	isHex := func(i int) bool {
+		return digit(i) || i >= 0 && i < len(runes) && strings.ContainsRune("abcdefABCDEF", runes[i])
+	}
+	s := cur - ls
+	for digit(s) && digit(s-1) {
+		s--
+	}
+	for s < len(runes) && !digit(s) {
+		s++
+	}
+	if s >= len(runes) {
+		return
+	}
+	if s >= 2 && (runes[s-1] == 'x' || runes[s-1] == 'X') && runes[s-2] == '0' {
+		s -= 2 // in the digits of a hex number, after its 0x
+	}
+	e := s
+	hex := runes[s] == '0' && s+2 < len(runes) && (runes[s+1] == 'x' || runes[s+1] == 'X') && isHex(s+2)
+	if hex {
+		e = s + 2
+		for isHex(e) {
+			e++
+		}
+	} else {
+		for digit(e) {
+			e++
+		}
+		if s > 0 && runes[s-1] == '-' {
+			s--
+		}
+	}
+	text := string(runes[s:e])
+	var out string
+	if hex {
+		n, err := strconv.ParseUint(text[2:], 16, 64)
+		if err != nil {
+			return
+		}
+		digits := strconv.FormatUint(n+uint64(int64(by)), 16)
+		if strings.ToUpper(text[2:]) == text[2:] && strings.ContainsAny(text[2:], "ABCDEF") {
+			digits = strings.ToUpper(digits)
+		}
+		for len(digits) < len(text)-2 {
+			digits = "0" + digits // as wide as it was
+		}
+		out = text[:2] + digits
+	} else {
+		n, err := strconv.ParseInt(text, 10, 64)
+		if err != nil {
+			return
+		}
+		out = strconv.FormatInt(n+int64(by), 10)
+	}
+	at := ls + s + utf8.RuneCountInString(out) - 1
+	d.edit([2]int{at, at}, textEdit{ls + s, ls + e, out})
+}
+
+// vimPaste pastes the register of the command cnt times after the
+// cursor, or before: lines below its line or above. With past, as gp and
+// gP, the cursor goes just past what was put.
+func (a *app) vimPaste(d *editor, cur int, before, past bool, cnt int) {
+	text, linewise := a.vimRead(d.vim.reg)
 	if text == "" {
 		return
 	}
@@ -1377,13 +1989,22 @@ func (a *app) vimPaste(d *editor, cur int, before bool, cnt int) {
 	ls, le := snap.LineRange(line)
 	if linewise {
 		body := strings.TrimSuffix(strings.Repeat(text, cnt), "\n")
+		first := line + 1
 		if before {
 			d.edit(d.sel, textEdit{ls, ls, body + "\n"})
-			vimPut(d, firstNonBlank(d.buf.Snapshot(), line))
+			first = line
 		} else {
 			d.edit(d.sel, textEdit{le, le, "\n" + body})
-			vimPut(d, firstNonBlank(d.buf.Snapshot(), line+1))
 		}
+		after := d.buf.Snapshot()
+		if past {
+			// The line after those put.
+			l := min(first+strings.Count(body, "\n")+1, after.LineCount()-1)
+			s, _ := after.LineRange(l)
+			vimPut(d, s)
+			return
+		}
+		vimPut(d, firstNonBlank(after, first))
 		return
 	}
 	body := strings.Repeat(text, cnt)
@@ -1391,7 +2012,16 @@ func (a *app) vimPaste(d *editor, cur int, before bool, cnt int) {
 	if !before && le > ls {
 		at = cur + 1
 	}
-	end := at + utf8.RuneCountInString(body) - 1
+	// The cursor on the last rune put, or on the first when they go over
+	// lines; past it, for gp and gP.
+	n := utf8.RuneCountInString(body)
+	end := at + n - 1
+	switch {
+	case past:
+		end = at + n
+	case strings.Contains(body, "\n"):
+		end = at
+	}
 	d.edit([2]int{end, end}, textEdit{at, at, body})
 }
 
@@ -1418,6 +2048,25 @@ func vimJoin(d *editor, line, count int) {
 	}
 	_, end := snap.LineRange(l2)
 	d.edit([2]int{s + at, s + at}, textEdit{s, end, text})
+}
+
+// vimJoinRaw joins count lines from line as they are, as gJ does: no
+// space between them, and their indent kept.
+func vimJoinRaw(d *editor, line, count int) {
+	snap := d.buf.Snapshot()
+	l2 := min(line+count-1, vimLast(snap))
+	if l2 <= line {
+		return
+	}
+	var edits []textEdit
+	at := 0
+	for l := line; l < l2; l++ {
+		_, e := snap.LineRange(l)
+		edits = append(edits, textEdit{e, e + 1, ""})
+		at = e - (l - line)
+	}
+	d.edit([2]int{at, at}, edits...)
+	vimPut(d, at)
 }
 
 // vimShowVisual selects what visual mode does: the runes from the anchor
@@ -1452,12 +2101,29 @@ func (a *app) vimVisualRun(d *editor, c vimCmd, mode, next vimMode) {
 	t := newVText(snap)
 	n := snap.Len()
 	lo, hi := min(v.anchor, v.cursor, n), min(max(v.anchor, v.cursor), n)
+	if !v.replay && vimVisualChanges(c.key) {
+		// For . to make again: the change, and how much it took.
+		rc := vimCmd{key: c.key, arg: c.arg, visual: mode, col: -1}
+		if l1, l2 := snap.LineAt(lo), snap.LineAt(hi); mode == vimVisualLine || l1 != l2 {
+			rc.span = l2 - l1
+			if mode != vimVisualLine {
+				rc.col = vimCol(snap, hi)
+			}
+		} else {
+			rc.span = hi - lo
+		}
+		v.last, v.hasLast, v.lastText = rc, true, ""
+		v.recording = next == vimInsert
+	}
+	v.reg, v.insRepeat = c.reg, 0
 	r := vimRange{start: lo, end: min(hi+1, n)}
 	switch {
 	case mode == vimVisualLine, c.key == "X", c.key == "D", c.key == "Y", c.key == "C", c.key == "S", c.key == "R":
 		r = vimRange{linewise: true, l1: snap.LineAt(lo), l2: snap.LineAt(hi)}
 	}
 	switch c.key {
+	case "zz", "zt", "zb", "z.", "z\r", "z-":
+		a.vimScrollTo(d, snap, snap.LineAt(min(v.cursor, n)), c.key)
 	case "\x1b", "v", "V":
 		if next == vimNormal {
 			vimPut(d, v.cursor)
@@ -1499,7 +2165,11 @@ func (a *app) vimVisualRun(d *editor, c vimCmd, mode, next vimMode) {
 		}, text)
 		d.edit([2]int{s, s}, textEdit{s, e, repl})
 	case "p", "P":
-		text, linewise := a.vimClip()
+		text, linewise := a.vimRead(v.reg)
+		if text == "" {
+			a.vimApply(d, "d", r, lo)
+			return
+		}
 		s, e := r.start, r.end
 		body := text
 		if r.linewise {
@@ -1511,17 +2181,54 @@ func (a *app) vimVisualRun(d *editor, c vimCmd, mode, next vimMode) {
 		} else if linewise {
 			body = "\n" + strings.TrimSuffix(text, "\n") + "\n"
 		}
+		if c.key == "p" {
+			// p yanks what it pastes over, as vim does; P keeps the
+			// register.
+			v.reg = 0
+			a.vimYank(d, snap, r, true)
+		}
 		d.edit([2]int{s, s}, textEdit{s, e, body})
+		after := d.buf.Snapshot()
+		if r.linewise || linewise {
+			l := snap.LineAt(s)
+			if !r.linewise {
+				l++ // the line put after the break
+			}
+			vimPut(d, firstNonBlank(after, min(l, vimLast(after))))
+		} else if strings.Contains(body, "\n") {
+			vimPut(d, s)
+		} else {
+			vimPut(d, s+utf8.RuneCountInString(body)-1)
+		}
 	default:
 		if len(c.key) == 2 && (c.key[0] == 'i' || c.key[0] == 'a') {
-			if from, to, ok := vimObject(t, v.cursor, c.key, c.count); ok && to > from {
-				v.anchor, v.cursor = from, to-1
+			if tg, ok := vimObject(t, v.cursor, c.key, c.count); ok && tg.to > tg.from {
+				v.anchor, v.cursor = tg.from, tg.to-1
 			}
 		} else if tg, ok := a.vimMotion(d, t, v.cursor, c.key, c.arg, c.count, ""); ok {
+			if vimJumps(c.key) && tg.to != v.cursor {
+				vimPushJump(d, v.cursor)
+			}
 			v.cursor = tg.to
+			if c.key == "$" || (c.key == "j" || c.key == "k") && v.want >= 1<<30 {
+				// The end of the line, its newline and all.
+				_, v.cursor = snap.LineRange(snap.LineAt(tg.to))
+			}
+		} else {
+			a.vimFailed = true
 		}
 		a.vimShowVisual(d, next)
 	}
+}
+
+// vimVisualChanges reports whether a key of visual mode changes the
+// text, as . repeats.
+func vimVisualChanges(key string) bool {
+	switch key {
+	case "y", "Y", "o", "v", "V", "\x1b":
+		return false
+	}
+	return vimVisualActions[key] || key == "r"
 }
 
 // toggleVim turns vim mode on, the editors in normal mode, or off.

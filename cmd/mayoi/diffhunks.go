@@ -130,6 +130,8 @@ func (a *app) hunkButtons(c *ui.Context, v *diffView, i int, right, contentW, y 
 				btn.Background(p.hover.Over(p.editor))
 				col = p.text
 			}
+			btn.Transition(hoverFade)
+			pressPose(btn)
 			btn.Children(func() {
 				ui.Icon(c, b.icon).FontSize(12).TextColor(col)
 				ui.Text(c, b.label).FontSize(11.5).TextColor(col).SingleLine()
@@ -147,7 +149,11 @@ func (a *app) hunkButtons(c *ui.Context, v *diffView, i int, right, contentW, y 
 // discards them. The texts are read again first, and the changes found
 // again among theirs, so that what is done is to the files as they are.
 func (a *app) applyHunks(f *diffFile, hs []linediff.Hunk, act hunkAction) {
-	if a.git.repo == nil || len(hs) == 0 {
+	ctx := a.repositoryForPath(f.path)
+	if f.repoRoot != "" {
+		ctx = a.repositoryForRoot(f.repoRoot)
+	}
+	if ctx.git.repo == nil || len(hs) == 0 {
 		return
 	}
 	path := f.path
@@ -159,7 +165,7 @@ func (a *app) applyHunks(f *diffFile, hs []linediff.Hunk, act hunkAction) {
 	switch act {
 	case hunkStage:
 		work, crlf, ok := a.workText(f)
-		a.gitDo("", func(r *git.Repo) error {
+		ctx.gitDo("", func(r *git.Repo) error {
 			if !ok {
 				var err error
 				if work, crlf, err = readWork(path); err != nil {
@@ -178,7 +184,7 @@ func (a *app) applyHunks(f *diffFile, hs []linediff.Hunk, act hunkAction) {
 			return r.StageText(path, joinLines(linediff.Apply(index, lines, picked), crlf))
 		}, nil)
 	case hunkUnstage:
-		a.gitDo("", func(r *git.Repo) error {
+		ctx.gitDo("", func(r *git.Repo) error {
 			head, _, err := r.Show("HEAD", path)
 			if err != nil {
 				return err
@@ -203,6 +209,10 @@ func (a *app) applyHunks(f *diffFile, hs []linediff.Hunk, act hunkAction) {
 // discardHunks puts changes of a file back as the index has them: in its
 // editor, as a step of undo, or else on disk, once asked.
 func (a *app) discardHunks(f *diffFile, hs []linediff.Hunk) {
+	ctx := a.repositoryForPath(f.path)
+	if f.repoRoot != "" {
+		ctx = a.repositoryForRoot(f.repoRoot)
+	}
 	if d, shown := a.editorOf(a.diffDoc(f)); d != nil {
 		old := f.old.lines
 		discard := func(d *editor) {
@@ -229,7 +239,7 @@ func (a *app) discardHunks(f *diffFile, hs []linediff.Hunk) {
 	}
 	a.confirm = &confirm{title: title, message: locales.DiscardHunkDetail(),
 		ok: locales.ButtonDiscard(), danger: true, run: func() {
-			a.gitDo("", func(r *git.Repo) error {
+			ctx.gitDo("", func(r *git.Repo) error {
 				work, crlf, err := readWork(path)
 				if err != nil {
 					return err

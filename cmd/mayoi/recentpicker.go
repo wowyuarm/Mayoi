@@ -134,10 +134,7 @@ func (a *app) recentRow(c *ui.Context, i int) {
 	name := r.names[m.Index]
 	row := ui.ButtonBase(c.Key("recent:"+name)).Padding(5, 10).Gap(10).Radius(6).Justify(ui.Start).AlignItems(ui.Center).
 		Label(locales.RecentOpenLabel(r.dirs[m.Index]))
-	switch {
-	case i == r.sel:
-		row.Background(p.active)
-	case row.Hovered():
+	if i != r.sel && row.Hovered() {
 		row.Background(p.hover)
 	}
 	if i == r.sel && r.moved {
@@ -147,7 +144,9 @@ func (a *app) recentRow(c *ui.Context, i int) {
 		newWin := row.ClickModifiers()&ui.Cmd != 0
 		a.post(func() { a.chooseRecent(i, newWin) })
 	}
+	row.Transition(hoverFade)
 	row.Children(func() {
+		a.pickMark(c, i == r.sel, "recent")
 		ui.Icon(c, iconFolder).FontSize(15).TextColor(p.accent)
 		base := strings.LastIndexByte(name, '/') + 1
 		ui.RichText(c, a.matchSpans(name[base:], base, m.Positions, p.text)...).FontSize(13).SingleLine().Shrink(0)

@@ -204,7 +204,10 @@ func (a *app) reconnected() {
 	if a.git.repo == nil {
 		a.git.looked = false
 	}
-	a.git.meta, a.git.refsMeta = time.Time{}, time.Time{}
+	for _, ctx := range a.rootRepositoryList() {
+		ctx.git.meta, ctx.git.refsMeta = time.Time{}, time.Time{}
+	}
+	a.repositories.dirty = true
 	a.indexStale, a.ignoredStale = true, true
 	a.gitChanged()
 	a.restartTerminals()
@@ -522,7 +525,7 @@ func (a *app) remoteTreeWaits(c *ui.Context) {
 	p := a.pal
 	host := remote.DisplayHost(a.conn.Host)
 	ui.Column(c).Padding(28, 20, 16, 20).Gap(8).AlignItems(ui.Center).Children(func() {
-		ui.Box(c).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center).Children(func() {
+		popUp(ui.Box(c.Key("badge")).Size(44, 44).Radius(22).Background(p.text.Alpha(0.06)).Justify(ui.Center).AlignItems(ui.Center)).Children(func() {
 			if a.connState == remote.Connecting {
 				ui.Spinner(c).Size(18, 18)
 			} else {
@@ -555,6 +558,8 @@ func (a *app) barButton(c *ui.Context, key, label string) ui.Element {
 	case b.Hovered():
 		b.Background(p.surfaceHover)
 	}
+	b.Transition(hoverFade)
+	pressPose(b)
 	b.Children(func() {
 		ui.Text(c, label).FontSize(12).FontWeight(500).TextColor(p.text).SingleLine()
 	})
@@ -588,6 +593,7 @@ func (a *app) remoteStatus(c *ui.Context, text func(string) ui.Element) {
 	if b.Hovered() {
 		b.Background(tint.Alpha(0.26))
 	}
+	b.Transition(hoverFade)
 	b.Children(func() {
 		if a.connState == remote.Connecting {
 			ui.Spinner(c).Size(11, 11)

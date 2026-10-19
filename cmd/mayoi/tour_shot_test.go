@@ -36,6 +36,7 @@ func TestShotTour(t *testing.T) {
 		s := settings.Default()
 		s.Recent = []string{hs.root, "/Users/someone/Projects/mygo", "/Users/someone/Projects/website"}
 		a := newApp(&fakeHost{}, s, s.NewWindow())
+		t.Cleanup(a.shutdown)
 		tt := ui.NewTester(a.view, 1200, 760)
 		tt.SetDark(dark)
 		empty := &harness{t: t, a: a, h: &fakeHost{}, tt: tt}

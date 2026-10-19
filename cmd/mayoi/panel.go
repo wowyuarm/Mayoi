@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -212,7 +213,22 @@ func (a *app) newTerminalTabAt(col *column, at int, dir string, focus bool) bool
 	return true
 }
 
+// lookPath finds a program on the path, as exec.LookPath, which tests
+// replace.
+var lookPath = exec.LookPath
+
+// shellName is the name of the shell a terminal runs: $SHELL's, and on
+// Windows, which has none, the first of those the terminal looks for that
+// is there: PowerShell's, then the command prompt.
 func shellName() string {
+	if hostOS == "windows" {
+		for _, name := range []string{"pwsh.exe", "powershell.exe", os.Getenv("COMSPEC"), "cmd.exe"} {
+			if _, err := lookPath(name); name != "" && err == nil {
+				return strings.TrimSuffix(strings.ToLower(filepath.Base(name)), ".exe")
+			}
+		}
+		return "shell"
+	}
 	if sh := os.Getenv("SHELL"); sh != "" {
 		return filepath.Base(sh)
 	}
@@ -402,7 +418,7 @@ func (a *app) panel(c *ui.Context) {
 				ui.Row(c).Gap(2).AlignItems(ui.Center).Children(func() {
 					for i, s := range terms {
 						chip := ui.ButtonBase(c.Key(s.id)).Padding(3, 8).Gap(6).Radius(5).AlignItems(ui.Center).Label(s.title).
-							Drag(dragItem{term: s})
+							Drag(dragItem{term: s}).Transition(tabMotion)
 						if chip.Dragging() {
 							a.dragNow = true
 						}
@@ -502,6 +518,7 @@ func termFont(s *settings.Settings) terminal.Font {
 	if strings.TrimSpace(f.Family) == "" {
 		f.Family = s.FontFamily
 	}
+	f.Family = monoFallback(f.Family)
 	if f.Size == 0 {
 		f.Size = max(s.FontSize-0.5, 9)
 	}

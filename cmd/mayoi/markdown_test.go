@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -151,6 +152,18 @@ func TestMarkdownBlocks(t *testing.T) {
 	if markdownPath("", path, "https://example.com/a.png") != "" || markdownPath("", path, "//example.com/a.png") != "" || filepath.ToSlash(markdownPath("", path, "/tmp/a%20b.png")) != "/tmp/a b.png" {
 		t.Fatal("destination resolution")
 	}
+	// A leading slash is of the root on Windows too, and a whole path of
+	// a disk is that path.
+	if got := markdownPath(filepath.FromSlash("/r"), path, "/docs/a.png"); got != filepath.FromSlash("/r/docs/a.png") {
+		t.Errorf("root-relative destination: %q", got)
+	}
+	if runtime.GOOS == "windows" {
+		for _, dest := range []string{`C:\x\a.png`, "C:/x/a.png"} {
+			if got := markdownPath("", path, dest); got != `C:\x\a.png` {
+				t.Errorf("markdownPath(%q) = %q", dest, got)
+			}
+		}
+	}
 }
 
 func TestMarkdownPreview(t *testing.T) {
@@ -190,6 +203,72 @@ func TestMarkdownPreview(t *testing.T) {
 	a.openFile(path, true)
 	a.run("view.togglePreview")
 	hs.until("long extension", func() bool { return a.activeEditor().preview.loaded })
+}
+
+func TestMarkdownPreviewColumn(t *testing.T) {
+	hs := newHarness(t, true)
+	a := hs.a
+	writePNG(t, hs.path("wide.png"), 2000, 100)
+	source := "[Paragraph](https://example.com/paragraph)\n\n| Left | Right |\n| --- | --- |\n| [First](https://example.com/first) | [Second](https://example.com/second) |\n\n[![Wide image](wide.png)](https://example.com/image)\n"
+	if err := os.WriteFile(hs.path("README.md"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a.openFile(hs.path("README.md"), true)
+	a.run("view.togglePreview")
+	hs.until("preview", func() bool { return a.activeEditor().preview.loaded })
+	for _, layout := range []struct {
+		name   string
+		width  int
+		split  bool
+		capped bool
+	}{
+		{"wide", 1600, false, true},
+		{"narrow", 900, false, false},
+		{"split", 1600, true, false},
+	} {
+		t.Run(layout.name, func(t *testing.T) {
+			hs.tt.SetSize(layout.width, 760)
+			if layout.split {
+				a.run("view.splitRight")
+				if a.activeEditor().preview == nil {
+					a.run("view.togglePreview")
+				}
+				hs.until("split preview", func() bool { return a.activeEditor().preview.loaded })
+			}
+			hs.settle()
+			bounds := func(label string) ui.Rect {
+				r, ok := hs.tt.Find(label)
+				if !ok {
+					t.Fatalf("missing %s", label)
+				}
+				return r
+			}
+			// The column is 120 digits wide, or the pane's width less its
+			// padding when that is narrower, and sits in the pane's middle.
+			pane := bounds("Preview README.md")
+			measure := a.activeEditor().preview.markdown.measure
+			if capped := measure < pane.W-2*textPadR; capped != layout.capped {
+				t.Fatalf("120 digits are %v wide in pane %v, capped %v, want %v", measure, pane, capped, layout.capped)
+			}
+			column := min(measure, pane.W-2*textPadR)
+			image := bounds("Open link https://example.com/image")
+			if math.Abs(float64(image.W-column)) > 1 {
+				t.Errorf("image is %v wide, want the column's %v in pane %v", image.W, column, pane)
+			}
+			left, right := image.X-pane.X, pane.X+pane.W-image.X-image.W
+			if left < textPadR-1 || math.Abs(float64(left-right)) > 2 {
+				t.Errorf("column is not centred: %v left, %v right in pane %v", left, right, pane)
+			}
+			if paragraph := bounds("Open link https://example.com/paragraph"); math.Abs(float64(paragraph.X-image.X)) > 1 {
+				t.Errorf("paragraph starts at %v, not the column's %v", paragraph.X, image.X)
+			}
+			first := bounds("Open link https://example.com/first")
+			second := bounds("Open link https://example.com/second")
+			if gap := second.X - first.X; math.Abs(float64(gap-column/2)) > 2 {
+				t.Errorf("table columns are %v apart, want half the column's %v", gap, column)
+			}
+		})
+	}
 }
 
 func TestMarkdownLiveSplitAndScroll(t *testing.T) {
@@ -244,6 +323,7 @@ func TestMarkdownPreviewRestoreAndReopen(t *testing.T) {
 		t.Fatal("per-column preview state was not saved")
 	}
 	b := newApp(&fakeHost{folder: hs.root}, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	bt := ui.NewTester(b.view, 1200, 760)
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
@@ -454,8 +534,8 @@ func TestMarkdownLocalImagesAndLinks(t *testing.T) {
 func TestMarkdownDebounceAndClosedResult(t *testing.T) {
 	hs := newHarness(t, true)
 	a := hs.a
-	images, readme := writeSpecialFiles(hs.root)
-	for _, path := range images {
+	special := specialFiles(t, hs.root)
+	for _, path := range special {
 		done := make(chan error, 1)
 		var before, after runtime.MemStats
 		runtime.ReadMemStats(&before)
@@ -473,7 +553,12 @@ func TestMarkdownDebounceAndClosedResult(t *testing.T) {
 			t.Fatal("special file allocated too much")
 		}
 	}
-	a.openFile(readme, true)
+	md := "Special files:"
+	for _, path := range special {
+		md += " ![x](" + filepath.ToSlash(path) + ")"
+	}
+	os.WriteFile(hs.path("README.md"), []byte(md), 0o644)
+	a.openFile(hs.path("README.md"), true)
 	a.run("view.togglePreview")
 	hs.until("special-file preview", func() bool { return a.activeEditor().preview.loaded })
 	ed := a.activeEditor()

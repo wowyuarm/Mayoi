@@ -14,6 +14,7 @@ import (
 // Where the shaper lays a tab out (CoreText does), that is: pango gives
 // a tab no width at all, and newFont falls back to four cells there.
 func TestWidthFollowsTabStops(t *testing.T) {
+	skipOnWindows(t, "MyGo's text layout on Windows gives a tab no width")
 	hs := newHarness(t, true)
 	f := hs.a.font
 	shaped, _ := ui.ShapeText("\t", f.font(), 0).Size()

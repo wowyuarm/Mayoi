@@ -3,6 +3,8 @@ package main
 import (
 	"slices"
 	"testing"
+
+	"mayoi/internal/settings"
 )
 
 // The code's font follows the settings' preferences as they change, and
@@ -25,7 +27,38 @@ func TestFontFollowsTheSettings(t *testing.T) {
 		t.Fatalf("terminal font %+v", tf)
 	}
 	a.settings.TerminalFontFamily, a.settings.TerminalFontSize = "Menlo", 11
-	if tf := termFont(a.settings); tf.Family != "Menlo" || tf.Size != 11 {
+	if tf := termFont(a.settings); tf.Family != "Menlo, monospace" || tf.Size != 11 {
 		t.Fatalf("terminal's own font %+v", tf)
+	}
+}
+
+// A family the system lacks falls back to a monospaced font, not to the
+// system's proportional one, and a list that names a generic family is
+// kept as it is.
+func TestMonoFallback(t *testing.T) {
+	for in, want := range map[string]string{
+		"":                        "monospace",
+		"monospace":               "monospace",
+		"JetBrains Mono":          "JetBrains Mono, monospace",
+		"Fira Code, Menlo":        "Fira Code, Menlo, monospace",
+		"Iosevka, ui-monospace":   "Iosevka, ui-monospace",
+		`"Comic Mono", Monospace`: `"Comic Mono", Monospace`,
+	} {
+		if got := monoFallback(in); got != want {
+			t.Errorf("monoFallback(%q) = %q, want %q", in, got, want)
+		}
+	}
+	hs := newHarness(t, false)
+	a := hs.a
+	p := a.settings.Prefs
+	p.FontFamily = "No Such Font Mayoi"
+	a.settings.SetPrefs(p)
+	hs.settle()
+	mono := newCodeFont(settings.Prefs{FontFamily: "monospace", FontSize: p.FontSize, FontWeight: p.FontWeight, LineHeight: p.LineHeight})
+	if a.font.family != "No Such Font Mayoi, monospace" || a.font.charW != mono.charW {
+		t.Errorf("a missing font measures %v a cell, as %q; monospace %v", a.font.charW, a.font.family, mono.charW)
+	}
+	if !a.font.is(a.settings.Prefs) {
+		t.Error("the font does not match the settings it was made from")
 	}
 }

@@ -55,3 +55,22 @@ func TestFuzzyRanksAsAFullSort(t *testing.T) {
 		}
 	}
 }
+
+// A query matches a run of characters together where it can, rather than
+// the last of each: "git" takes Git of "Git: Fetch", not its t.
+func TestFuzzyKeepsRunsTogether(t *testing.T) {
+	for _, tc := range []struct {
+		s, query string
+		want     []int
+	}{
+		{"Git: Fetch", "git", []int{0, 1, 2}},
+		{"Git: Commit", "git", []int{0, 1, 2}},
+		{"Git: Stage File", "git", []int{0, 1, 2}},
+		{"src/main.go", "mai", []int{4, 5, 6}},
+	} {
+		got := Fuzzy([]string{tc.s}, tc.query, 1)
+		if len(got) != 1 || !slices.Equal(got[0].Positions, tc.want) {
+			t.Errorf("%q in %q: %v, want positions %v", tc.query, tc.s, got, tc.want)
+		}
+	}
+}

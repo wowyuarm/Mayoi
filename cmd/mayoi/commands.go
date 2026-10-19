@@ -72,6 +72,7 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		// control, the editor's history or a text field's.
 		{"edit.undo", t.CmdEditUndo(), "", a.editActive(func(d *editor) { d.undo() })},
 		{"edit.redo", t.CmdEditRedo(), "", a.editActive(func(d *editor) { d.redo() })},
+		{"edit.cut", t.CmdEditCut(), "CmdOrCtrl+X", a.editActive(a.cut)},
 		{"edit.find", t.CmdEditFind(), "CmdOrCtrl+F", func() { a.openFind(false) }},
 		{"edit.replace", t.CmdEditReplace(), "Alt+CmdOrCtrl+F", func() { a.openFind(true) }},
 		{"edit.findNext", t.CmdEditFindNext(), "CmdOrCtrl+G", doc(func(d *editor) { a.find.open = true; a.step(d, 1) })},
@@ -115,6 +116,7 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"git.commit", t.CmdGitCommit(), "", func() { a.commit(false) }},
 		{"git.commitPush", t.CmdGitCommitPush(), "", func() { a.commit(true) }},
 		{"git.amend", t.CmdGitAmend(), "", func() { a.showSourceControl(); a.startAmend() }},
+		{"git.writeMessage", t.CmdGitWriteMessage(), "", func() { a.showSourceControl(); a.writeMessage() }},
 		{"git.openChanges", t.CmdGitOpenChanges(), "", a.openChanges},
 		{"git.openAllChanges", t.CmdGitOpenAllChanges(), "", func() { a.openChangesTab(true) }},
 		{"git.nextChange", t.CmdGitNextChange(), "Alt+F5", func() { a.stepChange(1) }},
@@ -122,8 +124,16 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"git.showChange", t.CmdGitShowChange(), "", a.editActive(func(d *editor) { d.peekHunk(caretLine(d)) })},
 		{"git.revertChange", t.CmdGitRevertChange(), "", a.editActive(func(d *editor) { a.onCaretHunk(d, a.revertHunk) })},
 		{"git.stageChange", t.CmdGitStageChange(), "", a.editActive(func(d *editor) { a.onCaretHunk(d, a.stageHunk) })},
-		{"git.stageFile", t.CmdGitStageFile(), "", func() { a.stage(a.activePaths()...) }},
-		{"git.unstageFile", t.CmdGitUnstageFile(), "", func() { a.unstage(a.activePaths()...) }},
+		{"git.stageFile", t.CmdGitStageFile(), "", func() {
+			if paths := a.activePaths(); len(paths) > 0 {
+				a.repositoryForPath(paths[0]).stage(paths...)
+			}
+		}},
+		{"git.unstageFile", t.CmdGitUnstageFile(), "", func() {
+			if paths := a.activePaths(); len(paths) > 0 {
+				a.repositoryForPath(paths[0]).unstage(paths...)
+			}
+		}},
 		{"git.stageAll", t.CmdGitStageAll(), "", a.stageAll},
 		{"git.undoCommit", t.CmdGitUndoCommit(), "", a.undoCommit},
 		{"git.continue", t.CmdGitContinue(), "", a.continueOp},
@@ -478,12 +488,16 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 		it.Disabled = len(a.review.notes) == 0
 		return it
 	}
+	cut := &mygo.MenuItem{Role: mygo.RoleCut}
+	if a.keyFocus == placeEditor {
+		cut = item("edit.cut")
+	}
 	menus := []*mygo.MenuItem{
 		appMenu,
 		{Label: locales.MenuFile(), Submenu: file},
 		{Label: locales.MenuEdit(), Submenu: []*mygo.MenuItem{
 			item("edit.undo"), item("edit.redo"), mygo.Separator(),
-			{Role: mygo.RoleCut}, {Role: mygo.RoleCopy}, {Role: mygo.RolePaste}, {Role: mygo.RoleSelectAll}, mygo.Separator(),
+			cut, {Role: mygo.RoleCopy}, {Role: mygo.RolePaste}, {Role: mygo.RoleSelectAll}, mygo.Separator(),
 			item("edit.find"), item("edit.replace"), item("edit.findNext"), item("edit.findPrev"), mygo.Separator(),
 			item("edit.findInFiles"), item("edit.replaceInFiles"),
 		}},

@@ -9,6 +9,16 @@ import (
 	"testing"
 )
 
+// TestMain has every git the tests run keep the line endings of the
+// files: Git for Windows turns them into CRLF by its own settings, and
+// the contents compared with them.
+func TestMain(m *testing.M) {
+	os.Setenv("GIT_CONFIG_COUNT", "1")
+	os.Setenv("GIT_CONFIG_KEY_0", "core.autocrlf")
+	os.Setenv("GIT_CONFIG_VALUE_0", "false")
+	os.Exit(m.Run())
+}
+
 // repo makes a work tree with a commit of a.txt and b.txt.
 func repo(t *testing.T) (*Repo, func(args ...string)) {
 	t.Helper()
@@ -610,5 +620,45 @@ func TestRevertReset(t *testing.T) {
 	st, _ = r.Status()
 	if r.Head() != second || len(st.Entries) != 0 {
 		t.Errorf("soft: %v", st.Entries)
+	}
+}
+
+func TestSubmodulesOpenOnlyInitializedGitlinks(t *testing.T) {
+	parent, git := repo(t)
+	inner, _ := repo(t)
+	git("-c", "protocol.file.allow=always", "submodule", "add", "-q", inner.Root, "modules/with space")
+	git("commit", "-q", "-m", "module")
+	modules, err := parent.Submodules()
+	if err != nil || len(modules) != 1 {
+		t.Fatalf("modules %v: %v", modules, err)
+	}
+	sub := modules[0]
+	if sub.Root != parent.Abs("modules/with space") || sub.Dir == parent.Dir {
+		t.Fatalf("wrong module: %+v", sub)
+	}
+	write(t, sub.Root, "a.txt", "staged\n")
+	cmd := exec.Command("git", "-C", sub.Root, "add", "a.txt")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("add: %v %s", err, out)
+	}
+	write(t, sub.Root, "a.txt", "unstaged\n")
+	st, err := sub.Status()
+	if err != nil || len(st.Entries) != 1 || !st.Entries[0].Staged() || !st.Entries[0].Unstaged() {
+		t.Fatalf("module status: %+v %v", st, err)
+	}
+	git("submodule", "deinit", "-f", "--", "modules/with space")
+	modules, err = parent.Submodules()
+	if err != nil || len(modules) != 0 {
+		t.Fatalf("uninitialized module became parent: %v %v", modules, err)
+	}
+}
+
+func TestSubmodulesSkipIndexWithoutGitmodules(t *testing.T) {
+	// There is deliberately no Git repository here. Without .gitmodules the
+	// discovery fast path must return before invoking any Git command.
+	r := &Repo{Root: t.TempDir()}
+	modules, err := r.Submodules()
+	if err != nil || len(modules) != 0 {
+		t.Fatalf("discovery without .gitmodules: %v %v", modules, err)
 	}
 }

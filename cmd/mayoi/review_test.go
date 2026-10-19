@@ -505,6 +505,7 @@ func TestReviewKept(t *testing.T) {
 	text, _ := os.ReadFile(hs.path("t.txt"))
 	os.WriteFile(hs.path("t.txt"), append([]byte("new\nnew\n"), text...), 0o644)
 	b := newApp(&fakeHost{folder: hs.root}, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	tt := ui.NewTester(b.view, 1200, 760)
 	step(tt)
 	step(tt)

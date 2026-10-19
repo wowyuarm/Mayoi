@@ -388,6 +388,7 @@ func (h *Highlighter) run() {
 			}
 		}
 		var lines []Line
+		var over patch   // lines written over prev's, rather than new ones
 		var rest request // the lines left for after the first in view
 		if !full && prev == nil && r.last-r.first > 2*(Context+Below) {
 			// Opened: the lines around the view first, the rest after.
@@ -395,12 +396,23 @@ func (h *Highlighter) run() {
 			r.first, r.last = max(r.first, r.view[0]-Context), min(r.last, r.view[1]+Below)
 			lines = lexRange(h.lexer, r.src, r.first, r.last+1)
 		} else if !full && prev != nil && prevFirst == r.first {
-			var exact bool
-			lines, exact = relex(h.lexer, r, prev)
-			if !exact {
+			p := relexPatch(h.lexer, r, prev)
+			switch {
+			case !p.exact:
 				check = r
-			} else if &lines[0] == &prev[0] {
+			case p.same:
 				check = request{}
+			}
+			switch {
+			case p.same:
+				lines = prev
+			case p.inPlace():
+				// A keystroke within a line: its lines go over the old
+				// ones, under the lock, rather than into a copy of them
+				// all. Only this goroutine writes h.lines.
+				lines, over = prev, p
+			default:
+				lines = p.apply(prev)
 			}
 		} else {
 			lines = lexRange(h.lexer, r.src, r.first, r.last+1)
@@ -411,6 +423,7 @@ func (h *Highlighter) run() {
 		}
 
 		h.mu.Lock()
+		copy(lines[over.from:], over.lines)
 		h.version, h.first, h.lines = r.src.Version(), r.first, lines
 		h.total, h.shift = r.src.LineCount(), 0
 		if w := h.want; w.src != nil {
@@ -507,6 +520,11 @@ func lexRange(l chroma.Lexer, src Source, first, end int) []Line {
 	return Lex(l, src.Slice(start, stop))
 }
 
+// relexAhead is how many lines below a change relex first gives the
+// lexer, and relexMargin how far above where the text was cut its lexing
+// must settle to be kept.
+const relexAhead, relexMargin = 160, 32
+
 // relex lexes the lines of request r again, given those of the same lines
 // of an earlier text: only the lines that changed, and around them.
 //
@@ -521,6 +539,36 @@ func lexRange(l chroma.Lexer, src Source, first, end int) []Line {
 // It reports whether the lines are surely as lexing all of them makes
 // them: when they are those of the earlier text, or lexed from the start.
 func relex(l chroma.Lexer, r request, prev []Line) ([]Line, bool) {
+	p := relexPatch(l, r, prev)
+	if p.same {
+		return prev, true
+	}
+	return p.apply(prev), p.exact
+}
+
+// patch is what relex changes in the earlier lines: lines takes the place
+// of prev[from:to], or none when same.
+type patch struct {
+	from, to int
+	lines    []Line
+	same     bool
+	// exact is relex's report: the lines are as lexing all of them makes
+	// them.
+	exact bool
+}
+
+// apply returns the lines of prev patched, new ones, leaving prev as it is.
+func (p patch) apply(prev []Line) []Line {
+	out := append(slices.Clip(prev[:p.from]), p.lines...)
+	return append(out, prev[p.to:]...)
+}
+
+// inPlace reports whether the patch keeps the number of lines, so that it
+// can be written over them.
+func (p patch) inPlace() bool { return !p.same && len(p.lines) == p.to-p.from }
+
+// relexPatch does relex's work, returning the lines it changes.
+func relexPatch(l chroma.Lexer, r request, prev []Line) patch {
 	n := r.last - r.first + 1
 	text := func(i int) string {
 		s, e := r.src.LineRange(r.first + i)
@@ -531,7 +579,7 @@ func relex(l chroma.Lexer, r request, prev []Line) ([]Line, bool) {
 		a++
 	}
 	if a == len(prev) && a == n {
-		return prev, true
+		return patch{same: true, exact: true}
 	}
 	b := 0 // the lines alike at the end
 	for b < len(prev)-a && b < n-a && prev[len(prev)-1-b].Text == text(n-1-b) {
@@ -539,47 +587,67 @@ func relex(l chroma.Lexer, r request, prev []Line) ([]Line, bool) {
 	}
 	shift := n - len(prev)
 	const settle = 3 // the lines with tokens alike that end the lexing
-	_, hi := r.src.LineRange(r.last)
 	for back := 16; ; back *= 4 {
 		s := max(0, a-back)
 		for s > 0 && prev[s-1].open {
 			s--
 		}
 		lo, _ := r.src.LineRange(r.first + s)
-		wrong, seen, run := false, 0, 0
-		lines, stop := lex(l, r.src.Slice(lo, hi), func(k int, lines []Line) bool {
-			ln := lines[k]
-			switch i := s + k; {
-			case i < a:
-				// From the start of the text the state is known; from further
-				// down, these lines tell whether it was guessed right.
-				if s == 0 {
-					return false
+		var lines []Line
+		var wrong bool
+		stop := -1
+		// The text goes to the lexer as far as some lines below the change,
+		// rather than to the end of the request: Chroma reads all the text
+		// it is given before it lexes, and the lexing mostly settles a few
+		// lines below. Lexing that settles too near where the text was cut
+		// may have been misled by the cut, and goes on with more.
+		for ahead := relexAhead; ; ahead *= 4 {
+			end := min(n-1, n-b+ahead)
+			_, hi := r.src.LineRange(r.first + end)
+			seen, run := 0, 0
+			wrong = false
+			lines, stop = lex(l, r.src.Slice(lo, hi), func(k int, lines []Line) bool {
+				ln := lines[k]
+				switch i := s + k; {
+				case i < a:
+					// From the start of the text the state is known; from further
+					// down, these lines tell whether it was guessed right.
+					if s == 0 {
+						return false
+					}
+					if len(ln.Tokens) > 0 {
+						seen++
+					}
+					wrong = !slices.Equal(ln.Tokens, prev[i].Tokens) || ln.open != prev[i].open || i == a-1 && seen < 2
+					return wrong
+				case i >= n-b:
+					switch old := prev[i-shift]; {
+					case !slices.Equal(ln.Tokens, old.Tokens) || ln.open || old.open:
+						run = 0
+					case len(old.Tokens) > 0:
+						run++
+					}
+					return run == settle
 				}
-				if len(ln.Tokens) > 0 {
-					seen++
-				}
-				wrong = !slices.Equal(ln.Tokens, prev[i].Tokens) || ln.open != prev[i].open || i == a-1 && seen < 2
-				return wrong
-			case i >= n-b:
-				switch old := prev[i-shift]; {
-				case !slices.Equal(ln.Tokens, old.Tokens) || ln.open || old.open:
-					run = 0
-				case len(old.Tokens) > 0:
-					run++
-				}
-				return run == settle
+				return false
+			})
+			if end == n-1 || !wrong && stop >= 0 && s+stop <= end-relexMargin {
+				break
 			}
-			return false
-		})
+			if wrong {
+				// The cut may have misled the lines above as well, if a
+				// token runs past it: they are checked with all the text,
+				// before lexing starts further up.
+				ahead = n
+			}
+		}
 		if wrong {
 			continue
 		}
 		if stop < 0 {
-			return append(slices.Clip(prev[:s]), lines...), s == 0
+			return patch{from: s, to: len(prev), lines: lines, exact: s == 0}
 		}
-		out := append(slices.Clip(prev[:s]), lines[:stop+1]...)
-		return append(out, prev[s+stop-shift+1:]...), false
+		return patch{from: s, to: s + stop - shift + 1, lines: lines[:stop+1]}
 	}
 }
 

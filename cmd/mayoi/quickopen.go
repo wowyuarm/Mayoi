@@ -5,6 +5,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/egoist/mygo/ui"
@@ -26,6 +27,8 @@ type quickOpen struct {
 	stale   bool
 	moved   bool     // the choice moved by keys, to scroll into view
 	used    []string // the commands the palette ran last, the last first
+	// shook is when Return found nothing to open, which shakes the box.
+	shook time.Time
 }
 
 func (a *app) openQuick(query string) {
@@ -85,16 +88,19 @@ func (a *app) quickOpenView(c *ui.Context) {
 	}
 	choose := func(i int) {
 		if i < 0 || i >= len(q.results) {
+			q.shook = c.Now()
 			return
 		}
 		rel := a.index[q.results[i].Index]
 		q.open = false
-		a.openFile(a.root+"/"+rel, true)
+		a.openFile(inDir(a.root, rel), true)
 	}
 	ui.Overlay(c, func() {
 		back := a.dialogBack(c, "quick")
 		back.Children(func() {
-			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip().
+			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip()
+			shake(c, box, q.shook)
+			box.
 				Role(ui.RoleDialog).Label(locales.QuickOpenLabel())
 			box.Children(func() {
 				ui.Row(c).Padding(10, 14).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.border).Children(func() {
@@ -118,6 +124,8 @@ func (a *app) quickOpenView(c *ui.Context) {
 							if line > 0 {
 								q.open = false
 								a.goToLine(line, col)
+							} else {
+								q.shook = c.Now()
 							}
 						} else {
 							choose(q.sel)
@@ -170,10 +178,7 @@ func (a *app) quickBody(c *ui.Context, isLine bool, line, col int, choose func(i
 		for i, m := range q.results {
 			rel := a.index[m.Index]
 			row := ui.ButtonBase(c.Key(rel)).Padding(5, 10).Gap(10).Radius(6).Justify(ui.Start).AlignItems(ui.Center).Label(rel)
-			switch {
-			case i == q.sel:
-				row.Background(p.active)
-			case row.Hovered():
+			if i != q.sel && row.Hovered() {
 				row.Background(p.hover)
 			}
 			if i == q.sel && q.moved {
@@ -182,7 +187,8 @@ func (a *app) quickBody(c *ui.Context, isLine bool, line, col int, choose func(i
 			if row.Clicked() {
 				choose(i)
 			}
-			row.Children(func() { a.quickRow(c, rel, m.Positions) })
+			row.Transition(hoverFade)
+			row.Children(func() { a.pickMark(c, i == q.sel, "quick"); a.quickRow(c, rel, m.Positions) })
 		}
 	})
 	q.moved = false
@@ -331,6 +337,7 @@ func (a *app) quickSymbols(c *ui.Context, query string) {
 	}
 	choose := func(i int) {
 		if i < 0 || i >= len(q.results) {
+			q.shook = c.Now()
 			return
 		}
 		q.open = false
@@ -347,7 +354,9 @@ func (a *app) quickSymbols(c *ui.Context, query string) {
 	ui.Overlay(c, func() {
 		back := a.dialogBack(c, "quick")
 		back.Children(func() {
-			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip().
+			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip()
+			shake(c, box, q.shook)
+			box.
 				Role(ui.RoleDialog).Label(locales.SymbolLabel())
 			box.Children(func() {
 				ui.Row(c).Padding(10, 14).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.border).Children(func() {
@@ -375,10 +384,7 @@ func (a *app) quickSymbols(c *ui.Context, query string) {
 							sym := syms[m.Index]
 							row := ui.ButtonBase(c.Key(fmt.Sprint("sym:", sym.Line))).Padding(5, 10).Gap(10).Radius(6).
 								Justify(ui.Start).AlignItems(ui.Center).Label(sym.Name)
-							switch {
-							case i == q.sel:
-								row.Background(p.active)
-							case row.Hovered():
+							if i != q.sel && row.Hovered() {
 								row.Background(p.hover)
 							}
 							if i == q.sel && q.moved {
@@ -387,7 +393,8 @@ func (a *app) quickSymbols(c *ui.Context, query string) {
 							if row.Clicked() {
 								choose(i)
 							}
-							row.Children(func() { a.symbolRow(c, sym, m.Positions, query == "") })
+							row.Transition(hoverFade)
+							row.Children(func() { a.pickMark(c, i == q.sel, "symbols"); a.symbolRow(c, sym, m.Positions, query == "") })
 						}
 					})
 					q.moved = false

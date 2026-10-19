@@ -39,6 +39,13 @@ type document struct {
 	indent    indentStyle
 	hist      history
 	git       gitmarks.Marks
+	// marks are vim mode's marks in the text, which move with its edits:
+	// those of m, and ' for where the cursor jumped from. changed is where
+	// the last change was, the mark . of vim. tracked are offsets that a
+	// command of many steps, as :g, follows the lines of.
+	marks   map[rune]int
+	changed int
+	tracked []int
 
 	// widest is the longest line in columns seen, which sizes the text
 	// area's width; widestVersion is the version it was last measured at
@@ -154,6 +161,8 @@ type editor struct {
 	peek    int
 	blame   blameState
 	vim     vimState
+	// vimShown are the matches of vim's search the editor highlighted last.
+	vimShown vimShownMatches
 	// restoreTab is where a tab of the last session was, which a remote file
 	// takes once it is read.
 	restoreTab *settings.Tab

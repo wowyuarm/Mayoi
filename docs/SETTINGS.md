@@ -64,6 +64,7 @@ takes its default.
 | `scmTree`               | `false`       | `true`, `false`                                             | **View as Tree** in Source Control's menu      |
 | `scmAllBranches`        | `false`       | `true`, `false`                                             | **Show All Branches** in Source Control's menu |
 | `syncIgnored`           | none          | Keys, `"settings.json"`, `"keybindings.json"`               | The [settings sync](#settings-sync) panel      |
+| `aiModel`               | `""`          | `""` (`deepseek-flash`), or a model of the AI gateway       | Only this file                                 |
 
 ### Language
 
@@ -106,11 +107,13 @@ differ in width lines them up only roughly.
 - **`wordWrap`** wraps long lines at the edge of the editor. **⌥Z** wraps or unwraps one tab only, until this
   setting changes.
 - **`vim`** starts editors in vim's normal mode.
-- **`vimCtrlKeys`** gives ⌃F, ⌃B and ⌃R to vim's normal mode on Windows and Linux, rather than to Find, Toggle
-  Sidebar and Open Recent. On macOS, where those commands use ⌘, vim always has them.
+- **`vimCtrlKeys`** gives ⌃F, ⌃B, ⌃R, ⌃A and ⌃X to vim's normal mode on Windows and Linux, rather than to Find,
+  Toggle Sidebar, Open Recent, Select All and Cut. On macOS, where those commands use ⌘, vim always has them.
 - **`blame`** shows who last changed the caret's line, and when, at the end of the line.
 - **`scmTree`** lists Source Control's changes in a tree of their folders, rather than by path.
 - **`scmAllBranches`** shows the commits of every branch and tag, not only those of the branch checked out.
+- **`aiModel`** is the model of Mon's AI gateway that writes commit messages, `deepseek-flash` when empty. The models
+  your account can use are listed at `https://mon.sorrycc.dev/api/v1/ai/v1/models`.
 
 ### Example
 
@@ -156,8 +159,7 @@ it starts.
 
 ## Settings sync
 
-**Mayoi → Sign In to Sync Settings…** (**Help → Sign In to Sync Settings…** on Windows and Linux, or **Account: Sign In
-to Sync Settings…** in the command palette) signs in to your account at [mon.sorrycc.dev](https://mon.sorrycc.dev).
+**Mayoi → Sign In…** (**Help → Sign In…** on Windows and Linux, or **Account: Sign In…** in the command palette) signs in to your account at [mon.sorrycc.dev](https://mon.sorrycc.dev).
 Mayoi shows a code and opens it in the browser: sign in there with GitHub or Google, check that the page shows the same
 code and approve it. The dialog counts down until the code expires.
 

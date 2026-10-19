@@ -1,6 +1,8 @@
 package main
 
 import (
+	"mayoi/locales"
+	"os"
 	"strings"
 	"testing"
 
@@ -110,7 +112,7 @@ func expectCursor(t *testing.T, d *editor, at int) {
 
 func TestVimNormalModeTypesNothing(t *testing.T) {
 	hs, d := vimHarness(t, "a.txt", "hello\n")
-	if !hs.tt.HasText("-- NORMAL --") {
+	if !hs.tt.HasText("NORMAL") {
 		t.Fatal("the status bar does not show normal mode")
 	}
 	// A key that types text, as a keyboard sends it: j moves down a line,
@@ -121,7 +123,7 @@ func TestVimNormalModeTypesNothing(t *testing.T) {
 	expectText(t, d, "hello\n")
 	expectCursor(t, d, 1)
 	hs.vim("0i")
-	if !hs.tt.HasText("-- INSERT --") {
+	if !hs.tt.HasText("INSERT") {
 		t.Fatal("i does not show insert mode")
 	}
 	hs.insert("oh ")
@@ -245,7 +247,7 @@ func TestVimTextObjects(t *testing.T) {
 func TestVimVisual(t *testing.T) {
 	hs, d := vimHarness(t, "a.txt", "one two three\nfour\nfive\n")
 	hs.vim("wv")
-	if !hs.tt.HasText("-- VISUAL --") {
+	if !hs.tt.HasText("VISUAL") {
 		t.Fatal("v does not show visual mode")
 	}
 	hs.vim("e")
@@ -335,4 +337,170 @@ func TestVimOff(t *testing.T) {
 	if hs.tt.HasText("NORMAL") {
 		t.Fatal("the status bar shows a mode with vim mode off")
 	}
+}
+
+func TestVimSearchLine(t *testing.T) {
+	hs, d := vimHarness(t, "a.txt", "one two\nthree two\nfour\n")
+	hs.vim("/")
+	if hs.a.vimLine.d != d || !hs.tt.HasText("/") {
+		t.Fatal("/ does not open the command line")
+	}
+	// The cursor goes to the first match as it is typed, and back as the
+	// line is closed with Esc.
+	hs.tt.Type("thr")
+	hs.frames()
+	expectCursor(t, d, 8)
+	if !hs.tt.HasText(locales.VimMatchCount(1, 1)) {
+		t.Fatal("the command line does not count the matches")
+	}
+	if len(hs.a.vimMatches(d, d.buf.Snapshot(), 0, 2)) != 1 {
+		t.Fatal("the matches of the search typed are not highlighted")
+	}
+	hs.tt.Key(0, ui.KeyEscape)
+	hs.frames()
+	if hs.a.vimLine.d != nil {
+		t.Fatal("Esc did not close the command line")
+	}
+	expectCursor(t, d, 0)
+	if len(hs.a.vimMatches(d, d.buf.Snapshot(), 0, 2)) != 0 {
+		t.Fatal("a search given up still shows its matches")
+	}
+	// Backspace with nothing typed closes it too.
+	hs.vim("/")
+	hs.tt.Key(0, ui.KeyBackspace)
+	hs.frames()
+	if hs.a.vimLine.d != nil {
+		t.Fatal("Backspace on an empty line did not close it")
+	}
+	// Return goes; the matches show until Esc in normal mode.
+	hs.vim("/")
+	hs.tt.Type("two")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	expectCursor(t, d, 4)
+	if n := len(hs.a.vimMatches(d, d.buf.Snapshot(), 0, 2)); n != 2 {
+		t.Fatalf("%d matches highlighted after the search, want 2", n)
+	}
+	hs.vim("n")
+	expectCursor(t, d, 14)
+	hs.vim("n")
+	expectCursor(t, d, 4)
+	if !hs.tt.HasText(locales.VimWrappedTop()) {
+		t.Fatal("a search that went round does not say so")
+	}
+	hs.vim("<Esc>")
+	if len(hs.a.vimMatches(d, d.buf.Snapshot(), 0, 2)) != 0 {
+		t.Fatal("Esc did not hide the matches")
+	}
+	// Up brings back the last search.
+	hs.vim("gg/")
+	hs.tt.Key(0, ui.KeyUp)
+	hs.frames()
+	if hs.a.vimLine.text != "two" {
+		t.Fatalf("Up brought %q back, want two", hs.a.vimLine.text)
+	}
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	expectCursor(t, d, 4)
+	// Nothing found: the bar shakes and stays.
+	hs.vim("/")
+	hs.tt.Type("[")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	if hs.a.vimLine.d == nil || hs.a.vimLine.shook.IsZero() {
+		t.Fatal("an invalid pattern did not shake the command line")
+	}
+	hs.tt.Key(0, ui.KeyEscape)
+	hs.frames()
+	hs.vim("/")
+	hs.tt.Type("nothing")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	if !hs.tt.HasText(locales.VimPatternNotFound("nothing")) {
+		t.Fatal("a search that finds nothing does not say so")
+	}
+	expectCursor(t, d, 4)
+}
+
+func TestVimCommands(t *testing.T) {
+	hs, d := vimHarness(t, "a.txt", "b\na\nc\n")
+	hs.vim(":")
+	hs.tt.Type("sort")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	expectText(t, d, "a\nb\nc\n")
+	hs.vim(":")
+	hs.tt.Type("nope")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	if !hs.tt.HasText(locales.VimNotCommand("nope")) {
+		t.Fatal("an unknown command does not say so")
+	}
+	hs.vim(":")
+	hs.tt.Type("w")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.frames()
+	if data, _ := os.ReadFile(hs.path("a.txt")); string(data) != "a\nb\nc\n" {
+		t.Fatalf(":w saved %q", data)
+	}
+	hs.vim(":")
+	hs.tt.Type("q")
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.settle()
+	if hs.a.activeEditor() != nil {
+		t.Fatal(":q did not close the tab")
+	}
+}
+
+func TestVimScrollsToCursor(t *testing.T) {
+	hs, d := vimHarness(t, "a.txt", strings.Repeat("line\n", 300))
+	hs.vim("150G")
+	hs.vim("zt")
+	lineH := hs.a.font.lineH
+	if top := (d.vscroll.Y - editorPadY) / lineH; top < 148 || top > 150 {
+		t.Fatalf("zt scrolled to line %v, want 149", top)
+	}
+	hs.vim("H")
+	if l := d.buf.Snapshot().LineAt(d.sel[1]); l < 149 || l > 151 {
+		t.Fatalf("H went to line %d", l)
+	}
+	hs.vim("zb")
+	hs.vim("L")
+	if l := d.buf.Snapshot().LineAt(d.sel[1]); l != 149 {
+		t.Fatalf("L after zb went to line %d, want 149", l)
+	}
+	hs.vim("zz")
+	mid := d.vscroll.Y + d.vim.viewH/2
+	if y := editorPadY + 149.5*lineH; y < mid-lineH || y > mid+lineH {
+		t.Fatalf("zz left the cursor at %v, the middle at %v", y, mid)
+	}
+}
+
+func TestVimCursorAndFlash(t *testing.T) {
+	hs, d := vimHarness(t, "a.txt", "one two\n")
+	hs.vim("d")
+	if !d.vim.operatorPending() {
+		t.Fatal("d does not wait for a motion")
+	}
+	hs.vim("<Esc>")
+	if d.vim.operatorPending() {
+		t.Fatal("Esc left the operator waiting")
+	}
+	hs.vim("yiw")
+	if d.vim.flash != [2]int{0, 3} || d.vim.flashAt.IsZero() {
+		t.Fatalf("yiw lit %v, want [0 3]", d.vim.flash)
+	}
+	hs.vim("wdw")
+	if d.vim.flash != [2]int{0, 3} {
+		t.Fatal("a delete lit the text it took")
+	}
+}
+
+// On a layout of another script, the keys are where a US keyboard has
+// them.
+func TestVimOtherLayout(t *testing.T) {
+	hs, d := vimHarness(t, "a.txt", "one two\n")
+	hs.tt.KeyAt(0, ui.KeyW)
+	hs.frames()
+	expectCursor(t, d, 4)
 }

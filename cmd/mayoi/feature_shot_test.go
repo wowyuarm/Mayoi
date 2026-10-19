@@ -301,6 +301,24 @@ func TestFeatVim(t *testing.T) {
 		hs.vim("w")
 		hs.settle()
 		hs.fshot("06-vim-normal", dark)
+		// A search as it is typed: its matches, and the command line.
+		hs.vim("/")
+		hs.tt.Type("settings")
+		hs.settle()
+		hs.fshot("06-vim-search", dark)
+		hs.tt.Key(0, ui.KeyEnter)
+		hs.settle()
+		hs.vim(":")
+		hs.tt.Type("%s/settings/s/g")
+		hs.settle()
+		hs.fshot("06-vim-command", dark)
+		hs.tt.Key(0, ui.KeyEscape)
+		hs.settle()
+		// A register recording, in the status bar.
+		hs.vim("qa")
+		hs.settle()
+		hs.fshot("06-vim-record", dark)
+		hs.vim("q")
 	})
 }
 
@@ -725,6 +743,7 @@ func TestFeatRemoteWindow(t *testing.T) {
 		w.Folder = remote.Path("dev-box", project)
 		w.Expanded = []string{"cmd", "internal"}
 		a := newApp(&fakeHost{}, s, w)
+		t.Cleanup(a.shutdown)
 		tt := ui.NewTester(a.view, featW, featH)
 		tt.SetDark(dark)
 		tt.SetScale(2)

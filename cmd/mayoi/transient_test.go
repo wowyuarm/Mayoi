@@ -140,6 +140,7 @@ func TestExplorerPreviewTab(t *testing.T) {
 
 	// The next start.
 	b := newApp(hs.h, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	tb := ui.NewTester(b.view, 1200, 760)
 	for range 5 {
 		step(tb)
@@ -285,6 +286,7 @@ func TestCommitPreviewTab(t *testing.T) {
 
 	// The next start.
 	b := newApp(hs.h, a.settings, a.window)
+	t.Cleanup(b.shutdown)
 	tb := ui.NewTester(b.view, 1200, 760)
 	for range 5 {
 		step(tb)

@@ -98,8 +98,10 @@ type Local interface {
 	// Read returns the preferences and shortcuts as they are now.
 	Read() (Snapshot, error)
 	// Apply makes s the preferences and shortcuts, and conflict, unless
-	// "", the account's keybindings.json that s leaves out.
-	Apply(s Snapshot, conflict string) error
+	// "", the account's keybindings.json that s leaves out. Where they
+	// are no longer read, as Read returned them, it changes nothing and
+	// fails with ErrStale.
+	Apply(read, s Snapshot, conflict string) error
 	// IsDefault reports whether s is what a first launch has, which a
 	// first sync replaces without asking.
 	IsDefault(s Snapshot) bool
@@ -146,6 +148,14 @@ const (
 // the account both have preferences of their own: sync again with
 // UseAccount or UseLocal.
 var ErrNeedsChoice = errors.New("cloudsync: this machine and the account both have settings")
+
+// ErrStale is what Apply fails with when this machine's settings changed
+// since they were read, as the person changed one as a sync ran. A sync
+// reads them again and merges anew, staleTries times at most, and fails
+// with it then: the change syncs as it is pushed.
+var ErrStale = errors.New("cloudsync: this machine's settings changed as they synced")
+
+const staleTries = 3
 
 // Result says what a sync did.
 type Result struct {
@@ -291,6 +301,7 @@ func (e *Engine) sync(ctx context.Context, choice Choice) (Result, error) {
 	mine := e.withUnknown(base, local)
 	var res Result
 	var applied *Snapshot
+	stale := 0
 	for {
 		ours := e.withKept(mine, remote)
 		merged, conflict := Merge(base, ours, remote)
@@ -299,12 +310,28 @@ func (e *Engine) sync(ctx context.Context, choice Choice) (Result, error) {
 			now = *applied
 		}
 		if !merged.Equal(now) || conflict != "" && conflict != res.KeybindingsConflict {
-			if err := e.Local.Apply(merged.clone(), conflict); err != nil {
+			err := e.Local.Apply(local, merged.clone(), conflict)
+			if errors.Is(err, ErrStale) && stale < staleTries {
+				// The person changed a setting since it was read: merge
+				// that change too, rather than undo it.
+				stale++
+				fresh, err := e.Local.Read()
+				if err != nil {
+					return res, err
+				}
+				mine, local = since(mine, local, fresh), fresh
+				continue
+			}
+			if err != nil {
 				return res, err
 			}
 			res.Applied = true
 			res.KeybindingsConflict = conflict
 			applied = &merged
+			// As applied, which a later Apply of this sync checks against.
+			if local, err = e.Local.Read(); err != nil {
+				return res, err
+			}
 		}
 		if merged.Equal(remote) && version > 0 {
 			st.Version, st.Base, st.SyncedAt = version, &merged, time.Now()
@@ -328,6 +355,31 @@ func (e *Engine) sync(ctx context.Context, choice Choice) (Result, error) {
 		st.Version, st.Base, st.SyncedAt = saved.Version, &merged, time.Now()
 		return res, e.setState(st)
 	}
+}
+
+// since returns mine with what changed from was to now, read as a sync
+// ran: the person's changes of then, over this machine's of before.
+func since(mine, was, now Snapshot) Snapshot {
+	out := mine.clone()
+	if out.Settings == nil {
+		out.Settings = map[string]json.RawMessage{}
+	}
+	for _, m := range []map[string]json.RawMessage{was.Settings, now.Settings} {
+		for k := range m {
+			if !changed(was.Settings, now.Settings, k) {
+				continue
+			}
+			if v, ok := now.Settings[k]; ok {
+				out.Settings[k] = v
+			} else {
+				delete(out.Settings, k)
+			}
+		}
+	}
+	if now.Keybindings != was.Keybindings {
+		out.Keybindings = now.Keybindings
+	}
+	return out
 }
 
 // withUnknown returns local with the preferences of base this version of

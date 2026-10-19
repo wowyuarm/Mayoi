@@ -94,6 +94,7 @@ func (a *app) syncStatus(c *ui.Context) {
 	if b.Hovered() || a.syncOpen {
 		b.Background(p.hover)
 	}
+	b.Transition(hoverFade)
 	b.Children(func() {
 		if si.busy {
 			ui.Spinner(c).Size(11, 11)
@@ -160,6 +161,8 @@ func (a *app) syncPanel(c *ui.Context, anchor, panel ui.Element, si syncInfo) {
 			if sync.Hovered() && !si.busy {
 				sync.Background(p.hover)
 			}
+			sync.Transition(hoverFade)
+			pressPose(sync)
 			sync.Children(func() {
 				col := p.muted
 				if si.busy {
@@ -237,6 +240,7 @@ func (a *app) syncRow(c *ui.Context, key string, icon *ui.SVG, label, detail str
 	if row.Hovered() {
 		row.Background(p.hover)
 	}
+	row.Transition(hoverFade)
 	was := on
 	row.Children(func() {
 		ui.Icon(c, icon).FontSize(14).TextColor(p.muted).Shrink(0)
@@ -262,6 +266,7 @@ func (a *app) syncAction(c *ui.Context, key string, icon *ui.SVG, label string, 
 		b.Background(p.hover)
 		col = p.text
 	}
+	b.Transition(hoverFade)
 	b.Children(func() {
 		ui.Icon(c, icon).FontSize(13).TextColor(col)
 		ui.Text(c, label).FontSize(12).TextColor(col).SingleLine()

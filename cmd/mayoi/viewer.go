@@ -442,7 +442,7 @@ func (a *app) viewerView(c *ui.Context, v *viewer, name string) {
 		case v.err != "":
 			// The picture that parsed last stays, with what is wrong now.
 			ui.Row(c).Absolute().Top(8).Left(8).Right(8).Justify(ui.Center).PassThrough().Children(func() {
-				ui.Text(c, v.err).FontSize(12).TextColor(p.danger).SingleLine().Padding(4, 10).Radius(6).
+				ui.Text(c, v.err).FontSize(12).TextColor(p.dangerFg).SingleLine().Padding(4, 10).Radius(6).
 					Background(p.chrome).Border(1, p.border).MaxWidthPercent(100)
 			})
 		}
@@ -550,7 +550,7 @@ func (a *app) viewerStatus(c *ui.Context, v *viewer, item func(key, label, tip s
 	if v.diskGone {
 		ui.Row(c).Padding(0, 6).Gap(5).AlignItems(ui.Center).Children(func() {
 			ui.Icon(c, iconTrash).FontSize(12).TextColor(p.danger)
-			text(locales.DeletedOnDisk()).TextColor(p.danger)
+			text(locales.DeletedOnDisk()).TextColor(p.dangerFg)
 		})
 	}
 	if v.markdown != nil {

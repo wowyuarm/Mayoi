@@ -205,6 +205,7 @@ func (h *desktop) openFolders(dirs []string) {
 }
 
 func (h *desktop) recentChanged() { h.m.refreshMenu() }
+func (h *desktop) menuChanged()   { h.m.refreshMenu() }
 
 func (h *desktop) fontChanged() {
 	for _, w := range h.m.wins {
@@ -524,9 +525,15 @@ func (m *mayoi) openFile(path string) {
 	var win *desktop
 	deepest := ""
 	for _, w := range m.wins {
-		if root := w.a.folder(); root != "" && path != root && remote.Contains(root, path) && len(root) > len(deepest) {
+		if root := w.a.folder(); root != "" && inFolder(root, path) && len(root) > len(deepest) {
 			win, deepest = w, root
 		}
+	}
+	if deepest != "" {
+		// As the window spells its folder, which on Windows a path given
+		// in other letters, c:\proj for C:\Proj, is too: the file opens
+		// once, as the Explorer has it.
+		path = filepath.Join(deepest, path[len(strings.TrimSuffix(deepest, string(filepath.Separator))):])
 	}
 	if win == nil && len(m.wins) > 0 {
 		win = m.wins[0]

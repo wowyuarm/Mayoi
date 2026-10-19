@@ -265,6 +265,7 @@ func TestLockedColumnRestoresFileTargetAfterCleanup(t *testing.T) {
 			}
 			w.Column, w.FileColumn = 2, savedTarget
 			a := newApp(&fakeHost{}, s, w)
+			t.Cleanup(a.shutdown)
 			tt := ui.NewTester(a.view, 1200, 760)
 			step(tt)
 			step(tt)

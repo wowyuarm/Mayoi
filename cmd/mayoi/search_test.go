@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/egoist/mygo/ui"
-	"runtime"
 )
 
 // settleSearch draws frames until the search under way, or waiting to
@@ -195,7 +195,7 @@ func TestReplaceInFiles(t *testing.T) {
 	if string(css) != "b0dy {\r\n  c0l0r: #333;\r\n}\r\n" {
 		t.Errorf("style.css: %q", css)
 	}
-	// Windows carries no permission bits.
+	// Windows has no permission bits to keep.
 	if info, _ := os.Stat(hs.path("web/style.css")); runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Errorf("style.css mode %v", info.Mode())
 	}

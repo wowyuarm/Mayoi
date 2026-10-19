@@ -30,6 +30,7 @@ func TestSwitchFolderSwapsSessions(t *testing.T) {
 	root, other := workspaceFixture(t), workspaceFixture(t)
 	s := settings.Default()
 	a := newApp(&fakeHost{}, s, s.NewWindow())
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	step(tt)
 	a.openFolder(root)
@@ -75,6 +76,7 @@ func TestCloseFolderKeepsSession(t *testing.T) {
 	root := workspaceFixture(t)
 	s := settings.Default()
 	a := newApp(&fakeHost{}, s, s.NewWindow())
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	step(tt)
 	a.openFolder(root)
@@ -101,6 +103,7 @@ func TestClosingWindowKeepsItsTabs(t *testing.T) {
 	h := &fakeHost{choice: 1} // don't save
 	w := s.NewWindow()
 	a := newApp(h, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	step(tt)
 	a.openFolder(root)
@@ -139,6 +142,7 @@ func TestRestoresWhereTabsWere(t *testing.T) {
 	}, Active: 0, Weight: 1}}
 	w.Expanded = []string{"internal/a", "gone"}
 	a := newApp(&fakeHost{folder: root}, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	step(tt)
 	step(tt)
@@ -178,6 +182,7 @@ func TestRestoresTheScroll(t *testing.T) {
 		{File: long, ScrollY: 1200}, {File: filepath.Join(root, "go.mod")},
 	}, Active: 0, Weight: 1}}
 	a := newApp(&fakeHost{folder: root}, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	for range 3 {
 		step(tt)

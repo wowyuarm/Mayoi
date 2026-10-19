@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/png"
+	"mayoi/internal/mon"
 	"mayoi/internal/settings"
 	"os"
 	"path/filepath"
@@ -51,6 +52,10 @@ type fakeHost struct {
 	image     []byte
 	// chosen are the paths the dialog of choosePaths answers.
 	chosen []string
+	// aiClient is what ai returns, and aiSignOuts counts the tokens Mon
+	// refused.
+	aiClient   *mon.Client
+	aiSignOuts int
 }
 
 func (h *fakeHost) openFolder(done func(string)) { done(h.folder) }
@@ -90,6 +95,7 @@ func (h *fakeHost) newWindow(dir string)      { h.windows = append(h.windows, di
 func (h *fakeHost) newBlankWindow()           { h.blankWindows++ }
 func (h *fakeHost) openFolders(dirs []string) { h.folders = append(h.folders, dirs...) }
 func (h *fakeHost) recentChanged()            { h.recentChanges++ }
+func (h *fakeHost) menuChanged()              {}
 func (h *fakeHost) fontChanged()              {}
 func (h *fakeHost) installCLI()               {}
 func (h *fakeHost) uninstallCLI()             {}
@@ -107,6 +113,8 @@ func (h *fakeHost) syncInfo() syncInfo {
 }
 func (h *fakeHost) syncPicture() *ui.Bitmap { return nil }
 func (h *fakeHost) syncConflictResolved()   { h.resolved++ }
+func (h *fakeHost) ai() *mon.Client         { return h.aiClient }
+func (h *fakeHost) aiSignedOut()            { h.aiSignOuts++ }
 func (h *fakeHost) stepProject(int)         {}
 func (h *fakeHost) showProject(int)         {}
 func (h *fakeHost) closeProject()           {}
@@ -198,6 +206,7 @@ func (hs *harness) path(rel string) string { return filepath.Join(hs.root, filep
 // status bar's parts go one by one, the least needed first, each only
 // once the bar would not hold it, and those left fit.
 func TestStatusBarDropsTheLeastNeededFirst(t *testing.T) {
+	skipOnWindows(t, "Windows' narrower font holds the branch at 300")
 	hs := newHarness(t, true)
 	git := hs.gitRepo()
 	branch := "feature/responsive-title-bar-polish"
@@ -378,6 +387,11 @@ func TestQuickOpenAndGoToLine(t *testing.T) {
 	hs.settle()
 	if d := a.activeEditor(); d == nil || filepath.Base(d.path) != "b.ts" {
 		t.Fatalf("quick open opened %v", d)
+	}
+	// As the Explorer spells it, with Windows' backslashes there, so that
+	// the file opens once whichever way it is opened.
+	if d := a.activeEditor(); d.path != filepath.Clean(d.path) {
+		t.Errorf("quick open opened %q, not %q", d.path, filepath.Clean(d.path))
 	}
 	if a.quick.open {
 		t.Error("quick open stayed open")

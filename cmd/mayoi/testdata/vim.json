@@ -1,0 +1,4076 @@
+[
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "w",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3w",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 8
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "W",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "e",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3e",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 7
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "E",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "b",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$b",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 15
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ge",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "gE",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 18
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "0",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "^",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "g_",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 18
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "j$",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 39
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2$",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 39
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "G",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "gg",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2G",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "}",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2}",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 50
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "{",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "f(%",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "%",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "fxdt]",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dfe",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dte",
+  "want": "e two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "cwX<Esc>",
+  "want": "X two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "cWX<Esc>",
+  "want": "X two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ceX<Esc>",
+  "want": "X two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dw",
+  "want": "two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "d2w",
+  "want": ".three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2dw",
+  "want": ".three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dW",
+  "want": "two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "de",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dE",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "db",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$db",
+  "want": "one two.three  r\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 15
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "d0",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$d^",
+  "want": "r\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "d$",
+  "want": "\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "D",
+  "want": "\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2D",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "C<Esc>",
+  "want": "\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "cc<Esc>",
+  "want": "\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dd",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2dd",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3dd",
+  "want": "last line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dj",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dk",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jdk",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dG",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jdgg",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyp",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyP",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yy2p",
+  "want": "one two.three  four\none two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yiwP",
+  "want": "oneone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yiwp",
+  "want": "oonene two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "x",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "5x",
+  "want": "wo.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$x",
+  "want": "one two.three  fou\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 17
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "X",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$X",
+  "want": "one two.three  for\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 17
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3X",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "s<Esc>",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Sz<Esc>",
+  "want": "z\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "rz",
+  "want": "zne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3rz",
+  "want": "zzz two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "r<CR>",
+  "want": "\nne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "~",
+  "want": "One two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "5~",
+  "want": "ONE Two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 5
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "g~w",
+  "want": "ONE two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "guu",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "gUU",
+  "want": "ONE TWO.THREE  FOUR\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "gUiw",
+  "want": "ONE two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "J",
+  "want": "one two.three  four five (six [x]) end\n\nlast line\n",
+  "cursor": 19
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3J",
+  "want": "one two.three  four five (six [x]) end\nlast line\n",
+  "cursor": 37
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jJ",
+  "want": "one two.three  four\n  five (six [x]) end\nlast line\n",
+  "cursor": 39
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Jx",
+  "want": "one two.three  fourfive (six [x]) end\n\nlast line\n",
+  "cursor": 19
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "o<Esc>",
+  "want": "one two.three  four\n\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Oz<Esc>",
+  "want": "z\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ix<Esc>",
+  "want": "xone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ax<Esc>",
+  "want": "oxne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Ix<Esc>",
+  "want": "xone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Ax<Esc>",
+  "want": "one two.three  fourx\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 19
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jIx<Esc>",
+  "want": "one two.three  four\n  xfive (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "A<Esc>",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 18
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ix<Esc>.",
+  "want": "xxone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dw.",
+  "want": ".three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dd.",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "x..",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3x.",
+  "want": "o.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2.",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ciwZ<Esc>w.",
+  "want": "Z Z.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "diw",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "daw",
+  "want": "two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "diW",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "daW",
+  "want": "two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wdaw",
+  "want": "one.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$daw",
+  "want": "one two.three\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 12
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf(di(",
+  "want": "one two.three  four\n  five () end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf(da(",
+  "want": "one two.three  four\n  five  end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfsdi(",
+  "want": "one two.three  four\n  five () end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf[di[",
+  "want": "one two.three  four\n  five (six []) end\n\nlast line\n",
+  "cursor": 33
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf[da]",
+  "want": "one two.three  four\n  five (six ) end\n\nlast line\n",
+  "cursor": 32
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfxci[Q<Esc>",
+  "want": "one two.three  four\n  five (six [Q]) end\n\nlast line\n",
+  "cursor": 33
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf)di)",
+  "want": "one two.three  four\n  five () end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jdib",
+  "want": "one two.three  four\n  five () end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "djp",
+  "want": "\none two.three  four\n  five (six [x]) end\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ddp",
+  "want": "  five (six [x]) end\none two.three  four\n\nlast line\n",
+  "cursor": 21
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ddP",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyjp",
+  "want": "one two.three  four\n  five (six [x]) end\none two.three  four\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dwP",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "xp",
+  "want": "noe two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ddjp",
+  "want": "  five (six [x]) end\n\none two.three  four\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jj",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jjj",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jjjk",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3j",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "kk",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "10j",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "l",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 1
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "5l",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 5
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$l",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 18
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "h",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3h",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "+",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "-",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "j-",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "<CR>",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2<CR>",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wv",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vd",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vey",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vep",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wviwd",
+  "want": "one .three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vd",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vjd",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "VjJ",
+  "want": "one two.three  four five (six [x]) end\n\nlast line\n",
+  "cursor": 19
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vjd",
+  "want": " five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vj$d",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vy",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vlld",
+  "want": " two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vllc_<Esc>",
+  "want": "_ two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vllo",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vlloh",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "v3lr-",
+  "want": "----two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vr-",
+  "want": "-------------------\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vU",
+  "want": "One two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vjU",
+  "want": "ONE TWO.THREE  FOUR\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vu",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vj~",
+  "want": "ONE TWO.THREE  FOUR\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "v$d",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "v$y",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vee",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 6
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ve<Esc>",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vjy",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vjc_<Esc>",
+  "want": "_\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vjjd",
+  "want": "last line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vjjx",
+  "want": "last line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vX",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vD",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vC_<Esc>",
+  "want": "_\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vS_<Esc>",
+  "want": "_\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vY",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yeP",
+  "want": "oneone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yep",
+  "want": "oonene two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yw$p",
+  "want": "one two.three  fourone \n  five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "y$P",
+  "want": "one two.three  fourone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 18
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "y0",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wy0P",
+  "want": "one one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "vlyjp",
+  "want": "one two.three  four\n on five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vyjp",
+  "want": "one two.three  four\n  five (six [x]) end\none two.three  four\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "VyjP",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Vjyp",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ywvep",
+  "want": "one  two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dd.",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ddu",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "xxuu",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ix<Esc>u",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "cwab<Esc>u",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Oab<Esc>u",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2ddu",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": ";",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": ",",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "fo;",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 16
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": ";;",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "fo,",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "to;",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 15
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "t ;",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 12
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Fo",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3fo",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dfo",
+  "want": ".three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "ctoX<Esc>",
+  "want": "Xo.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dto",
+  "want": "o.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dFo",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$dFo",
+  "want": "one two.three  fr\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 16
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "$dTo",
+  "want": "one two.three  for\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 17
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yfo",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "c$X<Esc>",
+  "want": "X\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "cjX<Esc>",
+  "want": "X\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "5j",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "G5k",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3gg",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "100G",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dgg",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yGP",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3ix<Esc>",
+  "want": "xxxone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3ax<Esc>",
+  "want": "oxxxne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3Ax<Esc>",
+  "want": "one two.three  fourxxx\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 21
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3Ix<Esc>",
+  "want": "xxxone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2ox<Esc>",
+  "want": "one two.three  four\nx\nx\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2Ox<Esc>",
+  "want": "x\nx\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3ix<Esc>.",
+  "want": "xxxxxxone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3ix<Esc>j.",
+  "want": "xxxone two.three  four\n  xxxfive (six [x]) end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2Ax<Esc>j.",
+  "want": "one two.three  fourxx\n  five (six [x]) endxx\n\nlast line\n",
+  "cursor": 43
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2ox<Esc>.",
+  "want": "one two.three  four\nx\nx\nx\nx\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 26
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3iab<Esc>",
+  "want": "abababone two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 5
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "2a<CR><Esc>",
+  "want": "o\n\nne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ayy\"ap",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ayyj\"aP",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ayw\"bywj\"ap\"bp",
+  "want": "one two.three  four\n one one  five (six [x]) end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"Ayy\"ap",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ayyj\"Ayy\"ap",
+  "want": "one two.three  four\n  five (six [x]) end\none two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ayw\"Aywj\"aP",
+  "want": "one two.three  four\none one   five (six [x]) end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"_ddp",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyj\"_ddp",
+  "want": "one two.three  four\n\none two.three  four\nlast line\n",
+  "cursor": 21
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yiwdd\"0P",
+  "want": "  onefive (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dddd\"1p\"2p",
+  "want": "\n  five (six [x]) end\none two.three  four\nlast line\n",
+  "cursor": 22
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "dw\"-P",
+  "want": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"add\"ap",
+  "want": "  five (six [x]) end\none two.three  four\n\nlast line\n",
+  "cursor": 21
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "3\"ayy\"ap",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"a3yy\"ap",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "\"ay$\"ap",
+  "want": "oone two.three  fourne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 19
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wmajj`ax",
+  "want": "one wo.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 4
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wmajj'ax",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jmakd'a",
+  "want": "\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jjmaggy'ap",
+  "want": "one two.three  four\none two.three  four\n  five (six [x]) end\n\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 20
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "wmabd`a",
+  "want": "two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jmaggd`a",
+  "want": "  five (six [x]) end\n\nlast line\n",
+  "cursor": 2
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Gmagg``x",
+  "want": "one two.three  four\n  five (six [x]) end\n\nast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "G''x",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "Gggx``x",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nast line\n",
+  "cursor": 41
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "/two<CR>``x",
+  "want": "ne two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 0
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jmaG'a''x",
+  "want": "one two.three  four\n  five (six [x]) end\n\nast line\n",
+  "cursor": 42
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyjgpx",
+  "want": "one two.three  four\n  five (six [x]) end\none two.three  four\n\nlast line\n",
+  "cursor": 61
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yiwgPx",
+  "want": "onene two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "cursor": 3
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "yyjgPx",
+  "want": "one two.three  four\none two.three  four\n five (six [x]) end\n\nlast line\n",
+  "cursor": 40
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jf(dib",
+  "want": "one two.three  four\n  five () end\n\nlast line\n",
+  "cursor": 28
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfxd[(",
+  "want": "one two.three  four\n  five x [x]) end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfxd])",
+  "want": "one two.three  four\n  five (si) end\n\nlast line\n",
+  "cursor": 30
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfx[(x",
+  "want": "one two.three  four\n  five six [x]) end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfx])x",
+  "want": "one two.three  four\n  five (six [x] end\n\nlast line\n",
+  "cursor": 35
+ },
+ {
+  "text": "one two.three  four\n  five (six [x]) end\n\nlast line\n",
+  "keys": "jfxc[(z<Esc>",
+  "want": "one two.three  four\n  five zx [x]) end\n\nlast line\n",
+  "cursor": 27
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "w.",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "dwj.",
+  "want": "beta gamma\nline\nthird\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "ciwX<Esc>j.",
+  "want": "X beta gamma\nX line\nthird\n",
+  "cursor": 13
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "ix<Esc>j.",
+  "want": "xalpha beta gamma\nxsecond line\nthird\n",
+  "cursor": 18
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "Ax<Esc>j.",
+  "want": "alpha beta gammax\nsecond linex\nthird\n",
+  "cursor": 29
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "2dw",
+  "want": "gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "3x",
+  "want": "ha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "A<BS><Esc>",
+  "want": "alpha beta gamm\nsecond line\nthird\n",
+  "cursor": 14
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "e",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 4
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "eee",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 15
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "ea<Esc>",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 4
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "cw<Esc>",
+  "want": " beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "cwx<Esc>w.",
+  "want": "x x gamma\nsecond line\nthird\n",
+  "cursor": 2
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "J.",
+  "want": "alpha beta gamma second line third\n",
+  "cursor": 28
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "yyjjp",
+  "want": "alpha beta gamma\nsecond line\nthird\nalpha beta gamma\n",
+  "cursor": 35
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "yiwjviwp",
+  "want": "alpha beta gamma\nalpha line\nthird\n",
+  "cursor": 21
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "$v0d",
+  "want": "\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "v$y$p",
+  "want": "alpha beta gammaalpha beta gamma\n\nsecond line\nthird\n",
+  "cursor": 16
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "Vjjd",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "jVkd",
+  "want": "third\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "3Vd",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "vjy",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "2yy",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "2yyjp",
+  "want": "alpha beta gamma\nsecond line\nalpha beta gamma\nsecond line\nthird\n",
+  "cursor": 29
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "y2y",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "dap",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "dip",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "yip",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "ixy<Esc>\".p",
+  "want": "xyxyalpha beta gamma\nsecond line\nthird\n",
+  "cursor": 3
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":s/a/b/<CR>j&",
+  "want": "blpha beta gamma\nsecond line\nthird\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":s/a/b/g<CR>j&",
+  "want": "blphb betb gbmmb\nsecond line\nthird\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":s/a/b/<CR>g&",
+  "want": "blphb beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":2,3m0<CR>",
+  "want": "second line\nthird\nalpha beta gamma\n",
+  "cursor": 12
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":1m$<CR>",
+  "want": "second line\nthird\nalpha beta gamma\n",
+  "cursor": 18
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":1m2<CR>",
+  "want": "second line\nalpha beta gamma\nthird\n",
+  "cursor": 12
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":3m1<CR>",
+  "want": "alpha beta gamma\nthird\nsecond line\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":1t.<CR>",
+  "want": "alpha beta gamma\nalpha beta gamma\nsecond line\nthird\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":1,2t$<CR>",
+  "want": "alpha beta gamma\nsecond line\nthird\nalpha beta gamma\nsecond line\n",
+  "cursor": 52
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":3t0<CR>",
+  "want": "third\nalpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":1co2<CR>",
+  "want": "alpha beta gamma\nsecond line\nalpha beta gamma\nthird\n",
+  "cursor": 29
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "yy:3pu<CR>",
+  "want": "alpha beta gamma\nsecond line\nthird\nalpha beta gamma\n",
+  "cursor": 35
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": "yy:pu!<CR>",
+  "want": "alpha beta gamma\nalpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":%norm Ax<CR>",
+  "want": "alpha beta gammax\nsecond linex\nthirdx\n",
+  "cursor": 36
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":%norm! Ix<CR>",
+  "want": "xalpha beta gamma\nxsecond line\nxthird\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":2,3norm dw<CR>",
+  "want": "alpha beta gamma\nline\n\n",
+  "cursor": 22
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":norm 2x<CR>",
+  "want": "pha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":%norm $x<CR>",
+  "want": "alpha beta gamm\nsecond lin\nthir\n",
+  "cursor": 30
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/a/d<CR>",
+  "want": "second line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":v/a/d<CR>",
+  "want": "alpha beta gamma\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g!/a/d<CR>",
+  "want": "alpha beta gamma\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/i/s/i/I/<CR>",
+  "want": "alpha beta gamma\nsecond lIne\nthIrd\n",
+  "cursor": 29
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/a/norm Ax<CR>",
+  "want": "alpha beta gammax\nsecond line\nthird\n",
+  "cursor": 16
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/e/m0<CR>",
+  "want": "second line\nalpha beta gamma\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":2,3g/./d<CR>",
+  "want": "alpha beta gamma\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/third/d<CR>",
+  "want": "alpha beta gamma\nsecond line\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta gamma\nsecond line\nthird\n",
+  "keys": ":g/alpha/d<CR>u",
+  "want": "alpha beta gamma\nsecond line\nthird\n",
+  "cursor": 0
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjf\"di\"",
+  "want": "func f(a, b) {\n    if a {\n        return \"\"\n    }\n    return 'q'\n}\n",
+  "cursor": 42
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjf\"da\"",
+  "want": "func f(a, b) {\n    if a {\n        return\n    }\n    return 'q'\n}\n",
+  "cursor": 39
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjfxci\"Q<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        return \"Q\"\n    }\n    return 'q'\n}\n",
+  "cursor": 42
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjdi\"",
+  "want": "func f(a, b) {\n    if a {\n        return \"\"\n    }\n    return 'q'\n}\n",
+  "cursor": 42
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "4jfqdi'",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return ''\n}\n",
+  "cursor": 65
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "4jfqca'Z<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    returnZ\n}\n",
+  "cursor": 63
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jdi{",
+  "want": "func f(a, b) {\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jda{",
+  "want": "func f(a, b) \n",
+  "cursor": 12
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjjdi{",
+  "want": "func f(a, b) {\n    if a {\n    }\n    return 'q'\n}\n",
+  "cursor": 30
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "di(",
+  "want": "func f() {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f(ci(z<Esc>",
+  "want": "func f(z) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "di{",
+  "want": "func f(a, b) {\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jdiB",
+  "want": "func f(a, b) {\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f{%",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 68
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "G%",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 13
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjjj%",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 53
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f,%",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 6
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjo<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n\n    }\n    return 'q'\n}\n",
+  "cursor": 47
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jo<Esc>",
+  "want": "func f(a, b) {\n    if a {\n\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 26
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jO<Esc>",
+  "want": "func f(a, b) {\n\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjox<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n        x\n    }\n    return 'q'\n}\n",
+  "cursor": 55
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjOx<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        x\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 34
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjS<Esc>",
+  "want": "func f(a, b) {\n    if a {\n\n    }\n    return 'q'\n}\n",
+  "cursor": 26
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjSx<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        x\n    }\n    return 'q'\n}\n",
+  "cursor": 34
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjccx<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        x\n    }\n    return 'q'\n}\n",
+  "cursor": 34
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjcc<Esc>",
+  "want": "func f(a, b) {\n    if a {\n\n    }\n    return 'q'\n}\n",
+  "cursor": 26
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjJ",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\" }\n    return 'q'\n}\n",
+  "cursor": 46
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjVjJ",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\" }\n    return 'q'\n}\n",
+  "cursor": 46
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "w",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 5
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "W",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 5
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "3W",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 13
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjw",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 34
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jj$b",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 44
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjf\"yi\"P",
+  "want": "func f(a, b) {\n    if a {\n        return \"x yx y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 44
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "2jci\"<Esc>",
+  "want": "func f(a, b) {\n    if a {\n        return \"\"\n    }\n    return 'q'\n}\n",
+  "cursor": 41
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jj^D",
+  "want": "func f(a, b) {\n    if a {\n        \n    }\n    return 'q'\n}\n",
+  "cursor": 33
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jj^d$",
+  "want": "func f(a, b) {\n    if a {\n        \n    }\n    return 'q'\n}\n",
+  "cursor": 33
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jj^y$P",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 45
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjvi\"d",
+  "want": "func f(a, b) {\n    if a {\n        return \"\"\n    }\n    return 'q'\n}\n",
+  "cursor": 42
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjva\"d",
+  "want": "func f(a, b) {\n    if a {\n        return\n    }\n    return 'q'\n}\n",
+  "cursor": 39
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jvi{d",
+  "want": "func f(a, b) {\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jva{d",
+  "want": "func f(a, b) \n",
+  "cursor": 12
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jvi{y",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjviwd",
+  "want": "func f(a, b) {\n    if a {\nreturn \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 26
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "fadaw",
+  "want": "func f(, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "dtb",
+  "want": "b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f{di}",
+  "want": "func f(a, b) {\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f{yi}",
+  "want": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjjd%",
+  "want": "func f(a, b) {\n    if a    }\n    return 'q'\n}\n",
+  "cursor": 24
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f(d%",
+  "want": "func f {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 6
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "f(y%P",
+  "want": "func f(a, b)(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 11
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "ct(X<Esc>",
+  "want": "X(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjf\"r<CR>",
+  "want": "func f(a, b) {\n    if a {\n        return \n        x y\"\n    }\n    return 'q'\n}\n",
+  "cursor": 49
+ },
+ {
+  "text": "func f(a, b) {\n    if a {\n        return \"x y\"\n    }\n    return 'q'\n}\n",
+  "keys": "jjfyr<CR>",
+  "want": "func f(a, b) {\n    if a {\n        return \"x \n        \"\n    }\n    return 'q'\n}\n",
+  "cursor": 52
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "w",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 8
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "ww",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 11
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "www",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 12
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wwww",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "e",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 6
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "ee",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 10
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "eee",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 11
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "eeee",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 14
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "b",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gb",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 29
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gbb",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 20
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gbbb",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 17
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gge",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 32
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Ggege",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 27
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "W",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 8
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "WW",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "E",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 6
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "EE",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 14
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "}",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "}}",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 36
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "}}}",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 36
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "G{",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 17
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "G{{",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "dw",
+  "want": "baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "d3w",
+  "want": "qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "dw.",
+  "want": "-qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "cw_<Esc>",
+  "want": "_ baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "c3w_<Esc>",
+  "want": "_qux\n\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jdd",
+  "want": "foo_bar baz-qux\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjdd",
+  "want": "foo_bar baz-qux\n\n  indented line\nend\n",
+  "cursor": 19
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jj2dd",
+  "want": "foo_bar baz-qux\n\nend\n",
+  "cursor": 17
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "J",
+  "want": "foo_bar baz-qux\n\n  indented line\nend\n",
+  "cursor": 14
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jJ",
+  "want": "foo_bar baz-qux\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "3J",
+  "want": "foo_bar baz-qux\n  indented line\nend\n",
+  "cursor": 14
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjJ",
+  "want": "foo_bar baz-qux\n\n\n  indented line end\n",
+  "cursor": 33
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "dap",
+  "want": "  indented line\nend\n",
+  "cursor": 2
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjdap",
+  "want": "foo_bar baz-qux\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "dip",
+  "want": "\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jdip",
+  "want": "foo_bar baz-qux\n  indented line\nend\n",
+  "cursor": 18
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wciwZ<Esc>",
+  "want": "foo_bar Z-qux\n\n\n  indented line\nend\n",
+  "cursor": 8
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wdiw",
+  "want": "foo_bar -qux\n\n\n  indented line\nend\n",
+  "cursor": 8
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wdaw",
+  "want": "foo_bar-qux\n\n\n  indented line\nend\n",
+  "cursor": 7
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wdiW",
+  "want": "foo_bar \n\n\n  indented line\nend\n",
+  "cursor": 7
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "wdaW",
+  "want": "foo_bar\n\n\n  indented line\nend\n",
+  "cursor": 6
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jdiw",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 16
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjdiw",
+  "want": "foo_bar baz-qux\n\n\nindented line\nend\n",
+  "cursor": 18
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjwdaw",
+  "want": "foo_bar baz-qux\n\n\n  line\nend\n",
+  "cursor": 20
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjdaw",
+  "want": "foo_bar baz-qux\n\n\n line\nend\n",
+  "cursor": 18
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjj^daw",
+  "want": "foo_bar baz-qux\n\n\n  line\nend\n",
+  "cursor": 20
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gdaw",
+  "want": "foo_bar baz-qux\n\n\n  indented line\n\n",
+  "cursor": 34
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gdiw",
+  "want": "foo_bar baz-qux\n\n\n  indented line\n\n",
+  "cursor": 34
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "dd",
+  "want": "\n\n  indented line\nend\n",
+  "cursor": 0
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjdd",
+  "want": "foo_bar baz-qux\n\n\nend\n",
+  "cursor": 18
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjjyyGp",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n  indented line\n",
+  "cursor": 40
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "Gyykp",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\nend\n",
+  "cursor": 34
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjj0d^",
+  "want": "foo_bar baz-qux\n\n\nindented line\nend\n",
+  "cursor": 18
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjj^",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 20
+ },
+ {
+  "text": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "keys": "jjj0w",
+  "want": "foo_bar baz-qux\n\n\n  indented line\nend\n",
+  "cursor": 20
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dd",
+  "want": "b\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gdd",
+  "want": "a\nb\nc\nd\n",
+  "cursor": 6
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gkdd",
+  "want": "a\nb\nc\ne\n",
+  "cursor": 6
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "2dd",
+  "want": "c\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gdk",
+  "want": "a\nb\nc\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dj",
+  "want": "c\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gdj",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "ddp",
+  "want": "b\na\nc\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gddp",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "GddP",
+  "want": "a\nb\nc\ne\nd\n",
+  "cursor": 6
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "yyp",
+  "want": "a\na\nb\nc\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gyyp",
+  "want": "a\nb\nc\nd\ne\ne\n",
+  "cursor": 10
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "ggyyGp",
+  "want": "a\nb\nc\nd\ne\na\n",
+  "cursor": 10
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "3J",
+  "want": "a b c\nd\ne\n",
+  "cursor": 3
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gkd2j",
+  "want": "a\nb\nc\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjdG",
+  "want": "a\nb\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjdgg",
+  "want": "d\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjyGP",
+  "want": "a\nb\nc\nd\ne\nc\nd\ne\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjyggP",
+  "want": "a\nb\nc\na\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "5x",
+  "want": "\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gx",
+  "want": "a\nb\nc\nd\n\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Gp",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "o<Esc>",
+  "want": "a\n\nb\nc\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Go<Esc>",
+  "want": "a\nb\nc\nd\ne\n\n",
+  "cursor": 10
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "GO<Esc>",
+  "want": "a\nb\nc\nd\n\ne\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjVd",
+  "want": "a\nb\nd\ne\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "GVkd",
+  "want": "a\nb\nc\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Vjjd",
+  "want": "d\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "V2jy",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "VGd",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "Vggd",
+  "want": "b\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "GVggd",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjVjp",
+  "want": "a\nb\ne\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "yyjVp",
+  "want": "a\na\nc\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "yyGVp",
+  "want": "a\nb\nc\nd\na\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "xjp",
+  "want": "\nba\nc\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "xjP",
+  "want": "\nab\nc\nd\ne\n",
+  "cursor": 1
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "jjxGp",
+  "want": "a\nb\n\nd\nec\n",
+  "cursor": 8
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "u",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "<C-r>",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dddd",
+  "want": "c\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dd2u",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dddduu",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": ":g/[bd]/d<CR>",
+  "want": "a\nc\ne\n",
+  "cursor": 4
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": ":g/./m0<CR>",
+  "want": "e\nd\nc\nb\na\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": ":g/./t.<CR>",
+  "want": "a\na\nb\nb\nc\nc\nd\nd\ne\ne\n",
+  "cursor": 18
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": ":%norm Ax<CR>u",
+  "want": "a\nb\nc\nd\ne\n",
+  "cursor": 0
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "dd:g/c/norm dd<CR>",
+  "want": "b\nd\ne\n",
+  "cursor": 2
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": ":2,4norm Ax<CR>",
+  "want": "a\nbx\ncx\ndx\ne\n",
+  "cursor": 9
+ },
+ {
+  "text": "a\nb\nc\nd\ne\n",
+  "keys": "\"ayyj\"byyG\"ap\"bp",
+  "want": "a\nb\nc\nd\ne\na\nb\n",
+  "cursor": 12
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "d}",
+  "want": "\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jd}",
+  "want": "if x {\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjjd}",
+  "want": "if x {\n    a()\n\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 16
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "wd}",
+  "want": "if \n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 2
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "y}P",
+  "want": "if x {\n    a()\nif x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "c}z<Esc>",
+  "want": "z\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jdip",
+  "want": "\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jdap",
+  "want": "    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjdap",
+  "want": "if x {\n    a()\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjdip",
+  "want": "if x {\n    a()\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 19
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jyipP",
+  "want": "if x {\n    a()\nif x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jvipd",
+  "want": "\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jvapd",
+  "want": "    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Gdap",
+  "want": "if x {\n    a()\n\n    b()\n}\n",
+  "cursor": 24
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Gdip",
+  "want": "if x {\n    a()\n\n    b()\n}\n\n",
+  "cursor": 26
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jd2ap",
+  "want": "func g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "2dap",
+  "want": "func g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jcipz<Esc>",
+  "want": "z\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j>ip",
+  "want": "    if x {\n        a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "di{",
+  "want": "if x {\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjjdi{",
+  "want": "if x {\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Gdi{",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n}\n",
+  "cursor": 38
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "d{",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Gd{",
+  "want": "if x {\n    a()\n\n    b()\n}\n}\n",
+  "cursor": 26
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjjd{",
+  "want": "if x {\n    a()\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 19
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjjy{P",
+  "want": "if x {\n    a()\n\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjjvi{d",
+  "want": "if x {\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "f{%d%",
+  "want": "if x \n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jdj",
+  "want": "if x {\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 11
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jd}u",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "3jo<Esc>",
+  "want": "if x {\n    a()\n\n    b()\n\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 24
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jo<Esc>.",
+  "want": "if x {\n    a()\n\n\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 16
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jcc<Esc>",
+  "want": "if x {\n\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jS<Esc>",
+  "want": "if x {\n\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jO<Esc>j.",
+  "want": "if x {\n\n\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 8
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jox<Esc>",
+  "want": "if x {\n    a()\n    x\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 19
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jj2D",
+  "want": "if x {\n    a()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jjD",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 15
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j^2D",
+  "want": "if x {\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 11
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j$2D",
+  "want": "if x {\n    a(\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 12
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j0wd}",
+  "want": "if x {\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jwdj",
+  "want": "if x {\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 11
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jwd2j",
+  "want": "if x {\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "r<CR>",
+  "want": "\nf x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 1
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jr<CR>",
+  "want": "if x {\n\na()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 8
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "w2r<CR>",
+  "want": "if \n{\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "v$y$p",
+  "want": "if x {if x {\n\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 6
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Vjjd",
+  "want": "    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jv$d",
+  "want": "if x {\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jv$jd",
+  "want": "if x {\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j$vjd",
+  "want": "if x {\n    a(    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 13
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "3vd",
+  "want": "x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "2Vd",
+  "want": "\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "3Vy",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 0
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jvj$y",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "j3vU",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "yiwwvep",
+  "want": "if if\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "yiwwveP",
+  "want": "if if\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "yiwwvePwvep",
+  "want": "if if\n    if\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 11
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Vjdj.",
+  "want": "\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 1
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "vlldj.",
+  "want": "x {\n a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 4
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "vjdj.",
+  "want": "   a()\n   b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "Vj>jjj.",
+  "want": "    if x {\n        a()\n\n        b()\n    }\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 32
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "vecz<Esc>w.",
+  "want": "z z{\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 2
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "v~w.",
+  "want": "If X {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 3
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "vjrxj.",
+  "want": "xxxxxx\nxxxxxxx\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 7
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "vjlyGp",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}if x {\n  \n",
+  "cursor": 47
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "jVyGp",
+  "want": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n    a()\n",
+  "cursor": 52
+ },
+ {
+  "text": "if x {\n    a()\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "keys": "wvlcab<Esc>W.",
+  "want": "if ab{\n    ab)\n\n    b()\n}\n\nfunc g() {\n    c()\n}\n",
+  "cursor": 12
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "da\"",
+  "want": "  lead tail\nx = 'a' + 'b'\n",
+  "cursor": 7
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "di\"",
+  "want": "  lead \"\" tail\nx = 'a' + 'b'\n",
+  "cursor": 8
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "ca\"z<Esc>",
+  "want": "  lead ztail\nx = 'a' + 'b'\n",
+  "cursor": 7
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jda'",
+  "want": "  lead \"q\" tail\nx = + 'b'\n",
+  "cursor": 20
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jfbda'",
+  "want": "  lead \"q\" tail\nx = 'a' +\n",
+  "cursor": 24
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jdi'",
+  "want": "  lead \"q\" tail\nx = '' + 'b'\n",
+  "cursor": 21
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jfbci'z<Esc>",
+  "want": "  lead \"q\" tail\nx = 'a' + 'z'\n",
+  "cursor": 27
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "di(",
+  "want": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "cursor": 0
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "ci[z<Esc>",
+  "want": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "cursor": 0
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jdib",
+  "want": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "cursor": 16
+ },
+ {
+  "text": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "keys": "jdab",
+  "want": "  lead \"q\" tail\nx = 'a' + 'b'\n",
+  "cursor": 16
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>n",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>nn",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>N",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "?alpha<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "?alpha<CR>n",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "G?beta<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/gam<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/Gam<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/a.p<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/\\<beta\\><CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/al\\|de<CR>n",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/x\\d<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 36
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/[gd]<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/a\\+<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 4
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/\\(be\\)ta<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "2/alpha<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/alpha<CR>2n",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "d/beta<CR>",
+  "want": "beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "y/de<CR>P",
+  "want": "alpha beta\nGamma alpha\n  alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "c/Gam<CR>z<Esc>",
+  "want": "z\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jd?beta<CR>",
+  "want": "alpha \nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 5
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "v/del<CR>d",
+  "want": "elta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "*",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 17
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "w*",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "#",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "w#",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "**",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jw*",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>/<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>dn",
+  "want": "alpha beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>u",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 6
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":2<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":$<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 39
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":3<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":+2<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":2,3d<CR>",
+  "want": "alpha beta\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%d<CR>",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":.,$d<CR>",
+  "want": "",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "j:d<CR>",
+  "want": "alpha beta\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 13
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":s/a/A/<CR>",
+  "want": "Alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":s/a/A/g<CR>",
+  "want": "AlphA betA\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/alpha/X/<CR>",
+  "want": "X beta\nGamma X\n  delta beta x1\nlast X 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/a/_/g<CR>",
+  "want": "_lph_ bet_\nG_mm_ _lph_\n  delt_ bet_ x1\nl_st _lph_ 9\n",
+  "cursor": 39
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/\\(\\w\\+\\) \\(\\w\\+\\)/\\2 \\1/<CR>",
+  "want": "beta alpha\nalpha Gamma\n  beta delta x1\nalpha last 9\n",
+  "cursor": 39
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/beta/[&]/<CR>",
+  "want": "alpha [beta]\nGamma alpha\n  delta [beta] x1\nlast alpha 9\n",
+  "cursor": 27
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/ /\\r/<CR>",
+  "want": "alpha\nbeta\nGamma\nalpha\n\n delta beta x1\nlast\nalpha 9\n",
+  "cursor": 44
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s#a#/#g<CR>",
+  "want": "/lph/ bet/\nG/mm/ /lph/\n  delt/ bet/ x1\nl/st /lph/ 9\n",
+  "cursor": 39
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/x1/x\\/2/<CR>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x/2\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/alpha/A/gi<CR>",
+  "want": "A beta\nGamma A\n  delta beta x1\nlast A 9\n",
+  "cursor": 31
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jVj:s/a/@/g<CR>",
+  "want": "alpha beta\nG@mm@ @lph@\n  delt@ bet@ x1\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "Vj:d<CR>",
+  "want": "  delta beta x1\nlast alpha 9\n",
+  "cursor": 2
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":2,3s/^/# /<CR>",
+  "want": "alpha beta\n# Gamma alpha\n#   delta beta x1\nlast alpha 9\n",
+  "cursor": 25
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/$/;/<CR>",
+  "want": "alpha beta;\nGamma alpha;\n  delta beta x1;\nlast alpha 9;\n",
+  "cursor": 42
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/beta//g<CR>",
+  "want": "alpha \nGamma alpha\n  delta  x1\nlast alpha 9\n",
+  "cursor": 21
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "/beta<CR>:s//B/<CR>",
+  "want": "alpha B\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":%s/alpha/A/<CR>u",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":2,3j<CR>",
+  "want": "alpha beta\nGamma alpha delta beta x1\nlast alpha 9\n",
+  "cursor": 11
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":j<CR>",
+  "want": "alpha beta Gamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": ":2,3y<CR>P",
+  "want": "Gamma alpha\n  delta beta x1\nalpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj:<<CR>",
+  "want": "alpha beta\nGamma alpha\ndelta beta x1\nlast alpha 9\n",
+  "cursor": 23
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "3:d<CR>",
+  "want": "last alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "gJ",
+  "want": "alpha betaGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 10
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jgJ",
+  "want": "alpha beta\nGamma alpha  delta beta x1\nlast alpha 9\n",
+  "cursor": 22
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "3gJ",
+  "want": "alpha betaGamma alpha  delta beta x1\nlast alpha 9\n",
+  "cursor": 21
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj$<C-a>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x2\nlast alpha 9\n",
+  "cursor": 37
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj<C-a>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x2\nlast alpha 9\n",
+  "cursor": 37
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj5<C-a>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x6\nlast alpha 9\n",
+  "cursor": 37
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj<C-x>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x0\nlast alpha 9\n",
+  "cursor": 37
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "jj12<C-x>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x-11\nlast alpha 9\n",
+  "cursor": 39
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "G<C-a>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 10\n",
+  "cursor": 51
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "G$<C-x>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 8\n",
+  "cursor": 50
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "G10<C-x>",
+  "want": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha -1\n",
+  "cursor": 51
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "vjy0gvd",
+  "want": "amma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "vey$gvd",
+  "want": " beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "Vjyjgvd",
+  "want": "  delta beta x1\nlast alpha 9\n",
+  "cursor": 2
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "vjd.gvy",
+  "want": " delta beta x1\nlast alpha 9\n",
+  "cursor": 0
+ },
+ {
+  "text": "alpha beta\nGamma alpha\n  delta beta x1\nlast alpha 9\n",
+  "keys": "vjy:'<,'>d<CR>",
+  "want": "  delta beta x1\nlast alpha 9\n",
+  "cursor": 2
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":sort<CR>",
+  "want": "alpha 10\nalpha 10\nbeta 2\ngamma -3\nzeta\n",
+  "cursor": 0
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":sort!<CR>",
+  "want": "zeta\ngamma -3\nbeta 2\nalpha 10\nalpha 10\n",
+  "cursor": 0
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":sort u<CR>",
+  "want": "alpha 10\nbeta 2\ngamma -3\nzeta\n",
+  "cursor": 0
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":sort n<CR>",
+  "want": "zeta\ngamma -3\nbeta 2\nalpha 10\nalpha 10\n",
+  "cursor": 0
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":2,4sort<CR>",
+  "want": "zeta\nalpha 10\nalpha 10\nbeta 2\ngamma -3\n",
+  "cursor": 5
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": "Vjj:sort<CR>",
+  "want": "alpha 10\nbeta 2\nzeta\nalpha 10\ngamma -3\n",
+  "cursor": 0
+ },
+ {
+  "text": "zeta\nalpha 10\nbeta 2\nalpha 10\ngamma -3\n",
+  "keys": ":sort i<CR>",
+  "want": "alpha 10\nalpha 10\nbeta 2\ngamma -3\nzeta\n",
+  "cursor": 0
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfodit",
+  "want": "<ul>\n  <li class=\"a\"></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfodat",
+  "want": "<ul>\n  \n  <li>three</li>\n</ul>\n",
+  "cursor": 6
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfociti<Esc>",
+  "want": "<ul>\n  <li class=\"a\">i</li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwdit",
+  "want": "<ul>\n  <li class=\"a\">one <b></b></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 28
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwd2it",
+  "want": "<ul>\n  <li class=\"a\"></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwdat",
+  "want": "<ul>\n  <li class=\"a\">one </li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 25
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jjditkdit",
+  "want": "<ul>\n  <li class=\"a\"></li>\n  <li></li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "dit",
+  "want": "<ul></ul>\n",
+  "cursor": 4
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwyitP",
+  "want": "<ul>\n  <li class=\"a\">one <b>twotwo</b></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 30
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwvitd",
+  "want": "<ul>\n  <li class=\"a\">one <b></b></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 28
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfwvatd",
+  "want": "<ul>\n  <li class=\"a\">one </li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 25
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jjfhcitX<Esc>",
+  "want": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>X</li>\n</ul>\n",
+  "cursor": 47
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jfw2dit",
+  "want": "<ul>\n  <li class=\"a\"></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "<ul>\n  <li class=\"a\">one <b>two</b></li>\n  <li>three</li>\n</ul>\n",
+  "keys": "jdit",
+  "want": "<ul>\n  <li class=\"a\"></li>\n  <li>three</li>\n</ul>\n",
+  "cursor": 21
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fbd[(",
+  "want": "f(a, gb, c), d)\nif (x) { y(); }\n",
+  "cursor": 6
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fbd])",
+  "want": "f(a, g(), d)\nif (x) { y(); }\n",
+  "cursor": 7
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fbc[(z<Esc>",
+  "want": "f(a, gzb, c), d)\nif (x) { y(); }\n",
+  "cursor": 6
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fb[(x",
+  "want": "f(a, gb, c), d)\nif (x) { y(); }\n",
+  "cursor": 6
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fb])x",
+  "want": "f(a, g(b, c, d)\nif (x) { y(); }\n",
+  "cursor": 11
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fb2[(x",
+  "want": "fa, g(b, c), d)\nif (x) { y(); }\n",
+  "cursor": 1
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "jfyd[{",
+  "want": "f(a, g(b, c), d)\nif (x) y(); }\n",
+  "cursor": 24
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "jfyd]}",
+  "want": "f(a, g(b, c), d)\nif (x) { }\n",
+  "cursor": 26
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "jfy[{x",
+  "want": "f(a, g(b, c), d)\nif (x)  y(); }\n",
+  "cursor": 24
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "jfy]}x",
+  "want": "f(a, g(b, c), d)\nif (x) { y(); \n",
+  "cursor": 30
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fad])",
+  "want": "f()\nif (x) { y(); }\n",
+  "cursor": 2
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "fd[(x",
+  "want": "fa, g(b, c), d)\nif (x) { y(); }\n",
+  "cursor": 1
+ },
+ {
+  "text": "f(a, g(b, c), d)\nif (x) { y(); }\n",
+  "keys": "f,[(x",
+  "want": "fa, g(b, c), d)\nif (x) { y(); }\n",
+  "cursor": 1
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":2,4norm Ax<CR>",
+  "want": "1 one\n2 twox\n3 threex\n4 fourx\n5 five\n6 six\n",
+  "cursor": 28
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":g/[24]/d<CR>",
+  "want": "1 one\n3 three\n5 five\n6 six\n",
+  "cursor": 14
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":g/o/norm A!<CR>",
+  "want": "1 one!\n2 two!\n3 three\n4 four!\n5 five\n6 six\n",
+  "cursor": 28
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":v/o/d<CR>",
+  "want": "1 one\n2 two\n4 four\n",
+  "cursor": 12
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":2,5m0<CR>",
+  "want": "2 two\n3 three\n4 four\n5 five\n1 one\n6 six\n",
+  "cursor": 21
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":4,5m1<CR>",
+  "want": "1 one\n4 four\n5 five\n2 two\n3 three\n6 six\n",
+  "cursor": 13
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":2m4<CR>",
+  "want": "1 one\n3 three\n4 four\n2 two\n5 five\n6 six\n",
+  "cursor": 21
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":5m2<CR>",
+  "want": "1 one\n2 two\n5 five\n3 three\n4 four\n6 six\n",
+  "cursor": 12
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":2,3t5<CR>",
+  "want": "1 one\n2 two\n3 three\n4 four\n5 five\n2 two\n3 three\n6 six\n",
+  "cursor": 40
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":g/^/m0<CR>",
+  "want": "6 six\n5 five\n4 four\n3 three\n2 two\n1 one\n",
+  "cursor": 0
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": ":g/e$/s/e/E/<CR>",
+  "want": "1 onE\n2 two\n3 thrEe\n4 four\n5 fivE\n6 six\n",
+  "cursor": 27
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": "3Gma5Gd'a",
+  "want": "1 one\n2 two\n6 six\n",
+  "cursor": 12
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": "3Gma5Gy'aP",
+  "want": "1 one\n2 two\n3 three\n4 four\n5 five\n3 three\n4 four\n5 five\n6 six\n",
+  "cursor": 12
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": "3Gmb:'b,$d<CR>",
+  "want": "1 one\n2 two\n",
+  "cursor": 6
+ },
+ {
+  "text": "1 one\n2 two\n3 three\n4 four\n5 five\n6 six\n",
+  "keys": "jVj:norm Ax<CR>",
+  "want": "1 one\n2 twox\n3 threex\n4 four\n5 five\n6 six\n",
+  "cursor": 20
+ }
+]

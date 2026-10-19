@@ -137,12 +137,17 @@ func (d *editor) edit(sel [2]int, edits ...textEdit) {
 	if len(edits) == 1 && edits[0].start <= 0 && edits[0].end >= before {
 		edits = nil // the whole text, as reloading it: the offsets stay
 	}
-	d.follow(func(x int) int {
+	moved := func(x int) int {
 		for _, e := range edits {
 			x = movedBy(x, e.start, e.end, utf8.RuneCountInString(e.text))
 		}
 		return x
-	})
+	}
+	d.follow(moved)
+	d.moveMarks(moved)
+	if len(edits) > 0 {
+		d.changed = min(edits[len(edits)-1].start, n)
+	}
 }
 
 // sortEdits orders edits from the last in the text to the first, so that
@@ -181,17 +186,22 @@ func (d *editor) follow(moved func(x int) int) {
 // followChange is follow for an edit that is only known by the text
 // before and after it, as typing is, made near offset hint.
 func (d *editor) followChange(old, now ui.TextSnapshot, hint int) {
-	if len(d.views) < 2 {
+	if len(d.views) < 2 && !d.marked() {
 		return
 	}
 	start, end, ok := changedRunes(old, now, hint)
 	n := end - start + now.Len() - old.Len()
-	d.follow(func(x int) int {
+	moved := func(x int) int {
 		if !ok {
 			return x
 		}
 		return movedBy(x, start, end, n)
-	})
+	}
+	d.follow(moved)
+	if ok {
+		d.moveMarks(moved)
+		d.changed = start
+	}
 }
 
 // diffWindow is how far from where an edit was made its ends are looked

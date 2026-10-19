@@ -2,12 +2,20 @@ package main
 
 import (
 	"slices"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 
 	"mayoi/internal/remote"
 	"mayoi/locales"
 )
+
+// tabLine is the identity of the line along the top of a column's tab
+// shown, which slides from tab to tab as another shows.
+type tabLine struct{ col int }
+
+// crossFade is how a tab's cross comes and goes with the pointer.
+var crossFade = ui.ElementTransition{Duration: 100 * time.Millisecond, Enter: &ui.Motion{}, Exit: &ui.Motion{}}
 
 // tabStrip shows a tab for each tab of a column: a click shows it, the
 // cross closes it, and a dot marks unsaved changes. A tab is dragged
@@ -59,7 +67,7 @@ func (a *app) tabStrip(c *ui.Context, col *column) {
 					}
 					tab := ui.ButtonBase(c.Key(t.id)).Padding(0, 6, 0, 12).Gap(7).AlignItems(ui.Center).
 						BorderWidth(0, 1, 0, 0).BorderColor(p.border).Label(t.name()).Tooltip(tip).
-						Drag(dragItem{tab: t})
+						Drag(dragItem{tab: t}).Transition(tabMotion)
 					// The middle button closes the tab, as in a browser.
 					box := tab.LayoutBounds()
 					tab = tab.HandleInput(func(ev ui.InputEvent) bool { return a.tabMiddle(t, ev, box) })
@@ -96,11 +104,16 @@ func (a *app) tabStrip(c *ui.Context, col *column) {
 						case over:
 							// Where the tab dragged goes: before this one.
 							ui.Box(c).Absolute().Top(0).Bottom(0).Left(0).Width(2).Background(p.accent)
-						case active && focused:
-							// The accent line along the top of the tab shown.
-							ui.Box(c).Absolute().Top(0).Left(0).Right(0).Height(2).Background(p.accent)
 						case active:
-							ui.Box(c).Absolute().Top(0).Left(0).Right(0).Height(2).Background(p.faint)
+							// The line along the top of the tab shown, in the accent
+							// while its column has the keyboard. It slides from the
+							// tab shown before.
+							line := p.faint
+							if focused {
+								line = p.accent
+							}
+							ui.Box(c.Key("line")).Absolute().Top(0).Left(0).Right(0).Height(2).Background(line).
+								Transition(ui.ElementTransition{Animation: &ui.Snappy, Match: tabLine{col.id}})
 						}
 						icon, tint := iconTerminal, p.muted
 						switch {
@@ -119,7 +132,7 @@ func (a *app) tabStrip(c *ui.Context, col *column) {
 						}
 						switch {
 						case t.ed != nil && t.ed.diskGone, t.view != nil && t.view.diskGone:
-							name.TextColor(p.danger).Strikethrough()
+							name.TextColor(p.dangerFg).Strikethrough()
 						case active:
 							name.FontWeight(550).TextColor(p.text)
 						default:
@@ -131,12 +144,13 @@ func (a *app) tabStrip(c *ui.Context, col *column) {
 						if x.Hovered() {
 							x.Background(p.hover)
 						}
+						x.Transition(hoverFade)
 						x.Children(func() {
 							switch {
 							case t.ed != nil && t.ed.dirty() && !x.Hovered():
-								ui.Box(c).Size(8, 8).Radius(4).Background(p.text.Alpha(0.7))
+								ui.Box(c.Key("dot")).Size(8, 8).Radius(4).Background(p.text.Alpha(0.7)).Transition(dotPop)
 							case active || hovered || x.Hovered():
-								ui.Icon(c, iconX).FontSize(13).TextColor(p.muted)
+								ui.Icon(c.Key("x"), iconX).FontSize(13).TextColor(p.muted).Transition(crossFade)
 							}
 						})
 						if x.Clicked() {

@@ -857,7 +857,11 @@ func (a *app) goToNote(n *reviewNote) {
 		return
 	}
 	if n.commit != "" {
-		a.showCommit(git.Commit{Hash: n.commit}, true)
+		root := a.diffRoot(nil)
+		if r := a.repositoryForPath(n.path).git.repo; r != nil {
+			root = r.Root
+		}
+		a.showCommit(git.Commit{Hash: n.commit}, true, root)
 	} else {
 		base := diffIndex
 		if n.staged {
@@ -995,6 +999,8 @@ func (a *app) noteButton(c *ui.Context, label string, primary, disabled bool) bo
 	case b.Hovered():
 		b.Background(p.hover)
 	}
+	b.Transition(hoverFade)
+	pressPose(b)
 	b.Children(func() { ui.Text(c, label).FontSize(11.5).FontWeight(500).TextColor(col).SingleLine() })
 	return b.Clicked() && !disabled
 }
@@ -1035,7 +1041,7 @@ func (a *app) noteCard(c *ui.Context, n *reviewNote, ed *editor, w float32) {
 			ui.Text(c, locales.ReviewNewComment()).FontSize(12).TextColor(p.muted).SingleLine().Shrink(1).MinWidth(0)
 		}
 		if n.outdated {
-			notePill(c, locales.ReviewOutdated(), locales.ReviewOutdatedTip(), p.modified)
+			notePill(c, locales.ReviewOutdated(), locales.ReviewOutdatedTip(), p.modifiedFg)
 		}
 		ui.Spacer(c)
 		if editing {
@@ -1078,6 +1084,7 @@ func (a *app) noteCard(c *ui.Context, n *reviewNote, ed *editor, w float32) {
 				b.Background(p.removed.Alpha(0.12))
 				fg = p.removed
 			}
+			b.Transition(hoverFade)
 			b.Children(func() {
 				ui.Icon(c, iconTrash).FontSize(12).TextColor(fg)
 				ui.Text(c, locales.ButtonDelete()).FontSize(12).FontWeight(500).TextColor(fg).SingleLine()
@@ -1226,6 +1233,8 @@ func (a *app) lineCommentButton(c *ui.Context, v *diffView, i int, x, y float32)
 		default:
 			b.Background(p.fill)
 		}
+		b.Transition(hoverFade)
+		pressPose(b)
 		b.Children(func() { ui.Icon(c, iconPlus).FontSize(12).TextColor(p.fillText) })
 		if !b.Clicked() {
 			return
@@ -1405,6 +1414,8 @@ func (a *app) reviewSendButton(c *ui.Context) {
 	default:
 		b.Background(p.fill)
 	}
+	b.Transition(hoverFade)
+	pressPose(b)
 	b.Children(func() {
 		ui.Icon(c, iconSend).FontSize(12).TextColor(p.fillText)
 		ui.Text(c, locales.ReviewSendButton(k)).FontSize(11.5).FontWeight(600).TextColor(p.fillText).SingleLine()
@@ -1428,6 +1439,7 @@ func (a *app) reviewStatus(c *ui.Context, text func(string) ui.Element) {
 	if b.Hovered() {
 		b.Background(p.hover)
 	}
+	b.Transition(hoverFade)
 	b.Children(func() {
 		ui.Icon(c, iconComment).FontSize(12).TextColor(p.statusFg)
 		text(fmt.Sprint(k))

@@ -20,6 +20,7 @@ import (
 // a tab at once, read-only, saying it shows once the host connects, and
 // takes no edits.
 func TestRemoteFileOffline(t *testing.T) {
+	remoteOnly(t)
 	hs := newHarness(t, true)
 	a := hs.a
 	path := remote.Path("offline.invalid", "/srv/app/main.go")
@@ -52,6 +53,7 @@ func TestRemoteFileOffline(t *testing.T) {
 // TestRemotePathsShow: a remote path shows as host:/path, and copies as
 // its host spells it.
 func TestRemotePathsShow(t *testing.T) {
+	remoteOnly(t)
 	p := remote.Path("me@box", "/home/me/proj")
 	if got := shortenHome(p); got != "me@box:/home/me/proj" {
 		t.Errorf("shortenHome = %q", got)
@@ -89,6 +91,7 @@ func TestPickDir(t *testing.T) {
 // TestConnectBoxListsHosts: the box that connects lists the hosts of the
 // recent folders, and takes a host typed that it does not list.
 func TestConnectBoxListsHosts(t *testing.T) {
+	remoteOnly(t)
 	hs := newHarness(t, true)
 	a := hs.a
 	a.settings.AddRecent(remote.Path("recent-box.invalid", "/srv/app"))
@@ -147,6 +150,7 @@ exec sh -c "$last"
 // as "user@host", one ssh signs in to without a password; without it, an
 // ssh that runs the commands on this machine stands for one.
 func remoteHarness(t *testing.T) (*harness, *remote.Conn, string) {
+	remoteOnly(t)
 	host := os.Getenv("MAYOI_SSH_TEST_HOST")
 	if host == "" {
 		useFakeSSH(t)
@@ -178,6 +182,7 @@ git init -q && git -c user.email=t@t -c user.name=t add -A && git -c user.email=
 	w.Folder = root
 	h := &fakeHost{}
 	a := newApp(h, s, w)
+	t.Cleanup(a.shutdown)
 	tt := ui.NewTester(a.view, 1200, 760)
 	hs := &harness{t: t, a: a, h: h, tt: tt, root: root}
 	hs.untilLong("the remote tree", func() bool { return tt.HasText("main.go") && tt.HasText("src") })
@@ -185,13 +190,19 @@ git init -q && git -c user.email=t@t -c user.name=t add -A && git -c user.email=
 	return hs, c, dir
 }
 
+// remoteOnly skips a test of remote folders where Mayoi reaches none, as
+// on Windows, whose paths are not POSIX's and which has no shell for the
+// fake ssh.
+func remoteOnly(t testing.TB) {
+	t.Helper()
+	if !remoteSupported {
+		t.Skip("no remote folders on " + runtime.GOOS)
+	}
+}
+
 // useFakeSSH puts fakeSSH first on the PATH.
 func useFakeSSH(t *testing.T) {
-	// The fake is a shell script; Windows has no shell to run it, and its
-	// hosts are WSL's. A real host still runs these, by MAYOI_SSH_TEST_HOST.
-	if runtime.GOOS == "windows" {
-		t.Skip("the fake ssh is a shell script, which Windows cannot run")
-	}
+	remoteOnly(t)
 	bin := t.TempDir()
 	if err := os.WriteFile(filepath.Join(bin, "ssh"), []byte(fakeSSH), 0o755); err != nil {
 		t.Fatal(err)
@@ -304,6 +315,7 @@ func TestRemoteFolder(t *testing.T) {
 	a.rememberTabs()
 	w := *a.window
 	a2 := newApp(&fakeHost{}, a.settings, &w)
+	t.Cleanup(a2.shutdown)
 	tt2 := ui.NewTester(a2.view, 1200, 760)
 	t.Cleanup(a2.shutdown)
 	hs2 := &harness{t: t, a: a2, h: &fakeHost{}, tt: tt2, root: hs.root}
@@ -319,9 +331,7 @@ func TestRemoteFolder(t *testing.T) {
 // A project of a host shows its logo as one of this machine does, found
 // through the same files, with an ssh that runs the commands here.
 func TestRemoteProjectLogo(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("the fake ssh is a shell script")
-	}
+	remoteOnly(t)
 	bin := t.TempDir()
 	fake := "#!/bin/sh\nsock= master= last=\nfor a; do\n  case $a in\n    ControlPath=*) sock=${a#ControlPath=} ;;\n    -N) master=1 ;;\n  esac\n  last=$a\ndone\n" +
 		"if [ -n \"$master\" ]; then\n  trap 'rm -f \"$sock\"; exit 0' INT TERM\n  : > \"$sock\"\n  while :; do sleep 0.05; done\nfi\nexec sh -c \"$last\"\n"

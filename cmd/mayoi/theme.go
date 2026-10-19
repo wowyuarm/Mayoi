@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"time"
 
 	"github.com/egoist/mygo"
@@ -67,6 +68,11 @@ type palette struct {
 	added                 ui.Color // lines changed since Git's last commit
 	changed               ui.Color
 	removed               ui.Color
+	// modifiedFg, addedFg, removedFg and dangerFg are those colors as
+	// text: the same hues, darker on a light window or lighter on a dark
+	// one, as far as they need to read at 4.5:1 on the chrome and the
+	// editor. The marks and tints keep the brighter ones.
+	modifiedFg, addedFg, removedFg, dangerFg ui.Color
 
 	syntax [highlight.Kinds]ui.Color
 	// ansi is the terminal's 16 colors: black, red, green, yellow, blue,
@@ -665,10 +671,54 @@ func (p *palette) derive() *palette {
 	} else {
 		p.dangerHover, p.dangerPressed = p.dangerFill.Mix(black, 0.1), p.dangerFill.Mix(black, 0.22)
 	}
+	p.modifiedFg = legible(p.modified, p.dark, p.chrome, p.editor, p.panel)
+	p.addedFg = legible(p.added, p.dark, p.chrome, p.editor, p.panel)
+	p.removedFg = legible(p.removed, p.dark, p.chrome, p.editor, p.panel)
+	p.dangerFg = legible(p.danger, p.dark, p.chrome, p.editor, p.panel)
 	p.selected = p.selection.Over(p.editor)
 	p.selectedDim = p.selection.Alpha(0.5).Over(p.editor)
 	p.cursor = p.accent.Alpha(0.5)
 	return p
+}
+
+// legible returns col as text that reads at 4.5:1, WCAG's AA, on each of
+// the backgrounds: col itself when it does, or else col mixed toward black
+// on a light window, or white on a dark one, no further than it must.
+func legible(col ui.Color, dark bool, backs ...ui.Color) ui.Color {
+	to := black
+	if dark {
+		to = white
+	}
+	reads := func(c ui.Color) bool {
+		for _, b := range backs {
+			if contrast(c, b) < 4.5 {
+				return false
+			}
+		}
+		return true
+	}
+	for i := 0; i <= 40; i++ {
+		if c := col.Mix(to, float32(i)/40); reads(c) || i == 40 {
+			return c
+		}
+	}
+	return col
+}
+
+// contrast is the WCAG contrast ratio of two opaque colors.
+func contrast(x, y ui.Color) float64 {
+	lum := func(c ui.Color) float64 {
+		ch := func(v uint8) float64 {
+			f := float64(v) / 255
+			if f <= 0.03928 {
+				return f / 12.92
+			}
+			return math.Pow((f+0.055)/1.055, 2.4)
+		}
+		return 0.2126*ch(c.R) + 0.7152*ch(c.G) + 0.0722*ch(c.B)
+	}
+	a, b := lum(x)+0.05, lum(y)+0.05
+	return max(a, b) / min(a, b)
 }
 
 // applyTheme sets the window's theme from the palette of its theme,
@@ -682,7 +732,7 @@ func (a *app) applyTheme(c *ui.Context) *palette {
 	// default theme's blue.
 	t.Accent, t.AccentText = p.fill, p.fillText
 	t.AccentHover, t.AccentPressed = p.fillHover, p.fillPressed
-	t.Danger, t.Warning, t.Success = p.danger, p.modified, p.added
+	t.Danger, t.Warning, t.Success = p.dangerFg, p.modifiedFg, p.addedFg
 	t.Selection = p.selection
 	t.Border = p.border
 	t.Text, t.TextMuted = p.text, p.muted
@@ -702,8 +752,109 @@ func (a *app) applyTheme(c *ui.Context) *palette {
 }
 
 // popIn is how a box over an editor comes in, as find's: it fades in,
-// from a little above where it settles. Only its colors follow it after.
-var popIn = ui.ElementTransition{Duration: 130 * time.Millisecond, Colors: true, Enter: &ui.Motion{Y: -6}}
+// from a little above where it settles, and goes back up as it fades out.
+// Only its colors follow it after.
+var popIn = ui.ElementTransition{Duration: 130 * time.Millisecond, Colors: true, Enter: &ui.Motion{Y: -6}, Exit: &ui.Motion{Y: -4}}
+
+// hoverFade is how a button's background follows the pointer: it fades
+// in and out rather than blinks.
+var hoverFade = ui.ElementTransition{Colors: true, Duration: 110 * time.Millisecond}
+
+// revealFade is hoverFade for a small button that shows only while the
+// pointer is over its row, as the actions of a group of changes: it fades
+// in and out too, rather than pops.
+var revealFade = ui.ElementTransition{Colors: true, Duration: 110 * time.Millisecond, Enter: &ui.Motion{}, Exit: &ui.Motion{}}
+
+// tabMotion is how a tab moves along its strip: it grows in as it opens,
+// folds away as it closes, and the others slide to their places.
+var tabMotion = ui.ElementTransition{
+	Duration: 140 * time.Millisecond,
+	Enter:    &ui.Motion{Collapse: true},
+	Exit:     &ui.Motion{Collapse: true},
+}
+
+// dotPop is how a small mark comes and goes, as the dot of a tab's
+// unsaved changes: it grows from nothing and shrinks away.
+var dotPop = ui.ElementTransition{
+	Animation: &ui.Snappy,
+	Enter:     &ui.Motion{Scale: 0.2},
+	Exit:      &ui.Motion{Scale: 0.2},
+}
+
+// pickMark is the identity of the mark under the row chosen in a list of
+// a box, as quick open's, which slides from row to row as the choice
+// moves.
+type pickMark struct{ list string }
+
+// pickMark marks the row chosen in a list, first in the row's children:
+// it slides from the row chosen before, as the keys move the choice.
+func (a *app) pickMark(c *ui.Context, on bool, list string) {
+	if !on {
+		return
+	}
+	ui.Box(c.Key("pick-mark")).Absolute().Left(0).Right(0).Top(0).Bottom(0).Radius(6).Background(a.pal.active).
+		Transition(ui.ElementTransition{Duration: 90 * time.Millisecond, Match: pickMark{list}})
+}
+
+// riseIn brings a block of a page in as the page shows: it fades in from
+// a little below, after delay, so that blocks delayed more follow.
+func riseIn(e ui.Element, delay time.Duration) ui.Element {
+	k := e.Keyframes("rise", []ui.Keyframe{{Value: 0}, {At: 240 * time.Millisecond, Value: 1, Ease: ui.EaseOut}},
+		ui.KeyframeOptions{Delay: delay})
+	return e.Opacity(k).Translate(0, 8*(1-k))
+}
+
+// chevron is the arrow of what folds: it points to the side while
+// closed, and turns down as it opens.
+func chevron(c *ui.Context, open bool) ui.Element {
+	turn := float32(0)
+	if open {
+		turn = 90
+	}
+	return ui.Icon(c.Key("chevron"), iconChevronRight).AnimatePose(ui.Pose{Rotate: turn}, ui.Snappy)
+}
+
+// pressPose sinks a button a little as it is held down, as a key does.
+func pressPose(b ui.Element) {
+	pose := ui.Pose{}
+	if b.Pressed() {
+		pose.Scale = 0.92
+	}
+	b.AnimatePose(pose, ui.Snappy)
+}
+
+// shakeFor is how long a box shakes its head, as a password field of the
+// Mac does at a wrong password.
+const shakeFor = 360 * time.Millisecond
+
+// shake moves a box side to side for a moment from at, as it finds
+// nothing for the Return pressed in it, and settles where it was. A box
+// shaken long ago, or never, stays put; with less motion, it does too.
+func shake(c *ui.Context, e ui.Element, at time.Time) ui.Element {
+	since := c.Now().Sub(at)
+	if at.IsZero() || since < 0 || since >= shakeFor || c.Preferences().ReduceMotion {
+		return e
+	}
+	c.AnimationFrame()
+	t := float64(since) / float64(shakeFor)
+	return e.Translate(float32(7*(1-t)*math.Sin(t*6*math.Pi)), 0)
+}
+
+// popUp brings the badge of an empty view in as the view shows: it grows
+// from a little smaller, past its size and back, and fades in.
+func popUp(e ui.Element) ui.Element {
+	k := e.Keyframes("pop", []ui.Keyframe{{Value: 0}, {At: 320 * time.Millisecond, Value: 1, Ease: backOut}})
+	o := min(1, 2*k)
+	return e.Opacity(o).Scale(0.6+0.4*k, 0.6+0.4*k)
+}
+
+// backOut goes a little past its end and comes back to it, as CSS's
+// easeOutBack does.
+var backOut = ui.CubicBezier(0.34, 1.56, 0.64, 1)
+
+// fieldFocus is how a field's border follows the keyboard: the accent
+// fades in as the field takes it, and out as it leaves.
+var fieldFocus = ui.ElementTransition{Colors: true, Duration: 120 * time.Millisecond}
 
 // floating styles a box that floats over the window: a dialog, as quick
 // open's, a picker's or a prompt's, or a smaller box over an editor, as

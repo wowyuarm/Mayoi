@@ -226,6 +226,7 @@ func (a *app) quickCommands(c *ui.Context, query string) {
 	}
 	choose := func(i int) {
 		if i < 0 || i >= len(q.results) {
+			q.shook = c.Now()
 			return
 		}
 		id := entries[q.results[i].Index].id
@@ -236,11 +237,13 @@ func (a *app) quickCommands(c *ui.Context, query string) {
 	ui.Overlay(c, func() {
 		back := a.dialogBack(c, "quick")
 		back.Children(func() {
-			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip().
+			box := a.floating(c, ui.Column(c).Width(600).MaxWidthPercent(92).Margin(titleBarH+8, 0, 0, 0).Radius(10), true).Clip()
+			shake(c, box, q.shook)
+			box.
 				Role(ui.RoleDialog).Label(locales.PaletteLabel())
 			box.Children(func() {
 				ui.Row(c).Padding(10, 14).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.border).Children(func() {
-					ui.Icon(c, iconChevronRight).FontSize(15).TextColor(p.muted)
+					ui.Icon(c, iconCommand).FontSize(15).TextColor(p.muted)
 					in := a.textKeys(ui.TextInputBase(c.Key("quick-input"), &q.query)).Grow(1).FontSize(14).AutoFocus().
 						Placeholder(locales.PalettePlaceholder()).Label(locales.PaletteLabel())
 					if in.Shortcut(0, ui.KeyDown) {
@@ -262,10 +265,7 @@ func (a *app) quickCommands(c *ui.Context, query string) {
 							// As tall with keys as without.
 							row := ui.ButtonBase(c.Key("cmd:"+e.id)).MinHeight(30).Padding(5, 10).Gap(10).Radius(6).
 								Justify(ui.Start).AlignItems(ui.Center).Label(e.title)
-							switch {
-							case i == q.sel:
-								row.Background(p.active)
-							case row.Hovered():
+							if i != q.sel && row.Hovered() {
 								row.Background(p.hover)
 							}
 							if i == q.sel && q.moved {
@@ -274,7 +274,8 @@ func (a *app) quickCommands(c *ui.Context, query string) {
 							if row.Clicked() {
 								choose(i)
 							}
-							row.Children(func() { a.commandRow(c, e, m.Positions) })
+							row.Transition(hoverFade)
+							row.Children(func() { a.pickMark(c, i == q.sel, "commands"); a.commandRow(c, e, m.Positions) })
 						}
 					})
 				}

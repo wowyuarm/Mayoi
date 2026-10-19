@@ -1,19 +1,29 @@
 // Package mon signs Mayoi in to Mon, the account behind sorrycc's apps at
-// mon.sorrycc.dev, and syncs its settings.
+// mon.sorrycc.dev, syncs its settings and asks Mon's AI gateway.
 //
-// It is a copy of github.com/sorrycc/mon/client, at Mon v0.1.2 (acc171b),
-// which is a private module: change both together. Sign-in uses the OAuth
-// device flow: the app shows a short code, the person approves it on the
-// Mon website, and the app receives an access token.
+// It is a copy of github.com/sorrycc/mon/client, at Mon 17fc8af, which is a
+// private module: change both together. Sign-in uses the OAuth device
+// flow: the app shows a short code, the person approves it on the Mon
+// website, and the app receives an access token.
 //
 //	c := mon.New("https://mon.sorrycc.dev")
 //	dc, err := c.StartDeviceLogin(ctx, "mayoi", hostname)
 //	// Show dc.UserCode and open dc.VerificationURIComplete in a browser.
 //	token, err := c.WaitForDeviceToken(ctx, dc)
 //	c.Token = token // store it in the keychain
+//
+//	st, err := c.GetSettings(ctx, "mayoi")
+//	st, err = c.PutSettings(ctx, "mayoi", st.Version, mySettings)
+//
+//	text, err := c.StreamMessage(ctx, mon.MessageRequest{
+//		Model: "deepseek-flash", MaxTokens: 4096,
+//		Messages: []mon.Message{{Role: "user", Content: "Hello"}},
+//	}, func(s string) { fmt.Print(s) })
 package mon
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -21,6 +31,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -205,6 +216,142 @@ type conflictResponse struct {
 }
 
 func (e *conflictResponse) Error() string { return "mon: version conflict" }
+
+// Message is a turn of a conversation with the AI gateway: Role is "user"
+// or "assistant".
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// MessageRequest asks the AI gateway for an answer, as the Anthropic
+// Messages API does.
+type MessageRequest struct {
+	Model     string    `json:"model"`
+	MaxTokens int       `json:"max_tokens"`
+	System    string    `json:"system,omitempty"`
+	Messages  []Message `json:"messages"`
+}
+
+// RateLimitError is returned by StreamMessage when the account used up its
+// daily tokens or its requests a minute. RetryAfter is how long to wait, 0
+// when Mon did not say.
+type RateLimitError struct {
+	RetryAfter time.Duration
+	Message    string
+}
+
+func (e *RateLimitError) Error() string {
+	if e.Message != "" {
+		return "mon: " + e.Message
+	}
+	return "mon: over the AI gateway's limit"
+}
+
+// aiErrorBody is the Anthropic API's shape of an error, which the AI
+// gateway answers with.
+type aiErrorBody struct {
+	Error struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+// StreamMessage sends req to the AI gateway and calls onText, if not nil,
+// with each piece of the answer's text as it arrives, leaving out thinking.
+// It returns the whole text. It fails with ErrUnauthorized when the token
+// is no longer good, a *RateLimitError over a limit, and an *Error for
+// anything else Mon or the provider refused.
+func (c *Client) StreamMessage(ctx context.Context, req MessageRequest, onText func(string)) (string, error) {
+	body, err := json.Marshal(struct {
+		MessageRequest
+		Stream bool `json:"stream"`
+	}{req, true})
+	if err != nil {
+		return "", err
+	}
+	hr, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/v1/ai/v1/messages", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	hr.Header.Set("Content-Type", "application/json")
+	hr.Header.Set("Accept", "text/event-stream")
+	hr.Header.Set("anthropic-version", "2023-06-01")
+	if c.Token != "" {
+		hr.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+	// An answer can take longer than the client's timeout for the rest of
+	// the API: ctx bounds it instead.
+	hc := http.Client{}
+	if c.HTTPClient != nil {
+		hc = *c.HTTPClient
+		hc.Timeout = 0
+	}
+	resp, err := hc.Do(hr)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		return "", aiError(resp, raw)
+	}
+
+	var text strings.Builder
+	sc := bufio.NewScanner(resp.Body)
+	sc.Buffer(make([]byte, 64<<10), 4<<20)
+	for sc.Scan() {
+		data, ok := strings.CutPrefix(sc.Text(), "data:")
+		if !ok {
+			continue
+		}
+		var ev struct {
+			Type  string `json:"type"`
+			Delta struct {
+				Type string `json:"type"`
+				Text string `json:"text"`
+			} `json:"delta"`
+			aiErrorBody
+		}
+		if json.Unmarshal([]byte(strings.TrimSpace(data)), &ev) != nil {
+			continue
+		}
+		switch ev.Type {
+		case "content_block_delta":
+			if ev.Delta.Type == "text_delta" && ev.Delta.Text != "" {
+				text.WriteString(ev.Delta.Text)
+				if onText != nil {
+					onText(ev.Delta.Text)
+				}
+			}
+		case "error":
+			return text.String(), &Error{Status: http.StatusOK, Code: ev.Error.Type, Description: ev.Error.Message}
+		case "message_stop":
+			return text.String(), nil
+		}
+	}
+	if err := sc.Err(); err != nil {
+		return text.String(), err
+	}
+	return text.String(), io.ErrUnexpectedEOF
+}
+
+// aiError is the error of a refused AI gateway request.
+func aiError(resp *http.Response, raw []byte) error {
+	var b aiErrorBody
+	json.Unmarshal(raw, &b)
+	switch resp.StatusCode {
+	case http.StatusUnauthorized:
+		return ErrUnauthorized
+	case http.StatusTooManyRequests:
+		e := &RateLimitError{Message: b.Error.Message}
+		if secs, err := strconv.Atoi(resp.Header.Get("Retry-After")); err == nil && secs > 0 {
+			e.RetryAfter = time.Duration(secs) * time.Second
+		}
+		return e
+	}
+	return &Error{Status: resp.StatusCode, Code: b.Error.Type, Description: b.Error.Message}
+}
 
 // do sends body as a form for url.Values and as JSON otherwise, and decodes
 // a successful response into out.

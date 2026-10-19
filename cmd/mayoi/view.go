@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -157,6 +158,7 @@ func (a *app) view(c *ui.Context) {
 	})
 	a.quickOpenView(c)
 	a.branchPickerView(c)
+	a.repositoryPickerView(c)
 	a.recentPickerView(c)
 	a.remotePickerView(c)
 	a.promptView(c)
@@ -167,6 +169,10 @@ func (a *app) view(c *ui.Context) {
 	}
 	a.dialogBuilt = false
 	a.windowKeys(c)
+	if inEditor := a.keyFocus == placeEditor; inEditor != a.cutInEditor {
+		a.cutInEditor = inEditor
+		a.host.menuChanged()
+	}
 	for _, msg := range a.errors {
 		c.Toast(msg)
 	}
@@ -286,12 +292,24 @@ func (a *app) splitter(c *ui.Context, at edge, drag func(d float32)) {
 	default:
 		h.Top(0).Bottom(0).Right(0).Width(5).Cursor(ui.CursorResizeEW)
 	}
-	lit := h.Hovered() || h.Dragging()
+	// The line shows once the pointer rests on the edge, as one crossing
+	// it on its way elsewhere does not light it, and fades in and out.
+	// Held, it shows at once.
+	var lit float32
+	if h.Pressed() || h.Dragging() {
+		lit = h.Jump("lit", 1)
+	} else {
+		show := ui.Animation{Duration: 150 * time.Millisecond}
+		if h.Hovered() {
+			show.Delay = 250 * time.Millisecond
+		}
+		lit = h.AnimateTo("lit", unit(h.Hovered()), show)
+	}
 	h.Children(func() {
-		if !lit {
+		if lit < 0.01 {
 			return
 		}
-		line := ui.Box(c).Absolute().Background(a.pal.accentDim)
+		line := ui.Box(c).Absolute().Background(a.pal.accentDim.Alpha(lit))
 		switch at {
 		case edgeTop:
 			line.Top(0).Left(0).Right(0).Height(2)
@@ -374,6 +392,7 @@ func (a *app) commandCenter(c *ui.Context) {
 	case hovered:
 		b.Background(p.surfaceHover).Border(1, mix(p.border, p.muted, 0.3))
 	}
+	b.Transition(hoverFade)
 	room := b.Bounds().W - 2*10 - 12 - 2*8 // its padding, the icon and the gaps
 	b.Children(func() {
 		col := p.faint
@@ -391,9 +410,12 @@ func (a *app) commandCenter(c *ui.Context) {
 		if a.root != "" {
 			folder = remoteFolder(a.root)
 		}
+		var nameW float32
+		if name != "" {
+			nameW, _ = c.MeasureText(0, ui.Span{Text: name, Size: 12, Weight: 550})
+		}
 		if name != "" && folder != "" && room > 0 {
 			// The folder goes before the name is cut short.
-			nameW, _ := c.MeasureText(0, ui.Span{Text: name, Size: 12, Weight: 550})
 			folderW, _ := c.MeasureText(0, ui.Span{Text: folder, Size: 12})
 			if nameW+8+folderW > room {
 				folder = ""
@@ -401,7 +423,10 @@ func (a *app) commandCenter(c *ui.Context) {
 		}
 		switch {
 		case name != "" && a.root != "":
-			ui.Text(c, name).FontSize(12).FontWeight(550).TextColor(p.text).SingleLine().Shrink(1).MinWidth(32)
+			// A short name, as a terminal's "zsh", keeps its own width
+			// rather than a gap after it.
+			ui.Text(c, name).FontSize(12).FontWeight(550).TextColor(p.text).SingleLine().Shrink(1).MinWidth(min(32, nameW)).
+				ContentTransition(ui.ContentTransition{})
 			if folder == "" {
 				break
 			}
@@ -434,6 +459,8 @@ func (a *app) iconButton(c *ui.Context, icon *ui.SVG, label string, on bool) ui.
 	if on {
 		col = p.text
 	}
+	b.Transition(revealFade)
+	pressPose(b)
 	b.Children(func() { ui.Icon(c, icon).FontSize(15).TextColor(col) })
 	return b
 }
@@ -515,7 +542,7 @@ func (a *app) columnView(c *ui.Context, col *column) {
 	a.tabStrip(c, col)
 	shown := col.tab()
 	if shown != nil && shown.term == nil {
-		a.breadcrumbs(c, shown)
+		a.breadcrumbs(c, col, shown)
 	}
 	for _, t := range col.tabs {
 		if t != shown && t.ed != nil {
@@ -547,6 +574,7 @@ func (a *app) columnView(c *ui.Context, col *column) {
 					if col == a.column() {
 						a.findView(c, shown.ed)
 					}
+					a.vimLineView(c, shown.ed)
 				}
 			})
 		}
@@ -669,27 +697,25 @@ func (a *app) dropMark(c *ui.Context) {
 		Background(a.pal.accent.Alpha(0.14)).Border(1, a.pal.accentDim)
 }
 
-// breadcrumbs name the file a tab shows and, in an editor, the blocks
-// its caret is in. An SVG has a button there to show it as a picture or
-// as text.
-func (a *app) breadcrumbs(c *ui.Context, t *colTab) {
+// breadcrumbs name the file a tab of column col shows and, in an editor,
+// the blocks its caret is in. A folder of the file's path shows its files
+// in a box, as clicked. An SVG has a button there to show it as a picture
+// or as text.
+func (a *app) breadcrumbs(c *ui.Context, col *column, t *colTab) {
 	p := a.pal
 	d := t.ed
-	var parts []string
+	var parts []crumb
 	if path := t.path(); path != "" {
-		rel := path
-		if a.root != "" && path != a.root && remote.Contains(a.root, path) {
-			if path, err := remote.Rel(a.root, path); err == nil {
-				rel = path
-			}
-		}
-		parts = strings.Split(filepath.ToSlash(rel), "/")
+		parts = crumbsOf(path, a.root, homeDir())
 	} else if t.diff != nil && t.diff.commit != nil && t.diff.commit.from != "" {
-		parts = []string{locales.Comparison(), t.name()}
+		parts = []crumb{{locales.Comparison(), ""}, {t.name(), ""}}
 	} else if t.diff != nil && t.diff.commit != nil {
-		parts = []string{locales.DiffCommitName(git.ShortHash(t.diff.commit.hash)), t.name()}
+		parts = []crumb{{locales.DiffCommitName(git.ShortHash(t.diff.commit.hash)), ""}, {t.name(), ""}}
 	} else {
-		parts = []string{t.name()}
+		parts = []crumb{{t.name(), ""}}
+	}
+	if k := &a.crumbs; k.open && k.col == col && !a.crumbsValid() {
+		a.closeCrumbs()
 	}
 	// The blocks the caret is in, after the file: the innermost two.
 	var snap ui.TextSnapshot
@@ -703,7 +729,7 @@ func (a *app) breadcrumbs(c *ui.Context, t *colTab) {
 		for i, part := range parts {
 			last := i == len(parts)-1
 			if last {
-				icon, col := fileIcon(p, part)
+				icon, col := fileIcon(p, part.name)
 				switch {
 				case t.diff != nil && t.diff.commit != nil:
 					icon, col = iconCommit, p.accent
@@ -712,10 +738,35 @@ func (a *app) breadcrumbs(c *ui.Context, t *colTab) {
 				}
 				ui.Icon(c, icon).FontSize(13).TextColor(col)
 			}
-			t := ui.Text(c, part).FontSize(12).SingleLine().TextColor(p.muted).Shrink(0)
-			if last {
-				// A long name, as a commit's subject, ends in an ellipsis.
-				t.TextColor(p.text).Shrink(1).MinWidth(24)
+			if part.dir != "" && t.diff == nil {
+				// A folder: its files in a box below it.
+				k := &a.crumbs
+				on := k.open && k.tab == t && k.dir == part.dir
+				b := ui.ButtonBase(c.Key("crumb:"+part.dir)).Height(crumbsH-6).Padding(0, 4).Margin(0, -4).Radius(4).
+					AlignItems(ui.Center).Shrink(0).Label(locales.CrumbsFolderTip(part.name))
+				if on || b.Hovered() {
+					b.Background(p.hover)
+				}
+				b.Transition(hoverFade)
+				b.Children(func() {
+					col := p.muted
+					if on || b.Hovered() {
+						col = p.text
+					}
+					ui.Text(c, part.name).FontSize(12).SingleLine().TextColor(col)
+				})
+				if b.Clicked() {
+					a.openCrumbs(col, t, part.dir)
+				}
+				if on {
+					a.crumbsBox(c, b)
+				}
+			} else {
+				t := ui.Text(c, part.name).FontSize(12).SingleLine().TextColor(p.muted).Shrink(0)
+				if last {
+					// A long name, as a commit's subject, ends in an ellipsis.
+					t.TextColor(p.text).Shrink(1).MinWidth(24)
+				}
 			}
 			if !last || len(scope) > 0 {
 				ui.Icon(c, iconChevronRight).FontSize(11).TextColor(p.faint)
@@ -728,6 +779,7 @@ func (a *app) breadcrumbs(c *ui.Context, t *colTab) {
 			if b.Hovered() {
 				b.Background(p.hover)
 			}
+			b.Transition(hoverFade)
 			b.Children(func() {
 				ui.Text(c, label).FontSize(12).Font(a.font.family).SingleLine().TextColor(p.muted)
 			})
@@ -761,7 +813,10 @@ func (a *app) previewButton(c *ui.Context, t *colTab, d *editor) {
 	if b.Hovered() {
 		b.Background(p.hover)
 	}
-	b.Children(func() { ui.Icon(c, icon).FontSize(13).TextColor(p.muted) })
+	b.Transition(hoverFade)
+	pressPose(b)
+	// The icon turns into the other's, the preview's or the source's.
+	b.Children(func() { ui.Icon(c, icon).FontSize(13).TextColor(p.muted).ContentTransition(ui.ContentTransition{}) })
 	if b.Clicked() {
 		a.post(func() {
 			a.setPreview(d, d.preview == nil)
@@ -811,7 +866,7 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 		w, _ := m.size(1)
 		used += w + 12 + 2
 	}
-	if busy := a.git.busy; busy != "" {
+	if busy := a.repository().git.busy; busy != "" {
 		used += measure(busy, true)
 	}
 	if a.conn != nil {
@@ -831,7 +886,11 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 	}
 	folder := func() {
 		if a.root != "" {
-			add(&v.folder, measure(remote.Base(a.root), true))
+			label := remote.Base(a.root)
+			if len(a.repositories.contexts) > 1 {
+				label = a.repositoryLabel()
+			}
+			add(&v.folder, measure(label, true))
 		}
 	}
 	t := a.activeTab()
@@ -852,7 +911,17 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 		n := snap.LineCount()
 		used += measure(locales.StatusPos(n, 999), false)
 		if a.settings.Vim {
-			used += measure(d.vim.label(), false)
+			// The mode's badge, and the keys typed after it.
+			used += measure(d.vim.mode.String(), false) + 2*6
+			if k := d.vim.pending(); k != "" {
+				used += measure(k, false)
+			}
+			if a.vimRec != 0 {
+				used += measure(locales.VimRecording(string(a.vimRec)), false) + 6 + 5
+			}
+			if m := a.vimMsg; m.text != "" && time.Since(m.at) < vimMessageFor {
+				used += min(measure(m.text, false), 420) + 6
+			}
 		}
 		if d.diskGone {
 			used += measure(locales.DeletedOnDisk(), true)
@@ -889,6 +958,51 @@ func (a *app) statusFit(c *ui.Context, width float32) statusVisibility {
 	return v
 }
 
+// vimBadge shows vim mode's mode in the status bar, as a badge colored
+// by it: plain in normal mode, the accent in insert mode, and the color
+// of a change in visual mode; then the keys of a command typed so far.
+func (a *app) vimBadge(c *ui.Context, v *vimState, text func(string) ui.Element) {
+	p := a.pal
+	bg, fg := p.text.Alpha(0.09), p.statusFg
+	switch {
+	case v.mode == vimInsert:
+		bg, fg = p.fill, p.fillText
+	case v.mode.visual():
+		bg, fg = p.modified.Alpha(0.22), p.modifiedFg
+	}
+	row := ui.Row(c.Key("status:vim")).Height(statusBarH).Padding(0, 6).Gap(6).AlignItems(ui.Center)
+	// From mode to mode, the badge's colors and name cross over.
+	fade := ui.Animation{Duration: 140 * time.Millisecond}
+	bg, fg = row.AnimateColor("bg", bg, fade), row.AnimateColor("fg", fg, fade)
+	row.Children(func() {
+		ui.Text(c, v.mode.String()).FontSize(10.5).FontWeight(650).LetterSpacing(0.6).TextColor(fg).SingleLine().
+			Padding(1, 6).Radius(4).Background(bg).ContentTransition(ui.ContentTransition{})
+		if a.vimRec != 0 {
+			// A register recording, as vim says: a red dot, and its name.
+			ui.Row(c.Key("status:vim-rec")).Gap(5).AlignItems(ui.Center).
+				Transition(ui.ElementTransition{Duration: 160 * time.Millisecond, Enter: &ui.Motion{Scale: 0.8}, Exit: &ui.Motion{Scale: 0.8}}).
+				Children(func() {
+					ui.Box(c).Width(6).Height(6).Radius(3).Background(p.dangerFg)
+					ui.Text(c, locales.VimRecording(string(a.vimRec))).FontSize(11.5).TextColor(p.dangerFg).SingleLine()
+				})
+		}
+		if k := v.pending(); k != "" {
+			text(k)
+		}
+		// What the last command said, as a search that went round, for a
+		// moment; an error in the color of one.
+		if m := a.vimMsg; m.text != "" && time.Since(m.at) < vimMessageFor {
+			col := p.statusFg
+			if m.err {
+				col = p.dangerFg
+			}
+			ui.Text(c.Key("status:vim-msg"), m.text).FontSize(11.5).TextColor(col).SingleLine().MaxWidth(420).
+				Transition(ui.ElementTransition{Duration: 180 * time.Millisecond, Colors: true, Enter: &ui.Motion{}, Exit: &ui.Motion{}}).
+				ContentTransition(ui.ContentTransition{})
+		}
+	})
+}
+
 func (a *app) statusBar(c *ui.Context) {
 	p := a.pal
 	width, _ := c.Size()
@@ -914,6 +1028,7 @@ func (a *app) statusBar(c *ui.Context) {
 			if b.Hovered() {
 				b.Background(p.hover)
 			}
+			b.Transition(hoverFade)
 			b.Children(func() {
 				if icon != nil {
 					ui.Icon(c, icon).FontSize(12).TextColor(p.statusFg)
@@ -934,6 +1049,7 @@ func (a *app) statusBar(c *ui.Context) {
 			if b.Hovered() {
 				b.Background(p.hover)
 			}
+			b.Transition(hoverFade)
 			b.Children(func() { text(label) })
 			b.Menu(build)
 		}
@@ -952,16 +1068,18 @@ func (a *app) statusBar(c *ui.Context) {
 			if bb.Hovered() {
 				bb.Background(p.hover)
 			}
+			bb.Transition(hoverFade)
 			bb.Children(func() {
 				ui.Icon(c, iconBranch).FontSize(12).TextColor(p.statusFg)
 				if visible.branchLabel {
-					text(a.branchLabel())
+					// Switched to another, the name rolls to it.
+					text(a.branchLabel()).ContentTransition(ui.ContentTransition{})
 				}
 			})
 			bb.Menu(a.branchMenu)
 		}
 		a.transferStatus(c, text)
-		if busy := a.git.busy; busy != "" {
+		if busy := a.repository().git.busy; busy != "" {
 			ui.Row(c.Key("status:busy")).Height(statusBarH).Padding(0, 6).Gap(5).AlignItems(ui.Center).Children(func() {
 				// In a theme with a character, it hops for it instead.
 				if a.themeMascot() == nil {
@@ -974,7 +1092,9 @@ func (a *app) statusBar(c *ui.Context) {
 			item("chord", locales.ChordWaiting(strings.Join(chordCaps(a.chord), " ")), "", iconKeyboard, nil)
 		}
 		if a.root != "" && visible.folder {
-			if a.conn != nil {
+			if len(a.repositories.contexts) > 1 {
+				a.repositoryButton(c, true)
+			} else if a.conn != nil {
 				item("folder", remote.Base(a.root), "", iconFolder, nil)
 			} else {
 				item("folder", remote.Base(a.root), revealFolderLabel(shortenHome(a.root)), iconFolder, func() { a.host.reveal(a.root) })
@@ -1012,7 +1132,7 @@ func (a *app) statusBar(c *ui.Context) {
 		if d.diskGone {
 			ui.Row(c).Padding(0, 6).Gap(5).AlignItems(ui.Center).Children(func() {
 				ui.Icon(c, iconTrash).FontSize(12).TextColor(p.danger)
-				text(locales.DeletedOnDisk()).TextColor(p.danger)
+				text(locales.DeletedOnDisk()).TextColor(p.dangerFg)
 			})
 		}
 		snap := d.buf.Snapshot()
@@ -1027,7 +1147,7 @@ func (a *app) statusBar(c *ui.Context) {
 			pos += locales.StatusSelected(n)
 		}
 		if a.settings.Vim {
-			item("vim", d.vim.label(), "", nil, nil)
+			a.vimBadge(c, &d.vim, text)
 		}
 		item("pos", pos, a.withKey(locales.GoToLineLabel(), "go.line"), nil, func() { a.openQuick(":") })
 		if visible.lines {
@@ -1126,7 +1246,8 @@ func (a *app) welcome(c *ui.Context) {
 				content.Width(380+2*24).Padding(24).Radius(12).Background(p.editor.Alpha(0.88)).Border(1, p.border)
 			}
 			content.Children(func() {
-				ui.Row(c).Gap(16).AlignItems(ui.Center).Children(func() {
+				// Inset as the rows below, so the logo lines up with their icons.
+				riseIn(ui.Row(c.Key("welcome:head")).Padding(0, 10).Gap(16).AlignItems(ui.Center), 0).Children(func() {
 					if m := a.themeMascot(); m != nil {
 						a.welcomeMascot(c, m)
 					} else {
@@ -1140,17 +1261,17 @@ func (a *app) welcome(c *ui.Context) {
 						ui.Text(c, locales.WelcomeTagline()).FontSize(13).TextColor(p.muted)
 					})
 				})
-				a.welcomeSection(c, locales.WelcomeStart(), func() {
+				a.welcomeSection(c, locales.WelcomeStart(), 60*time.Millisecond, func() {
 					if a.root == "" {
 						a.welcomeAction(c, iconFolderOpen, locales.CmdFileOpenFolder(), a.keyHint("file.openFolder"), a.chooseFolder)
 						if remoteSupported {
 							a.welcomeAction(c, iconServer, remoteLabel(locales.CmdRemoteConnect(), "Connect to WSL…"), a.keyHint("remote.connect"), a.openRemotePicker)
 						}
 					} else {
-						a.welcomeAction(c, iconSearch, locales.CmdGoQuickOpen(), a.keyHint("go.quickOpen"), func() { a.openQuick("") })
+						a.welcomeAction(c, iconFileSearch, locales.CmdGoQuickOpen(), a.keyHint("go.quickOpen"), func() { a.openQuick("") })
 						a.welcomeAction(c, iconSearch, locales.CmdEditFindInFiles(), a.keyHint("edit.findInFiles"), func() { a.showSearch(false) })
 					}
-					a.welcomeAction(c, iconChevronRight, locales.CmdGoCommands(), a.keyHint("go.commands"), func() { a.openQuick(">") })
+					a.welcomeAction(c, iconCommand, locales.CmdGoCommands(), a.keyHint("go.commands"), func() { a.openQuick(">") })
 					a.welcomeAction(c, iconFilePlus, locales.CmdFileNew(), a.keyHint("file.new"), a.newFile)
 					a.welcomeAction(c, iconTerminal, locales.CmdViewTerminal(), a.keyHint("view.terminal"), a.togglePanel)
 					a.welcomeAction(c, iconSidebar, locales.CmdViewSidebar(), a.keyHint("view.sidebar"), a.toggleSidebar)
@@ -1163,13 +1284,14 @@ func (a *app) welcome(c *ui.Context) {
 					recent = a.settings.RecentExcept("")
 				}
 				if len(recent) > 0 {
-					a.welcomeSection(c, locales.WelcomeRecent(), func() {
+					a.welcomeSection(c, locales.WelcomeRecent(), 120*time.Millisecond, func() {
 						for _, dir := range recent[:min(6, len(recent))] {
-							r := ui.ButtonBase(c.Key("recent:"+dir)).FillWidth().Padding(6, 10).Radius(6).Gap(10).
+							r := ui.ButtonBase(c.Key("recent:"+dir)).FillWidth().Height(welcomeRowH).Padding(0, 10).Radius(6).Gap(10).
 								Justify(ui.Start).AlignItems(ui.Center).Label(locales.RecentOpenLabel(dir)).Tooltip(shortenHome(dir))
 							if r.Hovered() {
 								r.Background(p.hover)
 							}
+							r.Transition(hoverFade)
 							r.Children(func() {
 								icon := iconFolder
 								if remote.Is(dir) {
@@ -1191,6 +1313,10 @@ func (a *app) welcome(c *ui.Context) {
 								}
 							}
 						}
+						// The rest, in Open Recent's picker.
+						if len(recent) > 6 {
+							a.welcomeAction(c, iconMore, locales.MenuOpenRecentMore(), a.keyHint("file.openRecent"), a.openRecentPicker)
+						}
 					})
 				}
 			})
@@ -1198,10 +1324,15 @@ func (a *app) welcome(c *ui.Context) {
 	})
 }
 
+// welcomeRowH is the height of every row of the welcome page, with keys
+// or without, so that they keep one rhythm.
+const welcomeRowH = 30
+
 // welcomeSection is a titled group of the welcome page.
-func (a *app) welcomeSection(c *ui.Context, title string, rows func()) {
+// It rises in after delay as the page shows.
+func (a *app) welcomeSection(c *ui.Context, title string, delay time.Duration, rows func()) {
 	p := a.pal
-	ui.Column(c).Gap(2).Children(func() {
+	riseIn(ui.Column(c.Key("welcome:"+title)).Gap(2), delay).Children(func() {
 		// As the sidebar titles its views.
 		ui.Text(c, strings.ToUpper(title)).FontSize(11).FontWeight(600).LetterSpacing(0.7).TextColor(p.muted).Padding(0, 10, 6)
 		rows()
@@ -1212,17 +1343,19 @@ func (a *app) welcomeSection(c *ui.Context, title string, rows func()) {
 // icon, its name and its keys.
 func (a *app) welcomeAction(c *ui.Context, icon *ui.SVG, label, keys string, fn func()) {
 	p := a.pal
-	r := ui.ButtonBase(c.Key("action:"+label)).FillWidth().Padding(6, 10).Radius(6).Gap(10).
+	r := ui.ButtonBase(c.Key("action:"+label)).FillWidth().Height(welcomeRowH).Padding(0, 10).Radius(6).Gap(10).
 		Justify(ui.Start).AlignItems(ui.Center).Label(label)
 	hovered := r.Hovered()
 	if hovered {
 		r.Background(p.hover)
 	}
+	r.Transition(hoverFade)
+	col := p.muted
+	if hovered {
+		col = p.accent
+	}
+	col = r.AnimateColor("icon", col, ui.Animation{Duration: hoverFade.Duration})
 	r.Children(func() {
-		col := p.muted
-		if hovered {
-			col = p.accent
-		}
 		ui.Icon(c, icon).FontSize(15).TextColor(col)
 		ui.Text(c, label).FontSize(13).TextColor(p.text).Grow(1).SingleLine()
 		a.keycaps(c, keys)
@@ -1330,8 +1463,23 @@ func shortenHome(p string) string {
 	if remote.Is(p) {
 		return remote.Display(p)
 	}
-	if home, err := os.UserHomeDir(); err == nil && strings.HasPrefix(p, home) {
-		return "~" + p[len(home):]
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		return shortenIn(p, home)
+	}
+	return p
+}
+
+// shortenIn is p with ~ for the home folder home when p is in it, or is
+// it: of a folder, not of a name home only begins, and on Windows
+// whatever the case of its letters, as C: and c: are one disk.
+func shortenIn(p, home string) string {
+	same := func(a, b string) bool { return a == b || hostOS == "windows" && strings.EqualFold(a, b) }
+	home = strings.TrimSuffix(home, string(filepath.Separator))
+	if home == "" || len(p) < len(home) || !same(p[:len(home)], home) {
+		return p
+	}
+	if rest := p[len(home):]; rest == "" || strings.HasPrefix(rest, string(filepath.Separator)) {
+		return "~" + rest
 	}
 	return p
 }

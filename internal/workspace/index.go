@@ -11,6 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"mayoi/internal/remote"
 	"mayoi/internal/vfs"
 )
 
@@ -265,8 +266,39 @@ func score(s string, q []rune, pos []int) (int, bool) {
 	if k >= 0 {
 		return 0, false
 	}
+	total := scorePositions(s, q, pos, base)
 	// Pull matches right after an earlier match next to it, keeping runs
-	// together: "mai" in "src/main.go" takes m-a-i of main.
+	// together: "git" in "Git: Fetch" takes g-i-t of Git, not the t of
+	// Fetch. Keep the pulled positions when they score better.
+	var buf [16]int
+	pulled := buf[:0]
+	if len(q) > len(buf) {
+		pulled = make([]int, 0, len(q))
+	}
+	pulled = append(pulled, pos...)
+	moved := false
+	for n := 1; n < len(q); n++ {
+		next := pulled[n-1] + utf8.RuneLen(q[n-1])
+		if next >= pulled[n] {
+			continue
+		}
+		if r, _ := utf8.DecodeRuneInString(s[next:]); lower(r) == q[n] {
+			pulled[n] = next
+			moved = true
+		}
+	}
+	if moved {
+		if t := scorePositions(s, q, pulled, base); t > total {
+			total = t
+			copy(pos, pulled)
+		}
+	}
+	return total, true
+}
+
+// scorePositions scores the characters of q matched at pos in s, whose
+// base name starts at base.
+func scorePositions(s string, q []rune, pos []int, base int) int {
 	total := 0
 	for n, p := range pos {
 		total += 10
@@ -285,7 +317,7 @@ func score(s string, q []rune, pos []int) (int, bool) {
 	}
 	total -= (len(s) - base) / 4 // shorter names first
 	total -= strings.Count(s, "/")
-	return total, true
+	return total
 }
 
 // lower is unicode.ToLower, quick for ASCII.
@@ -321,7 +353,7 @@ func Ignored(root string) map[string]bool {
 	ignored := map[string]bool{}
 	for name := range bytes.SplitSeq(out, []byte{0}) {
 		if len(name) > 0 {
-			ignored[filepath.Join(root, filepath.FromSlash(strings.TrimSuffix(string(name), "/")))] = true
+			ignored[remote.Join(root, strings.TrimSuffix(string(name), "/"))] = true
 		}
 	}
 	return ignored
