@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"path/filepath"
+	"mayoi/internal/remote"
 	"slices"
 	"strings"
 
@@ -233,9 +233,9 @@ func (a *app) discardHunks(f *diffFile, hs []linediff.Hunk) {
 		return
 	}
 	path := f.path
-	title := locales.DiscardChangeTo(filepath.Base(path))
+	title := locales.DiscardChangeTo(remote.Base(path))
 	if len(hs) > 1 {
-		title = locales.DiscardChangesTo(filepath.Base(path))
+		title = locales.DiscardChangesTo(remote.Base(path))
 	}
 	a.confirm = &confirm{title: title, message: locales.DiscardHunkDetail(),
 		ok: locales.ButtonDiscard(), danger: true, run: func() {

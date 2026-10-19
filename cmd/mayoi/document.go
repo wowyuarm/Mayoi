@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"errors"
+	"mayoi/internal/remote"
 	"os"
-	"path/filepath"
 	"slices"
 	"unicode/utf8"
 
@@ -203,7 +203,7 @@ func (d *document) name() string {
 	if d.path == "" {
 		return d.title
 	}
-	return filepath.Base(d.path)
+	return remote.Base(d.path)
 }
 
 func (d *document) dirty() bool { return d.buf.Version() != d.saved || d.crlf != d.diskCRLF }

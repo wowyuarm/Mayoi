@@ -95,7 +95,7 @@ func newImageViewer(path string) *viewer { return &viewer{path: path} }
 // newPreviewViewer makes the preview of an SVG or Markdown document.
 func newPreviewViewer(d *document) *viewer { return &viewer{doc: d} }
 
-func (v *viewer) name() string { return filepath.Base(v.path) }
+func (v *viewer) name() string { return remote.Base(v.path) }
 
 // loadImage reads and decodes the image file in the background, keeping the
 // picture shown until the new one is ready.

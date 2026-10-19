@@ -532,8 +532,15 @@ func (m *mayoi) openFile(path string) {
 	if deepest != "" {
 		// As the window spells its folder, which on Windows a path given
 		// in other letters, c:\proj for C:\Proj, is too: the file opens
-		// once, as the Explorer has it.
-		path = filepath.Join(deepest, path[len(strings.TrimSuffix(deepest, string(filepath.Separator))):])
+		// once, as the Explorer has it. A remote path keeps its host, and
+		// slashes, which Windows' separator is not.
+		if remote.Is(deepest) {
+			if rel, err := remote.Rel(deepest, path); err == nil {
+				path = remote.Join(deepest, rel)
+			}
+		} else {
+			path = filepath.Join(deepest, path[len(strings.TrimSuffix(deepest, string(filepath.Separator))):])
+		}
 	}
 	if win == nil && len(m.wins) > 0 {
 		win = m.wins[0]

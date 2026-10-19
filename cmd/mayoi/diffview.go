@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync/atomic"
@@ -891,7 +890,7 @@ func (a *app) layoutRows(v *diffView, l diffGeometry) {
 				}
 			}
 			if target == nil {
-				a.fail("%s", locales.FailNoChanges(filepath.Base(t.path)))
+				a.fail("%s", locales.FailNoChanges(remote.Base(t.path)))
 			} else {
 				target.folded = false
 			}

@@ -109,7 +109,7 @@ func (a *app) copyPathsInto(srcs []string, dir string) {
 	for _, p := range srcs {
 		to, err := copyInto(p, dir)
 		if err != nil {
-			a.fail("%s", locales.FailPasteItem(filepath.Base(p), err.Error()))
+			a.fail("%s", locales.FailPasteItem(remote.Base(p), err.Error()))
 			continue
 		}
 		if first == "" {
@@ -174,7 +174,7 @@ func (a *app) pasteAcross(srcs []string, dir string) {
 
 // transferLabel says what a paste does: "Uploading 3 items to box…".
 func transferLabel(srcs []string, dir string) string {
-	what := filepath.Base(srcs[0])
+	what := remote.Base(srcs[0])
 	if len(srcs) > 1 {
 		what = locales.ItemsCount(len(srcs))
 	}
@@ -317,7 +317,7 @@ func copyInto(src, dir string) (string, error) {
 	if info.IsDir() && (dir == src || strings.HasPrefix(dir, src+string(filepath.Separator))) {
 		return "", errors.New(locales.ErrPasteIntoItself())
 	}
-	to := freeName(dir, filepath.Base(src), info.IsDir())
+	to := freeName(dir, remote.Base(src), info.IsDir())
 	return to, copyEntry(src, to)
 }
 

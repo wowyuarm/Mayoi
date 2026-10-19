@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/fs"
 	"path"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -279,9 +278,9 @@ func (a *app) remoteLoaded(d *document, path string, info fs.FileInfo, data []by
 		}
 		switch {
 		case errors.Is(err, errBinary):
-			a.fail("%s", locales.FailBinary(filepath.Base(path)))
+			a.fail("%s", locales.FailBinary(remote.Base(path)))
 		case !errors.Is(err, fs.ErrNotExist) || !d.restored:
-			a.fail("%s", locales.FailOpen(filepath.Base(path), err.Error()))
+			a.fail("%s", locales.FailOpen(remote.Base(path), err.Error()))
 		}
 		a.dropDocTabs(d)
 		return

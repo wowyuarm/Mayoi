@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -227,11 +226,11 @@ func (a *app) openFileIn(col *column, at int, path string, focus bool) {
 		a.nextID++
 		d, err := readDocument(a.nextID, path, a.invalidate)
 		if errors.Is(err, errBinary) {
-			a.fail("%s", locales.FailBinary(filepath.Base(path)))
+			a.fail("%s", locales.FailBinary(remote.Base(path)))
 			return
 		}
 		if err != nil {
-			a.fail("%s", locales.FailOpen(filepath.Base(path), err.Error()))
+			a.fail("%s", locales.FailOpen(remote.Base(path), err.Error()))
 			return
 		}
 		doc = d
@@ -328,7 +327,7 @@ func (a *app) openImage(col *column, at int, path string, focus bool) {
 	}
 	// A remote image says itself why it could not be read.
 	if _, err := os.Stat(path); err != nil && !remote.Is(path) {
-		a.fail("%s", locales.FailOpen(filepath.Base(path), err.Error()))
+		a.fail("%s", locales.FailOpen(remote.Base(path), err.Error()))
 		return
 	}
 	v := newImageViewer(path)
@@ -732,8 +731,8 @@ func (a *app) rememberTabs() {
 				if a.git.repo != nil && ts.RepoRoot == a.git.repo.Root {
 					ts.RepoRoot = ""
 				} else if ts.RepoRoot != "" {
-					if rel, err := filepath.Rel(a.root, ts.RepoRoot); err == nil {
-						ts.RepoRoot = filepath.ToSlash(rel)
+					if rel, err := remote.Rel(a.root, ts.RepoRoot); err == nil {
+						ts.RepoRoot = rel
 					}
 				}
 				ts.Full, ts.ScrollY = v.full, v.scroll.Y
@@ -870,8 +869,8 @@ func (a *app) restoreTabs() {
 		for k, ts := range cs.Tabs {
 			// Relative roots move with the workspace; absolute roots from older
 			// settings remain readable.
-			if ts.RepoRoot != "" && !filepath.IsAbs(ts.RepoRoot) {
-				ts.RepoRoot = filepath.Join(a.root, filepath.FromSlash(ts.RepoRoot))
+			if ts.RepoRoot != "" && !remote.IsAbs(ts.RepoRoot) {
+				ts.RepoRoot = remote.Join(a.root, ts.RepoRoot)
 			}
 			n := len(col.tabs)
 			switch {

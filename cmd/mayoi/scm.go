@@ -439,7 +439,7 @@ func (a *gitContext) scmList(c *ui.Context) {
 		case r.more:
 			return locales.ScmShowMoreCommits()
 		}
-		return filepath.Base(rows[i].e.Path)
+		return remote.Base(rows[i].e.Path)
 	}
 	base := c.Theme()
 	quiet := *base
@@ -901,14 +901,14 @@ func (a *gitContext) scmFile(c *ui.Context, r scmRow, action *func()) {
 		a.app.dragFile(row, &fileDrag{path: e.Path})
 	}
 	row.Children(func() {
-		name := filepath.Base(e.Path)
+		name := remote.Base(e.Path)
 		icon, col := entryIcon(p, e, name)
 		ui.Icon(c, icon).FontSize(14).TextColor(col)
 		label := ui.Text(c, name).FontSize(13).SingleLine().Shrink(0).TextColor(gitColor(p, letter))
 		if letter == 'D' {
 			label.Strikethrough()
 		}
-		if dir := filepath.Dir(a.git.repo.Rel(e.Path)); dir != "." && !tree {
+		if dir := remote.Dir(a.git.repo.Rel(e.Path)); dir != "." && !tree {
 			ui.Text(c, dir).FontSize(11.5).TextColor(p.faint).SingleLine().Shrink(1)
 		}
 		ui.Spacer(c)
@@ -1736,9 +1736,9 @@ func (a *gitContext) discard(es ...git.Entry) {
 	}
 	title := locales.DiscardFilesQuestion(len(es))
 	if len(es) == 1 {
-		title = locales.DiscardFileQuestion(filepath.Base(es[0].Path))
+		title = locales.DiscardFileQuestion(remote.Base(es[0].Path))
 		if es[0].Untracked() {
-			title = locales.MoveToTrashQuestion(filepath.Base(es[0].Path), trashName())
+			title = locales.MoveToTrashQuestion(remote.Base(es[0].Path), trashName())
 		}
 	}
 	msg := locales.CannotBeUndone()
@@ -1770,7 +1770,7 @@ func (a *gitContext) discard(es ...git.Entry) {
 		}
 		for _, p := range untracked {
 			if err := a.app.host.trash(p); err != nil {
-				a.app.fail("%s", locales.FailMoveTo(filepath.Base(p), trashName(), err.Error()))
+				a.app.fail("%s", locales.FailMoveTo(remote.Base(p), trashName(), err.Error()))
 			}
 		}
 		if a.app.tree != nil && len(untracked) > 0 {
