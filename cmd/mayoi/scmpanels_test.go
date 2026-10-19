@@ -579,8 +579,9 @@ func TestScmPanelsLoadOnlyExpandedContent(t *testing.T) {
 		t.Fatalf("expanded remote URLs: %+v", p.remotes)
 	}
 	a.editPanelRemote("origin", false)
-	hs.settle()
-	if a.prompt == nil || a.prompt.title != "Edit Fetch URL…" || a.prompt.value != hs.root {
+	// The URL is read on the repository, and the prompt opened after it.
+	hs.until("the remote's URL in a prompt", func() bool { return a.prompt != nil })
+	if a.prompt.title != "Edit Fetch URL…" || a.prompt.value != hs.root {
 		t.Fatalf("edit remote prompt: %+v", a.prompt)
 	}
 	a.prompt = nil
