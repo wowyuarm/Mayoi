@@ -38,6 +38,11 @@ func TestCrumbsOf(t *testing.T) {
 				[]crumb{{"box", "/ssh:box"}, {"home", "/ssh:box/home"}, {"me", "/ssh:box/home/me"}, {"x.go", ""}}},
 			{"/ssh:box/srv/app/x.go", "/ssh:box/srv", u,
 				[]crumb{{"app", "/ssh:box/srv/app"}, {"x.go", ""}}},
+			// A file of a remote folder shows the folders under it, as
+			// one of this machine's does: the folder itself is the
+			// window's.
+			{"/ssh:wsl:Ubuntu/home/me/p/a/b.go", "/ssh:wsl:Ubuntu/home/me/p", u,
+				[]crumb{{"a", "/ssh:wsl:Ubuntu/home/me/p/a"}, {"b.go", ""}}},
 		}...)
 	}
 	for _, c := range cases {

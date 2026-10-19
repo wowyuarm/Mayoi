@@ -29,6 +29,11 @@ func crumbsOf(path, root, home string) []crumb {
 	var out []crumb
 	base, rel := "", path
 	switch host, rp, ok := remote.Split(path); {
+	case root != "" && remote.Is(root) && remote.Contains(root, path) && path != root:
+		// A remote file of the folder open: from the folder, as a file of
+		// this machine's is, its slashes never the machine's separator.
+		rel, _ = remote.Rel(root, path)
+		base = root
 	case root != "" && strings.HasPrefix(path, root+sep):
 		base, rel = root, path[len(root)+1:]
 	case ok:
