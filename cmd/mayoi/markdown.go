@@ -383,7 +383,7 @@ func parseMarkdown(source []byte, path, root string, current func() bool, caches
 					}
 				}
 				if s.text == "" {
-					s.text = filepath.Base(s.image)
+					s.text = remote.Base(s.image)
 					if s.text == "." || s.text == "" {
 						s.text = "image"
 					}
@@ -1121,7 +1121,7 @@ func (a *app) markdownNoImage(c *ui.Context, m *markdownPreview, path string, r 
 			Radius(6).Border(1, p.border).Background(p.chrome).Children(func() {
 			ui.Icon(c, iconImage).FontSize(size).TextColor(p.faint)
 			ui.Text(c, r.text).FontSize(size * 0.93).TextColor(p.muted).SingleLine().MinWidth(0)
-			if name := filepath.Base(r.image); name != r.text && name != "." && name != "/" {
+			if name := remote.Base(r.image); name != r.text && name != "." && name != "/" {
 				ui.Text(c, name).FontSize(size * 0.8).TextColor(p.faint).SingleLine().MinWidth(0).Shrink(1)
 			}
 		})
