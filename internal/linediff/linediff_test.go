@@ -153,3 +153,53 @@ func TestWords(t *testing.T) {
 		t.Errorf("added %q", got)
 	}
 }
+
+func TestChars(t *testing.T) {
+	pick := func(s string, spans []Span) []string {
+		var out []string
+		for _, sp := range spans {
+			out = append(out, s[sp.Start:sp.End])
+		}
+		return out
+	}
+	// A character changed within a word, where the words say the whole
+	// word changed.
+	as, bs := Chars("abcd", "abXd")
+	if got := pick("abcd", as); !slices.Equal(got, []string{"c"}) {
+		t.Errorf("removed %q", got)
+	}
+	if got := pick("abXd", bs); !slices.Equal(got, []string{"X"}) {
+		t.Errorf("added %q", got)
+	}
+	// A character of its own, as words find it too.
+	as, bs = Chars("foo bar", "foo baz")
+	if got := pick("foo bar", as); !slices.Equal(got, []string{"r"}) {
+		t.Errorf("removed %q", got)
+	}
+	if got := pick("foo baz", bs); !slices.Equal(got, []string{"z"}) {
+		t.Errorf("added %q", got)
+	}
+	// The end of the line gone, and one added.
+	as, bs = Chars("abcd", "abc")
+	if got := pick("abcd", as); !slices.Equal(got, []string{"d"}) {
+		t.Errorf("removed %q", got)
+	}
+	if got := pick("abc", bs); got != nil {
+		t.Errorf("added %q", got)
+	}
+	as, bs = Chars("", "x")
+	if got := pick("", as); got != nil {
+		t.Errorf("removed %q", got)
+	}
+	if got := pick("x", bs); !slices.Equal(got, []string{"x"}) {
+		t.Errorf("added %q", got)
+	}
+	// Text of another script counts characters, not bytes.
+	as, bs = Chars("日本語", "日本")
+	if got := pick("日本語", as); !slices.Equal(got, []string{"語"}) {
+		t.Errorf("removed %q", got)
+	}
+	if got := pick("日本", bs); got != nil {
+		t.Errorf("added %q", got)
+	}
+}

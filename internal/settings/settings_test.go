@@ -346,6 +346,27 @@ func TestMigrateTheme(t *testing.T) {
 	}
 }
 
+// A diff shows the words that changed unless it is told otherwise, three
+// unchanged lines around a change, and its sides scroll together. The
+// file keeps them in their bounds.
+func TestDiffPrefs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	s := Load(path)
+	if s.DiffHighlight != "" || s.DiffContext != 3 || !s.DiffSyncScroll {
+		t.Fatalf("defaults %+v", s.Prefs)
+	}
+	os.WriteFile(path, []byte(`{"diffHighlight": "char", "diffContext": 400, "diffSyncScroll": false}`), 0o644)
+	s = Load(path)
+	if s.DiffHighlight != "char" || s.DiffContext != 100 || s.DiffSyncScroll {
+		t.Fatalf("loaded %+v", s.Prefs)
+	}
+	os.WriteFile(path, []byte(`{"diffHighlight": "banana", "diffContext": -2}`), 0o644)
+	s = Load(path)
+	if s.DiffHighlight != "" || s.DiffContext != 0 {
+		t.Fatalf("reset %+v", s.Prefs)
+	}
+}
+
 func TestScmRepositoryPreferencesRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
 	s := Load(path)

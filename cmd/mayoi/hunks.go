@@ -148,9 +148,24 @@ func (a *app) revertHunk(d *editor, h linediff.Hunk) {
 // replaceHunk puts lines in place of the lines of an editor's text a hunk
 // changed, as a step of undo: the lines its other side had.
 func replaceHunk(d *editor, h linediff.Hunk, lines []string) {
-	snap := d.buf.Snapshot()
-	n := snap.LineCount()
+	e, ok := hunkEdit(d.buf.Snapshot(), h, lines)
+	if !ok {
+		return
+	}
+	d.peek = -1
+	at := e.start
+	d.edit([2]int{at, at}, e)
+}
+
+// hunkEdit returns the edit that puts lines in place of the lines of a
+// text a hunk changed, by the hunk's lines of it, and whether the hunk
+// fits the text.
+func hunkEdit(snap ui.TextSnapshot, h linediff.Hunk, lines []string) (textEdit, bool) {
+	if h.B >= snap.LineCount() && h.BLen > 0 {
+		return textEdit{}, false
+	}
 	old := strings.Join(lines, "\n")
+	n := snap.LineCount()
 	var e textEdit
 	switch {
 	case h.BLen > 0 && h.ALen > 0:
@@ -172,9 +187,7 @@ func replaceHunk(d *editor, h linediff.Hunk, lines []string) {
 	default:
 		e = textEdit{snap.Len(), snap.Len(), "\n" + old}
 	}
-	d.peek = -1
-	at := e.start
-	d.edit([2]int{at, at}, e)
+	return e, true
 }
 
 // stageHunk puts the lines of a hunk in the index as they are in the

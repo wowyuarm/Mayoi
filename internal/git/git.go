@@ -271,7 +271,7 @@ func (r *Repo) Show(rev, path string) (text string, ok bool, err error) {
 		}
 		var ge *Error
 		if errors.As(err, &ge) {
-			for _, s := range []string{"exists on disk, but not in", "does not exist in", "neither on disk nor in the index", "invalid object name", "bad revision"} {
+			for _, s := range []string{"exists on disk, but not in", "does not exist in", "neither on disk nor in the index", "invalid object name", "bad revision", "is in the index, but not at stage"} {
 				if strings.Contains(ge.Stderr, s) {
 					return "", false, nil
 				}
@@ -947,6 +947,39 @@ func (r *Repo) Pull() error {
 	return err
 }
 
+// Sync fast-forwards from the current branch's upstream, then pushes
+// any local commits back to that same branch, regardless of push defaults.
+func (r *Repo) Sync() error {
+	out, err := r.run(nil, "for-each-ref", "--format=%(HEAD)%1f%(refname)%1f%(upstream:remotename)%1f%(upstream:remoteref)", "refs/heads")
+	if err != nil {
+		return err
+	}
+	var branch, remote, upstream string
+	for _, line := range strings.Split(string(out), "\n") {
+		f := strings.Split(line, "\x1f")
+		if len(f) == 4 && f[0] == "*" {
+			branch, remote, upstream = f[1], f[2], f[3]
+			break
+		}
+	}
+	if branch == "" {
+		return errors.New("check out a branch with a commit before synchronizing")
+	}
+	if remote == "" || upstream == "" {
+		return errors.New("the current branch has no upstream to synchronize with")
+	}
+	if _, err := r.run(nil, "pull", "--ff-only", "--", remote, upstream); err != nil {
+		return err
+	}
+	// FETCH_HEAD includes remote changes not yet known when sync began.
+	out, err = r.run(nil, "rev-list", "--count", "FETCH_HEAD.."+branch)
+	if err != nil || strings.TrimSpace(string(out)) == "0" {
+		return err
+	}
+	_, err = r.run(nil, "push", "--", remote, branch+":"+upstream)
+	return err
+}
+
 // Push pushes the branch to its upstream, or to a remote of the same name
 // that becomes its upstream when it has none.
 func (r *Repo) Push(branch string, hasUpstream bool) error {
@@ -991,5 +1024,125 @@ func NeedsAuth(err error) bool {
 // Init makes dir a Git repository.
 func Init(dir string) error {
 	_, err := run(dir, nil, "init")
+	return err
+}
+
+// Stage is one of the versions Git keeps of a file in conflict.
+type Stage struct {
+	Text string
+	Ok   bool // the stage has the file
+}
+
+// Stages returns the three versions Git keeps of a file in conflict: the
+// common base, ours, and theirs. A stage has no file when that version
+// has none, as the base of a file both sides added, or the side that
+// deleted it.
+func (r *Repo) Stages(path string) (base, ours, theirs Stage, err error) {
+	base, err = r.stage(1, path)
+	if err != nil {
+		return base, ours, theirs, err
+	}
+	ours, err = r.stage(2, path)
+	if err != nil {
+		return base, ours, theirs, err
+	}
+	theirs, err = r.stage(3, path)
+	return base, ours, theirs, err
+}
+
+// stage returns the text of one stage of a conflicted file.
+func (r *Repo) stage(n int, path string) (Stage, error) {
+	text, ok, err := r.Show(":"+strconv.Itoa(n), path)
+	return Stage{Text: text, Ok: ok}, err
+}
+
+// MergeSide is one side of a conflict: the ref it reads, and its name as
+// the view shows it.
+type MergeSide struct {
+	Ref  string // the commit or ref the version comes from, "" for the base
+	Name string // how the view names it, as "main" or "HEAD"
+}
+
+// MergeSides names the two sides of a conflict under the command stopped
+// for it: ours is HEAD, theirs the commit the command brings in. Without
+// one, theirs is still named.
+func (r *Repo) MergeSides(op Op) (ours, theirs MergeSide) {
+	ours = MergeSide{Ref: "HEAD", Name: "HEAD"}
+	if out, err := run(r.Root, nil, "symbolic-ref", "--short", "-q", "HEAD"); err == nil {
+		ours.Name = strings.TrimSpace(string(out))
+	}
+	switch op {
+	case OpMerge:
+		theirs = r.sideOf("MERGE_HEAD")
+	case OpCherryPick:
+		theirs = r.sideOf("CHERRY_PICK_HEAD")
+	case OpRevert:
+		theirs = r.sideOf("REVERT_HEAD")
+	case OpRebase:
+		theirs = r.sideOf("REBASE_HEAD")
+		if base := r.rebaseOnto(); base.Ref != "" {
+			ours = base
+		} else if b := r.rebaseBranch(); b != "" {
+			ours.Name = b
+		}
+	default:
+		theirs = MergeSide{Name: "Theirs"}
+	}
+	return ours, theirs
+}
+
+// sideOf names the commit the head file of a command stopped for has.
+func (r *Repo) sideOf(name string) MergeSide {
+	b, err := vfs.ReadFile(remote.Join(r.Dir, name))
+	if err != nil {
+		return MergeSide{Name: "Theirs"}
+	}
+	hash := strings.TrimSpace(string(b))
+	if hash == "" {
+		return MergeSide{Name: "Theirs"}
+	}
+	return r.sideRef(hash)
+}
+
+func (r *Repo) sideRef(hash string) MergeSide {
+	s := MergeSide{Ref: hash, Name: ShortHash(hash)}
+	if out, err := run(r.Root, nil, "name-rev", "--name-only", "--exclude", "refs/remotes/*", hash); err == nil {
+		if name := strings.TrimSpace(string(out)); name != "" && name != "undefined" {
+			s.Name = name
+		}
+	}
+	return s
+}
+
+// rebaseBranch returns the branch a rebase stopped part way moves, "" for
+// a detached one.
+func (r *Repo) rebaseBranch() string {
+	b, err := vfs.ReadFile(remote.Join(r.Dir, "rebase-merge", "head-name"))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimPrefix(strings.TrimSpace(string(b)), "refs/heads/")
+}
+
+// rebaseOnto returns the commit currently checked out while rebase replays
+// the branch named by rebaseBranch.
+func (r *Repo) rebaseOnto() MergeSide {
+	b, err := vfs.ReadFile(remote.Join(r.Dir, "rebase-merge", "onto"))
+	if err != nil {
+		return MergeSide{}
+	}
+	hash := strings.TrimSpace(string(b))
+	if hash == "" {
+		return MergeSide{}
+	}
+	return r.sideRef(hash)
+}
+
+// RestoreConflict puts a file back in conflict, as the command stopped
+// part way makes it: Git merges its two sides again, which brings the
+// stages and the markers of the conflict back. A file the command merged
+// with no conflict of its own comes out as the index has it.
+func (r *Repo) RestoreConflict(path string) error {
+	_, err := r.run(nil, "checkout", "-m", "--", r.Rel(path))
 	return err
 }

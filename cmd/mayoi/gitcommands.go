@@ -37,7 +37,6 @@ func (a *app) abortOp()                                { a.repository().abortOp(
 func (a *app) askRefAt(cm git.Commit, tag bool)        { a.repository().askRefAt(cm, tag) }
 func (a *app) askNewBranch()                           { a.repository().askNewBranch() }
 func (a *app) branchMenu(m *ui.Menu)                   { a.repository().branchMenu(m) }
-func (a *app) branchLabel() string                     { return a.repository().branchLabel() }
 func (a *app) groupEntries() [groupCount][]git.Entry   { return a.repository().groupEntries() }
 func (a *app) scmRows() []scmRow                       { return a.repository().scmRows() }
 func (a *app) toggleDir(r scmRow)                      { a.repository().toggleDir(r) }

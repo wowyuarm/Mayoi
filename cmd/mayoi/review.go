@@ -890,7 +890,7 @@ func (a *app) stepNote(step int) {
 		i := stepIn(v.cards, v.cursor, step, func(a, b int) int { return a - b })
 		v.anchor = -1
 		v.setCursor(v.cards[i])
-		v.jumpRow(v.cards[i], jumpThird)
+		v.glideRow(v.cards[i], jumpThird)
 		v.pane.Focus()
 		return
 	}
@@ -1162,7 +1162,7 @@ func noteGeometry(l diffGeometry, split, old bool) (x, w float32) {
 		if old {
 			right = l.half - 10
 		} else {
-			x = l.half + diffRailW + 10
+			x = l.right() + diffRailW + 10
 		}
 	}
 	return x, max(right-x, 160)

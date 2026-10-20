@@ -35,13 +35,15 @@ type column struct {
 }
 
 // colTab is a tab of a column: an editor of a document, a viewer of an
-// image, the changes of a file, or a terminal.
+// image, the changes of a file, the three-way merge of a conflicted one,
+// or a terminal.
 type colTab struct {
-	id   int
-	ed   *editor
-	view *viewer
-	diff *diffView
-	term *session
+	id    int
+	ed    *editor
+	view  *viewer
+	diff  *diffView
+	merge *mergeView
+	term  *session
 	// transient marks the preview tab of its column, as a file is chosen
 	// in the Explorer or in search's results, or a commit in source
 	// control: the next one chosen replaces it, until it is edited or
@@ -57,6 +59,8 @@ func (t *colTab) name() string {
 		return t.view.name()
 	case t.diff != nil:
 		return t.diff.name()
+	case t.merge != nil:
+		return t.merge.name()
 	}
 	return t.ed.name()
 }
@@ -69,6 +73,8 @@ func (t *colTab) path() string {
 		return t.view.path
 	case t.ed != nil:
 		return t.ed.path
+	case t.merge != nil:
+		return t.merge.path
 	}
 	return ""
 }
@@ -91,6 +97,12 @@ func (col *column) showing(doc *document) int {
 // image file path, -1 when none does.
 func (col *column) showingImage(path string) int {
 	return slices.IndexFunc(col.tabs, func(t *colTab) bool { return t.view != nil && t.view.path == path })
+}
+
+// showingMerge returns the place of the tab of the column that shows the
+// three-way merge of a file, -1 when none does.
+func (col *column) showingMerge(path string) int {
+	return slices.IndexFunc(col.tabs, func(t *colTab) bool { return t.merge != nil && t.merge.path == path })
 }
 
 // take takes the tab at place i out of the column, which shows the one
@@ -248,7 +260,7 @@ func (a *app) openFileIn(col *column, at int, path string, focus bool) {
 // file path, as text or as an image, -1 when none does.
 func (col *column) showingFile(path string) int {
 	return slices.IndexFunc(col.tabs, func(t *colTab) bool {
-		return t.term == nil && t.diff == nil && t.path() == path
+		return t.term == nil && t.diff == nil && t.merge == nil && t.path() == path
 	})
 }
 
@@ -403,6 +415,11 @@ func (a *app) focusTab(t *colTab) {
 		t.view.pane.Focus()
 	case t.diff != nil:
 		t.diff.pane.Focus()
+	case t.merge != nil:
+		if t.merge.ed != nil {
+			t.merge.ed.focusNext = true
+			t.merge.ed.vscroll.Focus()
+		}
 	case t.ed.preview != nil:
 		t.ed.preview.pane.Focus()
 	default:
@@ -453,6 +470,34 @@ func (a *app) closeTab(t *colTab, then func()) {
 		a.rememberClosed(t)
 		a.removeTerminal(t.term)
 		done()
+		return
+	}
+	if t.merge != nil {
+		remove := func() {
+			if col, _ := a.locate(t); col != nil {
+				a.rememberClosed(t)
+				a.dropTab(t)
+				a.focusColumn()
+				a.rememberTabs()
+			}
+			done()
+		}
+		if doc := t.merge.doc; doc != nil && doc.dirty() && len(doc.views) <= 1 {
+			if a.autoSaves(doc) {
+				a.saveDoc(doc, remove)
+				return
+			}
+			a.host.confirmClose(doc.name(), func(choice int) {
+				switch choice {
+				case 0:
+					a.saveDoc(doc, remove)
+				case 1:
+					remove()
+				}
+			})
+			return
+		}
+		remove()
 		return
 	}
 	remove := func() {
@@ -530,6 +575,16 @@ func (a *app) dropTab(t *colTab) {
 	}
 	if t.diff != nil {
 		t.diff.stop()
+	}
+	if t.merge != nil {
+		v := t.merge
+		v.stop()
+		if v.doc != nil && len(v.doc.views) == 0 && a.docIndex(v.path) >= 0 {
+			a.docs = slices.DeleteFunc(a.docs, func(d *document) bool { return d == v.doc })
+			if a.tree != nil {
+				a.tree.Unwatch(v.path)
+			}
+		}
 	}
 	if t.ed != nil {
 		doc := t.ed.document
@@ -632,6 +687,30 @@ func (a *app) splitRight() {
 		a.addTab(nc, 0, &colTab{diff: v})
 		a.activate(nc, 0, true)
 		return
+	case t.merge != nil:
+		// The same merge, whose result the two views share.
+		v := &mergeView{path: t.merge.path, entry: t.merge.entry, op: t.merge.op, chosen: -1, current: -1,
+			loaded: t.merge.loaded, loading: t.merge.loading, err: t.merge.err,
+			ours: t.merge.ours, theirs: t.merge.theirs,
+			base: t.merge.base, oursT: t.merge.oursT, theirsT: t.merge.theirsT,
+			baseLines: t.merge.baseLines, oursLines: t.merge.oursLines, theirsLines: t.merge.theirsLines,
+			regions: t.merge.regions, binary: t.merge.binary, crlf: t.merge.crlf,
+			doc: t.merge.doc}
+		// A merge still being read, or a binary one, has no result yet,
+		// nor ever: the one still being read is read again for the view.
+		fresh := v.doc == nil && !v.binary && v.err == ""
+		if v.doc != nil {
+			v.ed = newEditor(v.doc)
+			v.syncRegions()
+		} else if fresh {
+			v.loaded, v.loading = false, false
+		}
+		a.addTab(nc, 0, &colTab{merge: v})
+		a.activate(nc, 0, true)
+		if fresh {
+			a.refreshMerge(v)
+		}
+		return
 	}
 	ed := newEditor(t.ed.document)
 	ed.sel, ed.caret = t.ed.sel, t.ed.caret
@@ -660,6 +739,8 @@ func (a *app) moveTab(t *colTab, to *column, at int) {
 			j = to.showing(t.ed.document)
 		case t.diff != nil:
 			j = to.showingDiff(t.diff)
+		case t.merge != nil:
+			j = to.showingMerge(t.merge.path)
 		default:
 			j = to.showingImage(t.view.path)
 		}
@@ -721,6 +802,8 @@ func (a *app) rememberTabs() {
 				ts = settings.Tab{Diff: "commit:" + t.diff.commit.key(), Layout: t.diff.layout.key(), Transient: t.transient}
 			case t.diff != nil:
 				ts = settings.Tab{Diff: "all", Layout: t.diff.layout.key()}
+			case t.merge != nil:
+				continue // a merge opens again from its conflict, not a session
 			case t.path() != "":
 				ts = settings.Tab{File: t.path(), Preview: t.ed != nil && t.ed.preview != nil, Transient: t.transient}
 			default:

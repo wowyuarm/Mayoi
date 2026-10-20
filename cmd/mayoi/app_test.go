@@ -56,6 +56,10 @@ type fakeHost struct {
 	// refused.
 	aiClient   *mon.Client
 	aiSignOuts int
+	// newVersion is the update a check found, and updateOpens counts the
+	// update windows opened.
+	newVersion  string
+	updateOpens int
 }
 
 func (h *fakeHost) openFolder(done func(string)) { done(h.folder) }
@@ -115,6 +119,8 @@ func (h *fakeHost) syncPicture() *ui.Bitmap { return nil }
 func (h *fakeHost) syncConflictResolved()   { h.resolved++ }
 func (h *fakeHost) ai() *mon.Client         { return h.aiClient }
 func (h *fakeHost) aiSignedOut()            { h.aiSignOuts++ }
+func (h *fakeHost) update() string          { return h.newVersion }
+func (h *fakeHost) installUpdate()          { h.updateOpens++ }
 func (h *fakeHost) stepProject(int)         {}
 func (h *fakeHost) showProject(int)         {}
 func (h *fakeHost) closeProject()           {}

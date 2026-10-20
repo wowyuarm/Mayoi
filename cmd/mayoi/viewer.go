@@ -117,6 +117,13 @@ func (a *app) loadImage(v *viewer) {
 			if v.src != nil && (v.w != float32(w) || v.h != float32(h)) {
 				v.zoom, v.panX, v.panY = 0, 0, 0 // another picture: fit it
 			}
+			// Zoomed in, its pixels show as squares, to be looked at one
+			// by one, as in an image editor; smaller, it is smooth. Not
+			// a picture decoded smaller than it is, which would show its
+			// squares at its own size.
+			if bw, bh := bm.Size(); bw == w && bh == h {
+				bm.Pixelated()
+			}
 			v.src, v.w, v.h = bm, float32(w), float32(h)
 		})
 	}()
@@ -411,6 +418,10 @@ func (a *app) viewerView(c *ui.Context, v *viewer, name string) {
 		if shown.W <= 0 || shown.H <= 0 {
 			return
 		}
+		if at.W < r.W && at.H < r.H {
+			// A soft shadow lifts a picture that fits off the pane.
+			pt.Shadow(at, 0, 0, 6, 24, 0, p.shadow)
+		}
 		pt.Clip(shown, 0, func() {
 			// The checks start at the picture's corner, as it moves.
 			tile := checkers(p.dark)
@@ -511,9 +522,25 @@ func (a *app) setPreview(d *editor, on bool) {
 	if on {
 		d.preview = newPreviewViewer(d.document)
 		if isMarkdown(d.document) {
-			d.preview.markdown = &markdownPreview{}
+			// It opens where the text is.
+			m := &markdownPreview{}
+			y := d.vscroll.Y
+			if d.hidden {
+				y = d.hiddenY
+			}
+			m.sync.want, m.sync.placing = a.textPlace(d, y), true
+			d.preview.markdown = m
 		}
 	} else {
+		if m := d.preview.markdown; m != nil && m.lines > 0 {
+			// The text opens where the preview was.
+			y := a.textY(d, m.sync.top)
+			if d.hidden {
+				d.hiddenY = y
+			} else {
+				d.vscroll.Y = y
+			}
+		}
 		d.preview.stop()
 		d.preview = nil
 	}
@@ -528,6 +555,30 @@ func (a *app) togglePreview() {
 	if d := a.activeEditor(); d != nil && canPreview(d.document) {
 		a.setPreview(d, d.preview == nil)
 		a.focusColumn()
+	}
+}
+
+// previewToSide shows the preview of the document shown in a column to
+// the right, beside its text, which keeps the keyboard.
+func (a *app) previewToSide() {
+	d := a.activeEditor()
+	if d == nil || !canPreview(d.document) {
+		return
+	}
+	if d.preview != nil {
+		// The preview is shown already: the text goes beside it.
+		a.setPreview(d, false)
+	}
+	src := a.column()
+	a.splitRight()
+	side := a.activeEditor()
+	// The text takes the keyboard back before the preview is shown, which
+	// would take it.
+	if col, i := a.locate(src.tab()); col != nil {
+		a.activate(col, i, true)
+	}
+	if side != nil && side != d && side.document == d.document {
+		a.setPreview(side, true)
 	}
 }
 
@@ -553,7 +604,10 @@ func (a *app) viewerStatus(c *ui.Context, v *viewer, item func(key, label, tip s
 			text(locales.DeletedOnDisk()).TextColor(p.dangerFg)
 		})
 	}
-	if v.markdown != nil {
+	if m := v.markdown; m != nil {
+		if m.words > 0 {
+			item("words", locales.PreviewWords(m.words)+" · "+locales.PreviewMinutes(m.minutes), "", nil, nil)
+		}
 		item("preview", locales.PreviewWord(), "", nil, nil)
 		return
 	}

@@ -19,7 +19,7 @@ All of Mayoi's files are in one data folder:
 | `keybindings.json`  | you           | [Keyboard shortcuts](#keybindingsjson), in VS Code's format                       |
 | `state.json`        | Mayoi         | Windows, tabs, recent folders and layout                                          |
 | `window-state.json` | Mayoi         | Each window's position and size                                                   |
-| `updater.json`      | Mayoi         | Update choices: automatic checks and downloads, a skipped version, the last check |
+| `updater.json`      | Mayoi         | Update choices: automatic downloads, a skipped version, the last check            |
 | `sync.json`         | Mayoi         | [Settings sync](#settings-sync): the account, and the settings as last synced     |
 | `crash.log`         | Mayoi         | What ended Mayoi if it crashed, with every goroutine's stack; empty otherwise     |
 | `crashes/`          | Mayoi         | The last 10 crash logs, each named by the time of its crash                       |
@@ -61,6 +61,11 @@ takes its default.
 | `vimCtrlKeys`           | `false`       | `true`, `false`                                             | Only this file                                 |
 | `blame`                 | `true`        | `true`, `false`                                             | **Git → Inline Blame**                         |
 | `diffLayout`            | `""`          | `""` (side by side when wide enough), `"split"`, `"inline"` | A diff's **Layout** button                     |
+| `diffCrossFiles`        | `""`          | `""` (say it, and cross on one more step), `"always"`, `"never"` | Only this file                            |
+| `diffHighlight`         | `""`          | `""` (changed words), `"line"`, `"char"`                       | A diff's **Highlight** menu                |
+| `diffContext`           | `3`           | `0` to `100` unchanged lines around each change                | A diff's **Context** menu                  |
+| `diffSyncScroll`        | `true`        | `true`, `false`                                                | A diff's **Synchronized Scrolling** menu   |
+| `diffAlignedRows`       | `true`        | `true`, `false`                                                | A diff's **Layout** menu                   |
 | `scmTree`               | `false`       | `true`, `false`                                             | **View as Tree** in Source Control's menu      |
 | `scmAllBranches`        | `false`       | `true`, `false`                                             | **Show All Branches** in Source Control's menu |
 | `syncIgnored`           | none          | Keys, `"settings.json"`, `"keybindings.json"`               | The [settings sync](#settings-sync) panel      |
@@ -106,6 +111,14 @@ differ in width lines them up only roughly.
 - **`autoSave`** saves a changed file a moment after you stop typing, and when you leave it.
 - **`wordWrap`** wraps long lines at the edge of the editor. **⌥Z** wraps or unwraps one tab only, until this
   setting changes.
+- **`diffHighlight`** chooses whether changed lines show word-level, character-level or line-level tinting. The
+  highlighting changes how a diff looks; block actions still use whole line hunks.
+- **`diffContext`** keeps that many unchanged lines around each diff hunk visible and folds the rest.
+- **`diffAlignedRows`** keeps the rows of a split diff's sides aligned: a line the one side lacks holds a space on the
+  other. Turn it off, and each side's lines close up where the other has lines it lacks, the sides reading in streams
+  of their own, which scroll on their own whatever `diffSyncScroll` has.
+- **`diffSyncScroll`** keeps the two sides of a split diff aligned while scrolling. Turn it off to scroll each side
+  independently.
 - **`vim`** starts editors in vim's normal mode.
 - **`vimCtrlKeys`** gives ⌃F, ⌃B, ⌃R, ⌃A and ⌃X to vim's normal mode on Windows and Linux, rather than to Find,
   Toggle Sidebar, Open Recent, Select All and Cut. On macOS, where those commands use ⌘, vim always has them.
@@ -269,3 +282,10 @@ The shortcuts are macOS's with Ctrl for ⌘, and the hints show them so, but for
 Ctrl with Alt is AltGr there, which types text, so no shortcut takes it: bind those commands in `keybindings.json`,
 as `{ "key": "ctrl+k s", "command": "workbench.action.files.saveAll" }`. A file can tell the systems apart with
 `isWindows`, `isLinux` and `isMac`.
+### `diffWhitespace`
+
+Controls which whitespace participates in diff comparison: `""` for exact,
+`"eol"` to ignore line-end spaces and tabs, `"all"` to ignore whitespace,
+or `"blank"` to also treat whitespace-only lines as blank. The filter changes
+the diff display and navigation while file text and block actions keep using
+the original lines.

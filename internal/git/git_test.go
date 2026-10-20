@@ -623,6 +623,158 @@ func TestRevertReset(t *testing.T) {
 	}
 }
 
+// conflictRepo makes a work tree where merging side into main stops for
+// a conflict of a.txt, which both branches changed.
+func conflictRepo(t *testing.T) (*Repo, func(args ...string)) {
+	r, git := repo(t)
+	git("checkout", "-qb", "side")
+	write(t, r.Root, "a.txt", "one\nside\nthree\n")
+	git("commit", "-qam", "theirs")
+	git("checkout", "-q", "main")
+	write(t, r.Root, "a.txt", "one\nours\nthree\n")
+	git("commit", "-qam", "ours")
+	cmd := exec.Command("git", "-C", r.Root, "merge", "side")
+	if out, err := cmd.CombinedOutput(); err == nil {
+		t.Fatalf("the merge went clean: %s", out)
+	}
+	return r, git
+}
+
+func TestStages(t *testing.T) {
+	r, _ := conflictRepo(t)
+	a := filepath.Join(r.Root, "a.txt")
+	base, ours, theirs, err := r.Stages(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !base.Ok || base.Text != "one\ntwo\nthree\n" {
+		t.Errorf("base %q ok %v", base.Text, base.Ok)
+	}
+	if !ours.Ok || ours.Text != "one\nours\nthree\n" {
+		t.Errorf("ours %q ok %v", ours.Text, ours.Ok)
+	}
+	if !theirs.Ok || theirs.Text != "one\nside\nthree\n" {
+		t.Errorf("theirs %q ok %v", theirs.Text, theirs.Ok)
+	}
+}
+
+func TestStagesAdded(t *testing.T) {
+	r, git := repo(t)
+	git("checkout", "-qb", "side")
+	write(t, r.Root, "new.txt", "side\n")
+	git("add", "new.txt")
+	git("commit", "-qm", "theirs")
+	git("checkout", "-q", "main")
+	write(t, r.Root, "new.txt", "ours\n")
+	git("add", "new.txt")
+	git("commit", "-qm", "ours")
+	if out, err := exec.Command("git", "-C", r.Root, "merge", "side").CombinedOutput(); err == nil {
+		t.Fatalf("the merge went clean: %s", out)
+	}
+	base, ours, theirs, err := r.Stages(filepath.Join(r.Root, "new.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if base.Ok {
+		t.Errorf("a file both sides added has no base, got %q", base.Text)
+	}
+	if !ours.Ok || ours.Text != "ours\n" || !theirs.Ok || theirs.Text != "side\n" {
+		t.Errorf("ours %q(%v) theirs %q(%v)", ours.Text, ours.Ok, theirs.Text, theirs.Ok)
+	}
+}
+
+func TestMergeSides(t *testing.T) {
+	r, _ := conflictRepo(t)
+	ours, theirs := r.MergeSides(OpMerge)
+	if ours.Name != "main" || ours.Ref != "HEAD" {
+		t.Errorf("ours %+v", ours)
+	}
+	if theirs.Name != "side" {
+		t.Errorf("theirs %+v", theirs)
+	}
+	// Without a command stopped for a conflict, the sides still say who
+	// they are.
+	ours, theirs = r.MergeSides("")
+	if ours.Name != "main" || theirs.Name == "" {
+		t.Errorf("without an op: %+v %+v", ours, theirs)
+	}
+}
+
+func TestRestoreConflict(t *testing.T) {
+	r, git := conflictRepo(t)
+	// The conflict resolved and staged: restoring it brings the stages
+	// and the markers of the conflict back.
+	write(t, r.Root, "a.txt", "one\nboth\nthree\n")
+	git("add", "a.txt")
+	if err := r.RestoreConflict(filepath.Join(r.Root, "a.txt")); err != nil {
+		t.Fatal(err)
+	}
+	base, ours, theirs, err := r.Stages(filepath.Join(r.Root, "a.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !base.Ok || !ours.Ok || !theirs.Ok {
+		t.Fatalf("stages back: base %v ours %v theirs %v", base.Ok, ours.Ok, theirs.Ok)
+	}
+	b, _ := os.ReadFile(filepath.Join(r.Root, "a.txt"))
+	if !strings.Contains(string(b), "<<<<<<<") {
+		t.Errorf("no markers back: %q", b)
+	}
+	// A file the command merged with no conflict stays as it is.
+	before, _ := os.ReadFile(filepath.Join(r.Root, "b.txt"))
+	if err := r.RestoreConflict(filepath.Join(r.Root, "b.txt")); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := os.ReadFile(filepath.Join(r.Root, "b.txt"))
+	if string(before) != string(after) {
+		t.Errorf("b.txt changed: %q to %q", before, after)
+	}
+}
+
+func TestMergeSidesRebase(t *testing.T) {
+	r, git := repo(t)
+	write(t, r.Root, "a.txt", "one\nside\nthree\n")
+	git("checkout", "-qb", "side")
+	git("commit", "-qam", "side")
+	git("checkout", "-q", "main")
+	write(t, r.Root, "a.txt", "one\nours\nthree\n")
+	git("commit", "-qam", "ours")
+	write(t, r.Root, "b.txt", "more\n")
+	git("add", "b.txt")
+	git("commit", "-qm", "main only")
+	if out, err := exec.Command("git", "-C", r.Root, "rebase", "side").CombinedOutput(); err == nil {
+		t.Fatalf("the rebase went clean: %s", out)
+	}
+	ours, theirs := r.MergeSides(OpRebase)
+	if ours.Name != "side" {
+		t.Errorf("ours %+v, want the rebase base", ours)
+	}
+	if theirs.Name == "" || theirs.Name == "Theirs" {
+		t.Errorf("theirs %+v, want the commit it applies", theirs)
+	}
+}
+
+func TestMergeSidesCherryPick(t *testing.T) {
+	r, git := repo(t)
+	write(t, r.Root, "a.txt", "one\nside\nthree\n")
+	git("checkout", "-qb", "side")
+	git("commit", "-qam", "side")
+	side := r.Head()
+	git("checkout", "-q", "main")
+	write(t, r.Root, "a.txt", "one\nours\nthree\n")
+	git("commit", "-qam", "ours")
+	if out, err := exec.Command("git", "-C", r.Root, "cherry-pick", side).CombinedOutput(); err == nil {
+		t.Fatalf("the cherry-pick went clean: %s", out)
+	}
+	ours, theirs := r.MergeSides(OpCherryPick)
+	if ours.Name != "main" {
+		t.Errorf("ours %+v", ours)
+	}
+	if theirs.Name == "" || theirs.Name == "Theirs" {
+		t.Errorf("theirs %+v, want the commit picked", theirs)
+	}
+}
+
 func TestSubmodulesOpenOnlyInitializedGitlinks(t *testing.T) {
 	parent, git := repo(t)
 	inner, _ := repo(t)

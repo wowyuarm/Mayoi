@@ -378,6 +378,31 @@ func TestTerminalTabLocksInPlace(t *testing.T) {
 	}
 }
 
+func TestTerminalTabSkipsLockedColumn(t *testing.T) {
+	if testing.Short() {
+		t.Skip("starts a shell")
+	}
+	if runtime.GOOS != "windows" {
+		t.Setenv("SHELL", "/bin/sh")
+	}
+	hs, left, right := lockedHarness(t)
+	a := hs.a
+	t.Cleanup(a.closeTerminals)
+	a.col = slices.Index(a.cols, right)
+	a.run("view.terminalTab")
+	if len(a.terms) != 1 || a.column() != left || left.tab() != a.terms[0].tab || len(right.tabs) != 0 {
+		t.Fatal("a new terminal tab opened in the locked column")
+	}
+	// With every column locked, the terminal gets a new workspace on the left.
+	a.toggleColumnLock(left)
+	a.col = slices.Index(a.cols, right)
+	a.run("view.terminalTab")
+	first := a.cols[0]
+	if len(a.terms) != 2 || first.locked || a.column() != first || first.tab() != a.terms[1].tab {
+		t.Fatal("a new terminal tab found no unlocked column")
+	}
+}
+
 func TestTerminalMovesToLockedRightColumn(t *testing.T) {
 	if testing.Short() {
 		t.Skip("starts a shell")

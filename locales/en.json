@@ -1,5 +1,233 @@
 {
   "@@locale": "en",
+  "@diffSummary": {
+    "placeholders": {
+      "files": {},
+      "hunks": {},
+      "add": {
+        "type": "int"
+      },
+      "del": {
+        "type": "int"
+      }
+    }
+  },
+  "@failForwardPort": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      },
+      "err": {}
+    }
+  },
+  "@findCount": {
+    "placeholders": {
+      "cur": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@findCountMore": {
+    "placeholders": {
+      "cur": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@hunkPeekTitle": {
+    "placeholders": {
+      "what": {},
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@indentSpaces": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@panelRangeCommits": {
+    "placeholders": {
+      "label": {},
+      "count": {}
+    }
+  },
+  "@pickWaiting": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@portIsAt": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      },
+      "host": {},
+      "local": {
+        "type": "int"
+      }
+    }
+  },
+  "@portsForwarded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "host": {}
+    }
+  },
+  "@quickGoToLineCol": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "col": {
+        "type": "int"
+      }
+    }
+  },
+  "@quickGoToLineN": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      }
+    }
+  },
+  "@quickLineRange": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "@remoteAttempt": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@remoteRetryingIn": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@reviewLine": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@reviewLines": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "@scmBranchAhead": {
+    "placeholders": {
+      "branch": {},
+      "ahead": {},
+      "upstream": {}
+    }
+  },
+  "@scmBranchAheadBehind": {
+    "placeholders": {
+      "branch": {},
+      "ahead": {},
+      "upstream": {},
+      "behind": {}
+    }
+  },
+  "@scmBranchBehind": {
+    "placeholders": {
+      "branch": {},
+      "behind": {},
+      "upstream": {}
+    }
+  },
+  "@searchFirstResults": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "files": {}
+    }
+  },
+  "@searchReplaceQuestion": {
+    "placeholders": {
+      "n": {},
+      "files": {},
+      "with": {}
+    }
+  },
+  "@searchReplacedIn": {
+    "placeholders": {
+      "n": {},
+      "files": {}
+    }
+  },
+  "@searchResultsIn": {
+    "placeholders": {
+      "n": {},
+      "files": {}
+    }
+  },
+  "@statusPos": {
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "col": {
+        "type": "int"
+      }
+    }
+  },
+  "@statusSelected": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@untitledName": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@vimMatchCount": {
+    "placeholders": {
+      "cur": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "abortDetail": "HEAD, the staged changes and the files go back to how they were before it.",
   "abortQuestion": "Abort the {op}?",
   "agoDays": "{count, plural, one {# day ago} other {# days ago}}",
@@ -13,6 +241,11 @@
   "aiLimitReached": "The AI limit is reached: {reason}",
   "aiLimitSoon": "{count, plural, one {Too many AI requests: try again in # second.} other {Too many AI requests: try again in # seconds.}}",
   "aiTimedOut": "The AI took too long to answer. Try again.",
+  "alertCaution": "Caution",
+  "alertImportant": "Important",
+  "alertNote": "Note",
+  "alertTip": "Tip",
+  "alertWarning": "Warning",
   "alreadyUpToDate": "Already up to date",
   "amendedLastCommit": "Amended the last commit",
   "beforeCheckout": "checking out a commit",
@@ -58,10 +291,12 @@
   "busyReverting": "Reverting…",
   "busySavingPatch": "Saving patch…",
   "busySwitchingTo": "Switching to {branch}…",
+  "busySyncing": "Synchronizing…",
   "busyUndoingCommit": "Undoing the last commit…",
   "busyUpdatingRemote": "Updating remote…",
   "buttonAbort": "Abort",
   "buttonCancel": "Cancel",
+  "buttonCompare": "Compare",
   "buttonDelete": "Delete",
   "buttonDiscard": "Discard",
   "buttonDontSave": "Don't Save",
@@ -80,13 +315,13 @@
   "checkOutToPush": "Check out a branch to push.",
   "cherryPicked": "Cherry-picked “{subject}”",
   "chordWaiting": "({keys}) was pressed. Waiting for the next key…",
+  "cliInstallFailed": "The 'mayoi' command could not be installed.",
   "cliInstalled": "The 'mayoi' command is installed in {dir}.",
   "cliInstalledDetail": "In a terminal, mayoi . opens the folder you are in, and mayoi <file> a file.",
-  "cliInstallFailed": "The 'mayoi' command could not be installed.",
   "cliNotInstalled": "The 'mayoi' command is not installed.",
+  "cliUninstallFailed": "The 'mayoi' command could not be uninstalled.",
   "cliUninstalled": "The 'mayoi' command is uninstalled.",
   "cliUninstalledDetail": "It was in {dir}.",
-  "cliUninstallFailed": "The 'mayoi' command could not be uninstalled.",
   "closeEsc": "Close (Esc)",
   "closeName": "Close {name}",
   "closeOtherProjects": "Close Other Projects",
@@ -127,21 +362,27 @@
   "cmdFileUninstallCLI": "Uninstall 'mayoi' Command",
   "cmdGitAbort": "Abort Merge, Rebase or Cherry-Pick…",
   "cmdGitAmend": "Amend Last Commit",
+  "cmdGitAppendChange": "Append the Lines of the Change",
   "cmdGitBlame": "Inline Blame",
   "cmdGitCommit": "Commit",
   "cmdGitCommitPush": "Commit & Push",
+  "cmdGitCompareFiles": "Compare Two Files…",
+  "cmdGitConflictFiles": "Show the Files in Conflict",
   "cmdGitContinue": "Continue Merge, Rebase or Cherry-Pick",
   "cmdGitCreateBranch": "Create Branch…",
   "cmdGitFetch": "Fetch",
   "cmdGitNextChange": "Next Change",
+  "cmdGitNextFile": "Next File",
   "cmdGitOpenAllChanges": "Open All Changes",
   "cmdGitOpenChanges": "Open Changes",
   "cmdGitPrevChange": "Previous Change",
+  "cmdGitPrevFile": "Previous File",
   "cmdGitPull": "Pull",
   "cmdGitPush": "Push",
   "cmdGitRefresh": "Refresh Source Control",
   "cmdGitRevertChange": "Revert Change",
   "cmdGitShowChange": "Show Change",
+  "cmdGitSolveConflicts": "Solve the Conflicts of the Active File",
   "cmdGitStageAll": "Stage All Changes",
   "cmdGitStageChange": "Stage Change",
   "cmdGitStageFile": "Stage File",
@@ -199,6 +440,7 @@
   "cmdViewPanelLeft": "Move Panel to Left",
   "cmdViewPanelRight": "Move Panel to Right",
   "cmdViewPrevColumn": "Focus Previous Column",
+  "cmdViewPreviewToSide": "Open Preview to the Side",
   "cmdViewProjectTabs": "Project Tabs",
   "cmdViewScm": "Source Control",
   "cmdViewSearch": "Search",
@@ -227,77 +469,126 @@
   "commitSelectForCompare": "Select for Compare",
   "committed": "Committed “{subject}”",
   "committedTo": "Committed “{subject}” to {branch}",
+  "compareTwoFiles": "Compare Two Files",
   "comparison": "Comparison",
   "convertToSpaces": "Convert Indentation to Spaces",
   "convertToTabs": "Convert Indentation to Tabs",
+  "copiedCode": "Copied the code",
   "copiedPatchOf": "Copied the patch of {commit}",
   "copiedText": "Copied {text}",
   "copiedTextItem": "Copy {text}",
   "copyAddress": "Copy Address",
+  "copyCode": "Copy Code",
   "copyCommitHash": "Copy Commit Hash",
   "copyLabel": "Copy",
   "copyPath": "Copy Path",
   "copyRelativePath": "Copy Relative Path",
   "createBranchEllipsis": "Create Branch…",
-  "createdRef": "{tag, select, true {Created tag {name} at {commit}} other {Created branch {name} at {commit}}}",
   "createTagEllipsis": "Create Tag…",
+  "createdRef": "{tag, select, true {Created tag {name} at {commit}} other {Created branch {name} at {commit}}}",
   "crumbsEmpty": "No files",
   "crumbsFolderTip": "Files in {name}",
-  "deletedOnDisk": "Deleted on disk",
   "deletePermanently": "Delete Permanently…",
   "deleteQuestion": "Delete {name}?",
   "deleteRemoteDetail": "It is deleted from {host} for good: a remote folder has no trash.",
+  "deletedOnDisk": "Deleted on disk",
   "dialogChoose": "Choose",
   "dialogChooseIcon": "Choose Icon",
   "dialogImages": "Images",
   "dialogOpen": "Open",
   "dialogOpenFolder": "Open Folder",
   "dialogSaveAs": "Save As",
+  "diffAcceptLeft": "Accept Left",
+  "diffAcceptLeftTip": "Write the left file's lines into the right file",
+  "diffAcceptRight": "Accept Right",
+  "diffAcceptRightTip": "Write the right file's lines into the left file",
+  "diffAlignRowsMenu": "Line Alignment",
+  "diffAppendDetail": "The compared lines are added after the local change in the editor.",
+  "diffAppendTitle": "Append source lines to {name}?",
+  "diffArrowRevertTip": "Revert this change: the lines of {old}, into the {new}; Control-click to append them",
   "diffBinary": "The file is binary.",
   "diffCatchingUp": "The diff is catching up with your edits: try again in a moment.",
+  "diffCatchingUpFiles": "The diff is catching up with the files: try again in a moment.",
+  "diffChangeOf": "Change {index} of {total}",
+  "diffChangedSinceDrawn": "{name} has changed since the diff was drawn. It is read again: try again.",
   "diffChangesName": "Changes",
+  "diffChooseDifferent": "Choose two different files to compare.",
   "diffCommitName": "Commit {hash}",
   "diffCommitNoFiles": "The commit changes no files.",
+  "diffContextLines": "{count, plural, one {# Line} other {# Lines}}",
+  "diffContextMenu": "Context",
+  "diffContextNone": "No Lines",
+  "diffCopiedLine": "Copied the line",
+  "diffEdgeFirstFile": "This is the first file of the diff.",
+  "diffEdgeFirstOfDiff": "This is the first change of the diff.",
+  "diffEdgeFirstOfFile": "This is the first change of {name}.",
+  "diffEdgeFirstOfFileAsk": "This is the first change of {name}. Press again to go to the previous file.",
+  "diffEdgeLastFile": "This is the last file of the diff.",
+  "diffEdgeLastOfDiff": "This is the last change of the diff.",
+  "diffEdgeLastOfFile": "This is the last change of {name}.",
+  "diffEdgeLastOfFileAsk": "This is the last change of {name}. Press again to go to the next file.",
+  "diffEditButton": "Edit",
+  "diffEditButtonActive": "Editing",
+  "diffEditOnlyLocal": "Only the working tree side of a diff can be edited, and {name} has none here.",
+  "diffEditRemote": "A file on a host is edited in its editor, not in the diff.",
+  "diffEditTip": "Edit the working tree side of this file (I) · Esc when done",
+  "diffEditingStatus": "Editing {name} · Esc when done",
+  "diffHighlightChars": "Highlight Characters",
+  "diffHighlightLines": "Highlight Lines",
+  "diffHighlightMenu": "Highlight",
+  "diffHighlightWords": "Highlight Words",
   "diffLayout": "Layout",
   "diffLayoutAuto": "Side by Side When Wide",
   "diffLayoutInline": "Inline",
   "diffLayoutSplit": "Side by Side",
   "diffNeitherVersion": "Neither version has the file.",
   "diffNextChange": "Next Change (])",
+  "diffNextFile": "Next File (.)",
   "diffNoChanges": "No Changes",
+  "diffNoLongerFits": "The diff no longer fits the file: try again in a moment.",
   "diffNoTextChanges": "No changes in the text.",
   "diffNotRepo": "The folder is not in a Git repository.",
+  "diffOpenFailAppend": "Could not open {name} to append its changes.",
+  "diffOpenFailApply": "Could not open {name} to apply this change.",
+  "diffOpenFailEdit": "Could not open {name} to edit it: {error}",
+  "diffOpenFailRevert": "Could not open {name} to revert its changes.",
   "diffOpenFile": "Open File (E)",
+  "diffOpenLeft": "Open Left",
+  "diffOpenRight": "Open Right",
   "diffPaneLabel": "Diff of the Changes",
   "diffPrevChange": "Previous Change ([)",
+  "diffPrevFile": "Previous File (,)",
+  "diffRemoveFile": "Remove File…",
+  "diffRestoreDetail": "The file is restored from the version in the index.",
+  "diffRestoreFile": "Restore File",
+  "diffRestoreTitle": "Restore {name}?",
+  "diffRestoring": "Restoring {name}…",
+  "diffRevertChangeTo": "{ok} this change to {name}?",
+  "diffRevertChangesTo": "{ok} these changes to {name}?",
+  "diffRevertDetail": "The lines go back as the index has them, in the editor, where undo takes them back.",
   "diffShowFullFiles": "Show Full Files",
   "diffShowUnchanged": "Show {count, plural, one {# unchanged line} other {# unchanged lines}}",
+  "diffSideLeft": "Left File",
+  "diffSideRight": "Right File",
+  "diffStillReading": "The file is still being read: try again in a moment.",
   "diffSummary": "{files, plural, one {# file} other {# files}} · {hunks, plural, one {# change} other {# changes}} · +{add} −{del}",
-  "@diffSummary": {
-    "placeholders": {
-      "files": {},
-      "hunks": {},
-      "add": {
-        "type": "int"
-      },
-      "del": {
-        "type": "int"
-      }
-    }
-  },
   "diffSummaryNoText": "{count, plural, one {# file} other {# files}} · no changes in the text",
+  "diffSyncScrollMenu": "Synchronized Scrolling",
   "diffToggleWrap": "Toggle Word Wrap",
   "diffTreeMatches": "The working tree matches the last commit.",
+  "diffWhitespaceMenu": "Whitespace",
+  "diffWholeFileGone": "The whole file is gone: its changes have no arrows; the buttons of its header stage the deletion or bring the file back.",
+  "diffWholeFileNew": "The whole file is new: its changes have no arrows; the buttons of its header stage it or remove it.",
+  "discardChangeTo": "Discard this change to {name}?",
   "discardChangesEllipsis": "Discard Changes…",
   "discardChangesTo": "Discard these changes to {name}?",
-  "discardChangeTo": "Discard this change to {name}?",
   "discardFileQuestion": "Discard the changes of {name}?",
   "discardFilesQuestion": "{count, plural, one {Discard the changes of # file?} other {Discard the changes of # files?}}",
   "discardHunkDetail": "The lines go back as the index has them. This cannot be undone.",
   "downloadButton": "Download",
-  "downloaded": "Downloaded {name}",
   "downloadEllipsis": "Download…",
   "downloadTitle": "Download {name}",
+  "downloaded": "Downloaded {name}",
   "editorLabel": "Editor {name}",
   "enterName": "Enter a name.",
   "enterNameNoSlashes": "Enter a name without slashes.",
@@ -324,14 +615,6 @@
   "failDownload": "Could not download {name}",
   "failDownloadNotConnected": "Could not download: {host} is not connected",
   "failForwardPort": "Could not forward port {port, number, ::group-off}: {err}",
-  "@failForwardPort": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      },
-      "err": {}
-    }
-  },
   "failIcon": "Could not set the icon of {name}: {err}",
   "failInvalidRemoteBranch": "Invalid remote branch “{name}”",
   "failMake": "Could not make {name}: {err}",
@@ -353,27 +636,7 @@
   "fileManagerOther": "File Manager",
   "filesCount": "{count, plural, one {# file} other {# files}}",
   "findCount": "{cur} of {total}",
-  "@findCount": {
-    "placeholders": {
-      "cur": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "findCountMore": "{cur} of {total}+",
-  "@findCountMore": {
-    "placeholders": {
-      "cur": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "findInvalid": "Invalid expression",
   "findLabel": "Find",
   "findMatchCase": "Match Case",
@@ -383,8 +646,8 @@
   "findRegex": "Use Regular Expression",
   "findReplace": "Replace",
   "findReplaceAll": "Replace All",
-  "findReplaced": "{count, plural, one {Replaced # occurrence} other {Replaced # occurrences}}",
   "findReplaceOne": "Replace (⏎)",
+  "findReplaced": "{count, plural, one {Replaced # occurrence} other {Replaced # occurrences}}",
   "findToggleReplace": "Toggle Replace",
   "findWholeWord": "Match Whole Word",
   "fitToView": "Fit to the View",
@@ -392,6 +655,8 @@
   "folderEmptyDetail": "Add a file or a folder to start.",
   "forwardPortEllipsis": "Forward a Port…",
   "gitNeedsAuth": "Git needs to sign in: run the command in the terminal once.",
+  "gitSync": "Synchronize Changes",
+  "gitSyncTip": "Pull from and push to {upstream}",
   "goToLineLabel": "Go to Line",
   "goToScope": "Go to {label}",
   "groupChanges": "Changes",
@@ -400,6 +665,8 @@
   "groupStagedChanges": "Staged Changes",
   "groupUntracked": "Untracked",
   "hunkAdded": "Added",
+  "hunkAppend": "Append",
+  "hunkAppendTip": "Append the lines of the compared side after this change",
   "hunkChanged": "Changed",
   "hunkDiscard": "Discard",
   "hunkDiscardLabel": "Discard Change",
@@ -407,17 +674,6 @@
   "hunkNextChange": "Next Change",
   "hunkPeekLabel": "Change",
   "hunkPeekTitle": "{what} · change {n} of {total} since HEAD",
-  "@hunkPeekTitle": {
-    "placeholders": {
-      "what": {},
-      "n": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "hunkPrevChange": "Previous Change",
   "hunkRemoved": "Removed",
   "hunkStage": "Stage",
@@ -427,17 +683,10 @@
   "hunkUnstageLabel": "Unstage Change",
   "hunkUnstageTip": "Unstage this change",
   "imageLabel": "Image {name}",
-  "indentation": "Indentation",
-  "indentSpaces": "Spaces: {n}",
-  "@indentSpaces": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
-  "indentTabs": "Tabs",
   "inDir": "in {dir}",
+  "indentSpaces": "Spaces: {n}",
+  "indentTabs": "Tabs",
+  "indentation": "Indentation",
   "itemsCount": "{count, plural, one {# item} other {# items}}",
   "keymapNoCommand": "Mayoi has no command {name}",
   "keymapOpenNeedsPath": "vscode.open needs the path of a file as its args.",
@@ -461,10 +710,90 @@
   "menuSelection": "Selection",
   "menuSyncingAs": "Syncing Settings as {name}",
   "menuTheme": "Theme",
+  "menuUpdateTo": "Update to {version}…",
   "menuView": "View",
+  "mergeAcceptLeftTip": "Put ours' lines of the conflict in the result",
+  "mergeAcceptRightTip": "Put theirs' lines of the conflict in the result",
+  "mergeApply": "Apply",
+  "mergeApplyAll": "Apply All Non-Conflicting Changes",
+  "mergeApplyAuto": "Apply Automatically",
+  "mergeApplyChange": "Apply This Change",
+  "mergeApplyChangeTip": "Put this change of the side, which no conflict holds, in the result",
+  "mergeApplyChanges": "Apply Changes",
+  "mergeApplyChangesTip": "Save the result, stage the file, and go on to the next file in conflict",
+  "mergeApplyLeft": "Apply Non-Conflicting Changes from the Left",
+  "mergeApplyRight": "Apply Non-Conflicting Changes from the Right",
+  "mergeApplyTip": "Take the changes of a side that no conflict of the merge holds into the result",
+  "mergeBinary": "The file is binary: the conflict is resolved in the terminal.",
   "mergeButton": "Merge",
-  "mergedInto": "Merged {rev} into {into}",
+  "mergeConflictOf": "Conflict {index} of {total} · the result has {state}",
+  "mergeConflictTip": "The file is in conflict",
+  "mergeConflictsCount": "{unresolved} of {total}",
+  "mergeConflictsEllipsis": "Conflicts…",
+  "mergeConflictsTip": "The files of the {op}, resolved and to resolve",
+  "mergeConflictsToResolve": "{count, plural, one {# conflict to resolve} other {# conflicts to resolve}}",
+  "mergeConflictsUnresolved": "Conflicts Unresolved",
+  "mergeConflictsUnresolvedTip": "Conflicts the result still has the base's lines for",
+  "mergeContinueOp": "Continue {op}",
+  "mergeContinueOpTip": "Go on with the {op}, once its conflicts stand resolved",
+  "mergeContinueOpTipFiles": "Go on with the {op}, once every file of it stands resolved",
+  "mergeFileResolved": "The file stands resolved.",
+  "mergeFileResolvedOp": "The file stands resolved: the {op} goes on when every file of it does.",
+  "mergeFilesResolved": "{resolved} of {total} files resolved",
+  "mergeFilesResolvedTip": "The files of the {op} that stand resolved",
+  "mergeFilesTitle": "Files in Conflict",
+  "mergeFilesToResolve": "{count, plural, one {# file to resolve} other {# files to resolve}}",
+  "mergeIgnoreLeft": "Ignore Left",
+  "mergeIgnoreLeftTip": "Put the base's lines of the conflict back, taking ours' out",
+  "mergeIgnoreRight": "Ignore Right",
+  "mergeIgnoreRightTip": "Put the base's lines of the conflict back, taking theirs' out",
+  "mergeMarkResolved": "Mark Resolved",
+  "mergeMarkResolvedTip": "Save the result and stage the file, which ends its conflict",
+  "mergeMarkedResolved": "Marked {name} resolved",
+  "mergeNextConflict": "Next Conflict (])",
+  "mergeOpMerge": "merge",
+  "mergeOpStoppedFile": "The {op} stopped for this file",
+  "mergeOpenFileTip": "Open the file as it is on disk",
+  "mergeOpenMerge": "Open the merge of {name}",
+  "mergeOpenMergeTip": "Open the merge of the file",
+  "mergeOursPane": "OURS · {name}",
+  "mergeOursTip": "Ours: the branch checked out, as HEAD has the file",
+  "mergeOursTipBranch": "Ours: {name}, the branch checked out, as HEAD has the file",
+  "mergePrevConflict": "Previous Conflict ([)",
   "mergeQuestion": "Merge {rev} into {into}?",
+  "mergeResetBase": "Reset to Base",
+  "mergeResetBaseTip": "Put the base's text in the result, taking back what every conflict took",
+  "mergeRestoreConflict": "Restore Conflict…",
+  "mergeRestoreConflictTip": "Put the file back in conflict, as the command stopped for it has it",
+  "mergeRestoreDetail": "The result saved goes, and the two sides of the conflict come back, as the command stopped for them has them.",
+  "mergeRestoreOk": "Restore",
+  "mergeRestoreTitle": "Put {name} back in conflict?",
+  "mergeResultPane": "RESULT · FROM BASE",
+  "mergeResultTip": "The result, which starts as the base both sides come from: edit it, take the sides of a conflict into it, and save it to resolve the file",
+  "mergeSaveClose": "Save and Close",
+  "mergeSaveCloseTip": "Save the result, and go back to the files in conflict",
+  "mergeSaveTip": "Save the result in the file (Cmd+S)",
+  "mergeShowResolved": "Show {name}",
+  "mergeShowResolvedTip": "The file stands resolved: open it as it is, or take its resolution back",
+  "mergeSolveConflicts": "Solve Conflicts…",
+  "mergeStateBase": "the base's lines",
+  "mergeStateBoth": "both sides, alike",
+  "mergeStateEdited": "lines of its own",
+  "mergeStateIgnored": "ignored",
+  "mergeStateOurs": "ours",
+  "mergeStateTheirs": "theirs",
+  "mergeTheirsBare": "THEIRS",
+  "mergeTheirsBroughtIn": "{tip} · brought in by the {op}",
+  "mergeTheirsPane": "THEIRS · {name}",
+  "mergeTheirsTip": "Theirs: the other side of the conflict",
+  "mergeTheirsTipName": "Theirs: {name}, the other side of the conflict",
+  "mergeUnresolvedDetail": "{count, plural, one {# conflict still has} other {# conflicts still have}} the base's lines in the result, which neither side has. Mark the file resolved as it is?",
+  "mergeUnresolvedTitle": "Mark {name} resolved?",
+  "mergeUseLeft": "Resolve using Left",
+  "mergeUseLeftTip": "Accept ours and ignore theirs, for every conflict of the file",
+  "mergeUseRight": "Resolve using Right",
+  "mergeUseRightTip": "Accept theirs and ignore ours, for every conflict of the file",
+  "mergedInto": "Merged {rev} into {into}",
   "moreLines": "… {count, plural, one {# more line} other {# more lines}}",
   "moveToNextColumn": "Move to Next Column",
   "moveToPanel": "Move to Panel",
@@ -485,15 +814,15 @@
   "notificationFrom": "Notification from {title}",
   "onHost": "on {host}",
   "opDone": "{op} done",
+  "opNoun": "{op, select, merge {merge} rebase {rebase} cherrypick {cherry-pick} other {revert}}",
+  "opStopped": "{op} stopped for conflicts: resolve and stage them, then continue",
+  "opStoppedAgain": "{op} stopped again for conflicts: resolve and stage them, then continue",
+  "opTitle": "{op, select, merge {Merge} rebase {Rebase} cherrypick {Cherry-Pick} other {Revert}}",
   "openFile": "Open File",
   "openFolder": "Open Folder",
   "openInBrowser": "Open in Browser",
   "openInTerminal": "Open in Terminal",
   "openLink": "Open link {dest}",
-  "opNoun": "{op, select, merge {merge} rebase {rebase} cherrypick {cherry-pick} other {revert}}",
-  "opStopped": "{op} stopped for conflicts: resolve and stage them, then continue",
-  "opStoppedAgain": "{op} stopped again for conflicts: resolve and stage them, then continue",
-  "opTitle": "{op, select, merge {Merge} rebase {Rebase} cherrypick {Cherry-Pick} other {Revert}}",
   "paletteLabel": "Command Palette",
   "paletteNoMatches": "No matching commands",
   "palettePlaceholder": "Run a command by name",
@@ -521,8 +850,8 @@
   "panelHide": "Hide Panel",
   "panelIncoming": "Incoming",
   "panelLeft": "Left",
-  "panelLoadingCommits": "Loading commits…",
   "panelLoadMore": "Load more",
+  "panelLoadingCommits": "Loading commits…",
   "panelMaximize": "Maximize Panel",
   "panelMergeIntoCurrent": "Merge into Current Branch…",
   "panelNoBranches": "No branches",
@@ -535,12 +864,6 @@
   "panelPruneRemote": "Prune Remote…",
   "panelPullBranch": "Pull Branch",
   "panelRangeCommits": "{label} · {count, plural, one {# commit} other {# commits}}",
-  "@panelRangeCommits": {
-    "placeholders": {
-      "label": {},
-      "count": {}
-    }
-  },
   "panelReadCommitsFailed": "Unable to read commits — Retry",
   "panelReadRefsFailed": "Unable to read Git refs — Retry",
   "panelRebaseCurrentOnto": "Rebase Current Branch onto Here…",
@@ -566,8 +889,8 @@
   "pickCouldNotConnect": "Could not connect to {host}.",
   "pickCouldNotRead": "Could not read {dir}: {err}",
   "pickFolderPlaceholder": "Type the path of a folder, or ~ for home",
-  "pickFoldersIn": "Folders in {dir}",
   "pickFolderTitle": "Open Folder on {host}",
+  "pickFoldersIn": "Folders in {dir}",
   "pickNoFolder": "There is no folder {path}.",
   "pickNoFolders": "No folders in {dir}",
   "pickNoFoldersStart": "No folders in {dir} start with {prefix}",
@@ -583,40 +906,17 @@
   "pickSshConfig": "SSH Config",
   "pickTabGoesIn": "tab goes into a folder",
   "pickWaiting": "Waiting for the host · {n}s",
-  "@pickWaiting": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "pickWithKeys": "with your keys and the SSH agent",
   "portEnter": "Enter a port, from 1 to 65535.",
   "portForwardTitle": "Forward a Port",
   "portIsAt": "Port {port, number, ::group-off} of {host} is at localhost:{local, number, ::group-off}",
-  "@portIsAt": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      },
-      "host": {},
-      "local": {
-        "type": "int"
-      }
-    }
-  },
   "portOfHost": "of {host}",
   "portsForwarded": "{count, plural, one {# port of {host} forwarded} other {# ports of {host} forwarded}}",
-  "@portsForwarded": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "host": {}
-    }
-  },
+  "previewEmpty": "Nothing to preview",
   "previewLabel": "Preview {name}",
+  "previewMinutes": "{count, plural, one {# min read} other {# min read}}",
   "previewWord": "Preview",
+  "previewWords": "{count, plural, one {# word} other {# words}}",
   "published": "Published {branch}",
   "pulledCommits": "{count, plural, one {Pulled # commit} other {Pulled # commits}}",
   "pushedTo": "Pushed {branch} to {upstream}",
@@ -627,36 +927,12 @@
   "quickGoToAction": "go to",
   "quickGoToLine": "go to line",
   "quickGoToLineCol": "Go to line {line, number, ::group-off}, column {col, number, ::group-off}",
-  "@quickGoToLineCol": {
-    "placeholders": {
-      "line": {
-        "type": "int"
-      },
-      "col": {
-        "type": "int"
-      }
-    }
-  },
   "quickGoToLineN": "Go to line {line, number, ::group-off}",
-  "@quickGoToLineN": {
-    "placeholders": {
-      "line": {
-        "type": "int"
-      }
-    }
-  },
   "quickIndexing": "Indexing files…",
   "quickLine": "line",
   "quickLineHint": "Type a line number to go to",
   "quickLineNoFile": "Open a file to go to a line",
   "quickLineRange": "Type a line number between 1 and {max, number, ::group-off}",
-  "@quickLineRange": {
-    "placeholders": {
-      "max": {
-        "type": "int"
-      }
-    }
-  },
   "quickNavigate": "navigate",
   "quickNoFiles": "No matching files",
   "quickNoFolder": "Open a folder to search its files, or type > for commands",
@@ -685,8 +961,8 @@
   "railUntitled": "Untitled",
   "rebaseButton": "Rebase",
   "rebaseDetail": "The commits of {branch} that {onto} lacks are made again on top of it. Rebasing commits already pushed rewrites history others may have.",
-  "rebasedOnto": "Rebased {branch} onto {onto}",
   "rebaseQuestion": "Rebase {branch} onto {onto}?",
+  "rebasedOnto": "Rebased {branch} onto {onto}",
   "recentLabel": "Open Recent",
   "recentNewWindowTip": "{keys} in a new window",
   "recentNoMatches": "No matching folders",
@@ -699,13 +975,6 @@
   "refresh": "Refresh",
   "refreshExplorer": "Refresh Explorer",
   "remoteAttempt": "  attempt {n}",
-  "@remoteAttempt": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "remoteChangedDetail": "It changed on {host} since it was opened here. Overwrite it with your changes, or revert to the file on the host? Undo brings your changes back after a revert.",
   "remoteChangedOn": "{name} changed on {host}",
   "remoteCloseFolder": "Close Remote Folder",
@@ -724,20 +993,13 @@
   "remoteNotConnected": "Not Connected",
   "remoteOverwrite": "Overwrite",
   "remotePorts": "Ports",
-  "remoteReading": "Reading {name}…",
   "remoteReadOnly": "The files are read-only until it connects again.",
+  "remoteReading": "Reading {name}…",
   "remoteReconnect": "Reconnect",
-  "remoteReconnectingTo": "Reconnecting to {host}…",
   "remoteReconnectNow": "Reconnect Now",
+  "remoteReconnectingTo": "Reconnecting to {host}…",
   "remoteRefused": "{host} refused the connection. ",
   "remoteRetryingIn": "Retrying in {n}s",
-  "@remoteRetryingIn": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "remoteRevert": "Revert",
   "remoteRevertToFile": "Revert to the File",
   "remoteShowsOnce": "{name} shows once {host} is connected.",
@@ -766,9 +1028,9 @@
   "revealOpenContaining": "Open Containing Folder",
   "revertButton": "Revert",
   "revertDetail": "A new commit takes back the changes of “{subject}”.",
-  "reverted": "Reverted “{subject}”",
   "revertMergeDetail": "Those of a merge are taken back against its first parent.",
   "revertQuestion": "Revert {commit}?",
+  "reverted": "Reverted “{subject}”",
   "reviewAddComment": "Add Comment (C)",
   "reviewChooseLines": "Choose the lines to comment on.",
   "reviewCleared": "{count, plural, one {Cleared # review comment} other {Cleared # review comments}}",
@@ -780,29 +1042,12 @@
   "reviewEditComment": "Edit Comment",
   "reviewEditTip": "Edit Comment: {text}",
   "reviewLine": "Line {n, number, ::group-off}",
-  "@reviewLine": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "reviewLines": "Lines {from, number, ::group-off}–{to, number, ::group-off}",
-  "@reviewLines": {
-    "placeholders": {
-      "from": {
-        "type": "int"
-      },
-      "to": {
-        "type": "int"
-      }
-    }
-  },
   "reviewNewComment": "New comment",
+  "reviewNoTerminal": "{count, plural, one {No terminal is open: copied # review comment instead} other {No terminal is open: copied # review comments instead}}",
   "reviewNone": "No review comments.",
   "reviewNoneToCopy": "No review comments to copy.",
   "reviewNoneToSend": "No review comments to send.",
-  "reviewNoTerminal": "{count, plural, one {No terminal is open: copied # review comment instead} other {No terminal is open: copied # review comments instead}}",
   "reviewOutdated": "Outdated",
   "reviewOutdatedTip": "The lines have changed since the comment",
   "reviewPlaceholder": "Leave a comment for the agent…",
@@ -820,33 +1065,11 @@
   "saveChangesQuestion": "Do you want to save the changes you made to {name}?",
   "scmAbortOp": "Abort {op}…",
   "scmAmendCommit": "Amend Commit",
-  "scmAmending": "Amending last commit",
   "scmAmendTip": "Amend the last commit with the staged changes",
+  "scmAmending": "Amending last commit",
   "scmBranchAhead": "{branch} is clean, {ahead, plural, one {# commit} other {# commits}} ahead of {upstream}.",
-  "@scmBranchAhead": {
-    "placeholders": {
-      "branch": {},
-      "ahead": {},
-      "upstream": {}
-    }
-  },
   "scmBranchAheadBehind": "{branch} is clean, {ahead, plural, one {# commit} other {# commits}} ahead of {upstream} and {behind, plural, one {# commit} other {# commits}} behind.",
-  "@scmBranchAheadBehind": {
-    "placeholders": {
-      "branch": {},
-      "ahead": {},
-      "upstream": {},
-      "behind": {}
-    }
-  },
   "scmBranchBehind": "{branch} is clean, {behind, plural, one {# commit} other {# commits}} behind {upstream}.",
-  "@scmBranchBehind": {
-    "placeholders": {
-      "branch": {},
-      "behind": {},
-      "upstream": {}
-    }
-  },
   "scmBranchClean": "{branch} is clean.",
   "scmBranchUnpublished": "{branch} is clean, and not yet published.",
   "scmBranchUpToDate": "{branch} is clean and up to date with {upstream}.",
@@ -875,8 +1098,8 @@
   "scmNoRepo": "No Git Repository",
   "scmNoRepoDetail": "The folder is not in a Git repository. Make it one to track and commit its changes.",
   "scmNotPushed": " · not pushed",
-  "scmOpenStaged": "Open Staged Changes",
   "scmOpInProgress": "{op} in progress",
+  "scmOpenStaged": "Open Staged Changes",
   "scmPublishBranch": "Publish Branch",
   "scmPullCommits": "{count, plural, one {Pull # Commit} other {Pull # Commits}}",
   "scmPullCount": "{count, plural, one {Pull # commit} other {Pull # commits}}",
@@ -911,14 +1134,6 @@
   "searchFilesExclude": "files to exclude",
   "searchFilesInclude": "files to include",
   "searchFirstResults": "The first {n} results in {files, plural, one {# file} other {# files}}",
-  "@searchFirstResults": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      },
-      "files": {}
-    }
-  },
   "searchHintFind": "Find text in the folder's files.",
   "searchHintOpen": "Open the match",
   "searchHintResults": "Go to the results",
@@ -928,28 +1143,9 @@
   "searchNoResultsFiltered": "No results found in the files to include and exclude",
   "searchNothingToReplace": "Nothing to replace",
   "searchReplaceAllInFile": "Replace All in File",
-  "searchReplacedIn": "Replaced {n, plural, one {# occurrence} other {# occurrences}} in {files, plural, one {# file} other {# files}}",
-  "@searchReplacedIn": {
-    "placeholders": {
-      "n": {},
-      "files": {}
-    }
-  },
   "searchReplaceQuestion": "Replace {n, plural, one {# occurrence} other {# occurrences}} in {files, plural, one {# file} other {# files}} with {with}?",
-  "@searchReplaceQuestion": {
-    "placeholders": {
-      "n": {},
-      "files": {},
-      "with": {}
-    }
-  },
+  "searchReplacedIn": "Replaced {n, plural, one {# occurrence} other {# occurrences}} in {files, plural, one {# file} other {# files}}",
   "searchResultsIn": "{n, plural, one {# result} other {# results}} in {files, plural, one {# file} other {# files}}",
-  "@searchResultsIn": {
-    "placeholders": {
-      "n": {},
-      "files": {}
-    }
-  },
   "searchSearching": "Searching",
   "searchSearchingEllipsis": "Searching…",
   "searchToggleDetails": "Toggle Search Details",
@@ -959,6 +1155,8 @@
   "showMore": "Show More",
   "showPreview": "Show Preview",
   "showSource": "Show Source",
+  "sideIndex": "Index",
+  "sideWorkingTree": "Working Tree",
   "sidebarExplorer": "Explorer",
   "sidebarScm": "Source Control",
   "sidebarSearch": "Search",
@@ -966,8 +1164,6 @@
   "sidebarTitleScm": "SOURCE CONTROL",
   "sidebarTitleScmShort": "GIT",
   "sidebarTitleSearch": "SEARCH",
-  "sideIndex": "Index",
-  "sideWorkingTree": "Working Tree",
   "stageAllCommit": "Stage All & Commit",
   "stageAllQuestion": "Stage all changes and commit them?",
   "stageChanges": "Stage Changes",
@@ -976,25 +1172,8 @@
   "statusDeleted": "Deleted",
   "statusModified": "Modified",
   "statusPos": "Ln {line, number, ::group-off}, Col {col, number, ::group-off}",
-  "@statusPos": {
-    "placeholders": {
-      "line": {
-        "type": "int"
-      },
-      "col": {
-        "type": "int"
-      }
-    }
-  },
   "statusRenamed": "Renamed",
   "statusSelected": " ({n} selected)",
-  "@statusSelected": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "statusTypeChanged": "Type Changed",
   "statusUntracked": "Untracked",
   "stopForwarding": "Stop Forwarding",
@@ -1054,6 +1233,7 @@
   "syncWaiting": "Waiting for approval…",
   "syncWaitingExpires": "Waiting for approval · the code expires in {time}",
   "syncWhatSyncs": "Syncs on this machine",
+  "syncedWith": "Synchronized with {upstream}",
   "tabClose": "Close",
   "tabCloseAll": "Close All",
   "tabCloseOthers": "Close Others",
@@ -1064,8 +1244,8 @@
   "termMoveLockedRight": "Move to Locked Right Column",
   "termMoveToEditor": "Move Terminal to Editor Area",
   "transferCancel": "Cancel",
-  "transferCanceled": "Canceled",
   "transferCancelLabel": "Cancel {label}",
+  "transferCanceled": "Canceled",
   "transferClickToCancel": "{label} Click to cancel.",
   "transferCopyingOn": "Copying {what} on {host}…",
   "transferDownloading": "Downloading {what}…",
@@ -1078,15 +1258,9 @@
   "unsavedChanges": "Unsaved changes",
   "unstageChanges": "Unstage Changes",
   "untitledName": "Untitled-{n}",
-  "@untitledName": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "untrackedDeleted": "The changes cannot be undone. Files Git does not track are deleted: a remote folder has no trash.",
   "untrackedGoTo": "The changes cannot be undone. Files Git does not track go to {trash}.",
+  "updateAvailable": "Mayoi {version} is available",
   "uploadButton": "Upload",
   "uploadEllipsis": "Upload…",
   "uploadTo": "Upload to {dir}",
@@ -1095,16 +1269,6 @@
   "vimMarkNotSet": "Mark not set: {mark}",
   "vimMarksEmpty": "No marks set",
   "vimMatchCount": "[{cur}/{total}]",
-  "@vimMatchCount": {
-    "placeholders": {
-      "cur": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
   "vimNotCommand": "Not an editor command: {cmd}",
   "vimPatternNotFound": "Pattern not found: {pattern}",
   "vimRecording": "recording @{reg}",
@@ -1116,6 +1280,11 @@
   "welcomeRecent": "Recent",
   "welcomeStart": "Start",
   "welcomeTagline": "迷い · a small, quick code editor",
+  "welcomeUpdate": "Update",
+  "whitespaceExact": "Exact",
+  "whitespaceIgnoreAll": "Ignore Whitespace",
+  "whitespaceIgnoreBlank": "Ignore Whitespace and Blank Lines",
+  "whitespaceIgnoreEOL": "Ignore Line End",
   "worktreeCurrentWindow": "Current Window",
   "worktreeMissingDetail": "The branch “{branch}” is checked out in a worktree whose folder is gone:\n\n{path}\n\nPrune the missing worktree and switch to the branch here?",
   "worktreeMissingTitle": "Worktree Folder Missing",

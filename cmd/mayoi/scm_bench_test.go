@@ -113,3 +113,21 @@ func BenchmarkReviewLayout(b *testing.B) {
 		b.Fatal("the diff was not laid out with the comments")
 	}
 }
+
+// BenchmarkSplitScrollFrame scrolls the diff of 2000 files side by side,
+// with the bands and arrows of its changes in the gutter between them.
+func BenchmarkSplitScrollFrame(b *testing.B) {
+	hs := benchScm(b, 2000)
+	hs.a.setDiffLayout(hs.a.activeTab().diff, layoutSplit)
+	hs.settle()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := range b.N {
+		dy := float32(60)
+		if i/200%2 == 1 {
+			dy = -60
+		}
+		hs.tt.Scroll(700, 400, 0, dy)
+		step(hs.tt)
+	}
+}

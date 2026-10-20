@@ -246,6 +246,8 @@ var vscodeCommands = map[string]string{
 	"workbench.action.positionPanelRight":        "view.panelPosition.right",
 	"workbench.action.splitEditor":               "view.splitRight",
 	"workbench.action.splitEditorRight":          "view.splitRight",
+	"markdown.showPreview":                       "view.togglePreview",
+	"markdown.showPreviewToSide":                 "view.previewToSide",
 	"workbench.action.focusNextGroup":            "view.nextColumn",
 	"workbench.action.focusPreviousGroup":        "view.prevColumn",
 	"workbench.action.moveEditorToNextGroup":     "view.moveTabNext",

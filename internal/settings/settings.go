@@ -118,6 +118,32 @@ type Prefs struct {
 	// DiffLayout is how diffs show: "split" side by side, "inline" in
 	// one column, or "" side by side when they are wide enough to.
 	DiffLayout string `json:"diffLayout,omitempty"`
+	// DiffCrossFiles is how a diff's change navigation crosses into
+	// another file at the first or last change of one: "" says where it
+	// is and crosses on one more step that way, "always" crosses at once,
+	// and "never" stays in the file.
+	DiffCrossFiles string `json:"diffCrossFiles,omitempty"`
+	// DiffHighlight is what a diff shows of a line that changed: "line"
+	// no more than the line, "char" the characters that changed, or ""
+	// the words that changed. What it shows is only so: a diff's block
+	// actions are for its hunks of lines, whatever it highlights.
+	DiffHighlight string `json:"diffHighlight,omitempty"`
+	// DiffWhitespace controls the comparison: "eol" ignores line-end
+	// whitespace, "all" ignores whitespace, and "blank" also treats
+	// whitespace-only lines as empty. Empty is exact comparison.
+	DiffWhitespace string `json:"diffWhitespace,omitempty"`
+	// DiffContext is how many unchanged lines a diff shows around a
+	// change, the rest folded away.
+	DiffContext int `json:"diffContext"`
+	// DiffSyncScroll has the sides of a side-by-side diff scroll
+	// together. Without it, each side scrolls on its own, and scrolls
+	// together again from where the right one was.
+	DiffAlignedRows bool `json:"diffAlignedRows"`
+	DiffSyncScroll  bool `json:"diffSyncScroll"`
+	// MergeAutoApply puts the changes of a conflicted file that no
+	// conflict holds in its result when the merge view opens. The
+	// conflicts stand, for the hand to decide.
+	MergeAutoApply bool `json:"mergeAutoApply"`
 	// ScmTree lists the changes in source control in a tree of their
 	// folders, rather than by path.
 	ScmTree bool `json:"scmTree,omitempty"`
@@ -338,12 +364,17 @@ type Tab struct {
 	Wrap    *bool   `json:"wrap,omitempty"`
 }
 
+// MaxDiffContext is as many unchanged lines around a change as a diff
+// shows, the rest folded away.
+const MaxDiffContext = 100
+
 // Default is the settings of a first launch.
 func Default() *Settings {
 	return &Settings{
 		Prefs: Prefs{
 			FontSize: 13, FontFamily: "monospace", FontWeight: 400, LineHeight: 1.55,
 			AutoSave: true, Blame: true, TerminalCopyOnSelect: true,
+			DiffAlignedRows: true, DiffContext: 3, DiffSyncScroll: true, MergeAutoApply: true,
 		},
 	}
 }
@@ -431,6 +462,18 @@ func (s *Settings) normalize() {
 	if s.TerminalFontSize != 0 {
 		s.TerminalFontSize = clamp(s.TerminalFontSize, 9, 28)
 	}
+	switch s.DiffHighlight {
+	case "line", "char":
+	default:
+		s.DiffHighlight = ""
+	}
+	switch s.DiffWhitespace {
+	case "eol", "all", "blank":
+	default:
+		s.DiffWhitespace = ""
+	}
+	s.DiffContext = min(max(s.DiffContext, 0), MaxDiffContext)
+
 	// "" and "bottom" are the same panel position.
 	if s.PanelPosition != "left" && s.PanelPosition != "right" {
 		s.PanelPosition = ""

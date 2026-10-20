@@ -226,14 +226,24 @@ when they are staged, or to discard them. Mayoi reads the index and the file aga
 are. Discarding edits an open file as a step of undo, and asks first for one that is not open. As you scroll through a
 file, its header stays at the top of the view with its buttons, and a click there folds the file.
 
-Removed and added lines show in one column, or side by side with the lines of a change across from each other. The
+**Git → Compare Two Files…** compares two local files directly, including files outside the current repository. The
+tab names the left and right paths, and each changed block has **Accept Left** and **Accept Right** arrows. Accepting
+a side opens or reuses that file's document and records one undoable edit; save it from the file tab when ready. This
+comparison reads and writes local documents only and does not stage Git changes.
+
+Removed and added lines show in one column, or side by side with the lines of a change across from each other. Side by
+side, a gutter between the sides joins each change's lines on the left to its lines on the right with a band, which
+curves where the sides stand apart, and holds the change's arrows; pointing at an arrow lights the lines it takes. The
 layout button in the breadcrumbs chooses side by side, one column, or side by side when each side has room for 80
 columns, which is the default. Words that changed within a line are tinted,
 and a bar along the left is brightest for the change you are on. Long lines wrap as the editor's do: **Word Wrap**
 sets them all, and ⌥Z or the wrap button just the tab.
 
-Double-click a line to open the file there. The arrows go from change to change, and the status bar counts the lines
-added and removed. With the diff focused, keys work as in a pager:
+Double-click a line to open the file there. The arrows go from change to change, and the status bar says which change
+of how many you are on, with the lines added and removed. At the last, or first, change of a file the navigation says
+so, and one more press that way goes to the next file with changes, or the last of the previous; **diffCrossFiles** in
+the settings has it cross at once, or never leave the file. At the first or last file it says so, and stops. With the
+diff focused, keys work as in a pager:
 
 | Key | Does |
 | --- | --- |
@@ -327,7 +337,7 @@ PNG, JPEG, GIF, WebP and BMP files open in a viewer, fitted to the view on a che
 
 An SVG opens as text. ⇧⌘V, or the button at the end of the breadcrumbs, shows it as an image that updates as you type.
 
-Markdown (`.md` and `.markdown`) opens as text too. ⇧⌘V or the same button shows a read-only, scrollable preview with headings, formatted text, links, nested lists, task lists, quotes, highlighted code, tables and local images. Split with ⌘\ to keep source in one column and a live preview in the other. Preview state is restored with the session. Remote images show their alt text without network requests. A path starting with `/` is taken from the root of the file's Git repository, or else of the workspace, as GitHub takes it. HTML comments and front matter are hidden, `<br>` breaks the line, and other HTML is displayed as text.
+Markdown (`.md` and `.markdown`) opens as text too. ⇧⌘V or the same button shows a read-only, scrollable preview with headings, formatted text, links, nested lists, task lists, quotes, highlighted code, tables and local images. Split with ⌘\ to keep source in one column and a live preview in the other. **Open Preview to the Side** does both at once, the text keeping the keyboard. The preview scrolls with the text beside it, and the text with the preview as you scroll it. Tables are as wide as their text, and the status bar counts the words and the minutes to read them. GitHub's alerts, `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` and `[!CAUTION]`, show with their icons and colors; a block of code has its language in the corner and a Copy Code button under the pointer; a link to `#a-heading` scrolls to that heading. Preview state is restored with the session. Remote images show their alt text without network requests. A path starting with `/` is taken from the root of the file's Git repository, or else of the workspace, as GitHub takes it. HTML comments and front matter are hidden, `<br>` breaks the line, and other HTML is displayed as text.
 
 ## Columns
 
@@ -338,9 +348,9 @@ a new column.
 
 Choose **Lock Column** in a tab's menu to keep a column for terminals, or **Move to Locked Right Column** in a
 terminal tab's or panel terminal's menu to move the running terminal there in one step. The lock in the tab strip unlocks
-the column. Files, images and diffs opened from the Explorer, Search, Quick Open or Source Control go to the unlocked
-column that has the keyboard, or the one used last when a locked column has it. Dragging a tab or file into a locked
-column still puts it there. Closing files keeps at least one unlocked column beside the locked ones, without widening
+the column. Files, images and diffs opened from the Explorer, Search, Quick Open or Source Control, and terminals from
+**New Terminal in Editor Area**, go to the unlocked column that has the keyboard, or the one used last when a locked
+column has it. Dragging a tab or file into a locked column still puts it there. Closing files keeps at least one unlocked column beside the locked ones, without widening
 them, and ⌘W closes an extra empty column. A locked column stays when its last terminal exits and offers **New
 Terminal**. Locks, widths and the last file column come back with each project's session. The command palette has
 **Toggle Column Lock** and **Move Terminal to Locked Right Column**, which take keyboard shortcuts.
@@ -599,8 +609,10 @@ machines opens side by side to merge. See [SETTINGS.md](SETTINGS.md#settings-syn
 
 ## Updates
 
-Release builds check GitHub Releases for a new version once a day, 10 seconds after launch when a check is due, and
-**Mayoi → Check for Updates…** (**Help → Check for Updates…** on Linux and Windows) checks right away. A window shows the
-release notes and offers to install the update, skip that version or remind you later. Updates download only what
-changed when they can, are checked against Mayoi's signing key, and apply when Mayoi relaunches. Development builds, and
-copies Mayoi can't write to, never check.
+Release builds check GitHub Releases for a new version every hour, the first time 10 seconds after launch and again
+when the computer wakes. A new version shows in the status bar, on the welcome page, and in the menu as **Mayoi → Update
+to 0.12.0…** (**Help → Update to 0.12.0…** on Linux and Windows); without one the item reads **Check for Updates…** and
+checks right away. Clicking any of them opens a window with the release notes that offers to install the update, skip
+that version, which hides it, or remind you later. Updates download only what changed when they can, are checked
+against Mayoi's signing key, and apply when Mayoi relaunches. Development builds, and copies Mayoi can't write to, never
+check.

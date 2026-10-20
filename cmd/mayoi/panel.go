@@ -158,6 +158,10 @@ func (a *app) spawnTerminal(s *session, dir string) (*terminal.Terminal, error) 
 			}
 			return ok
 		},
+		// The wheel with Command held zooms no terminal on its own: Cmd+=
+		// and Cmd+- size all the text, and Command held to switch apps
+		// scrolls no terminal's font away.
+		OnZoom: func(terminal.Zoom) bool { return true },
 		OnExit: func(code int) {
 			a.post(func() { a.terminalExited(s, term, code) })
 		},

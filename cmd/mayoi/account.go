@@ -13,8 +13,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -424,6 +427,26 @@ func (c *cloud) flush() {
 	}
 }
 
+// deviceName is how Mon lists Mayoi signed in on this computer: a Mac's name,
+// as in Sharing settings, or the host name. A development build signs in
+// apart from the release, and says so.
+func deviceName() string {
+	name := ""
+	if runtime.GOOS == "darwin" {
+		if out, err := exec.Command("/usr/sbin/scutil", "--get", "ComputerName").Output(); err == nil {
+			name = strings.TrimSpace(string(out))
+		}
+	}
+	if name == "" {
+		host, _ := os.Hostname()
+		name = cmp.Or(strings.TrimSuffix(host, ".local"), "Computer")
+	}
+	if mygo.IsDev() {
+		name += " (dev)"
+	}
+	return name
+}
+
 // signIn signs in to Mon, showing the code to approve in a's window, and
 // syncs once it is approved.
 func (c *cloud) signIn(a *app) {
@@ -432,7 +455,6 @@ func (c *cloud) signIn(a *app) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancelSignIn = cancel
-	host, _ := os.Hostname()
 	// The dialog shows at once, as the code comes.
 	si := &signin{cancel: cancel}
 	a.signin = si
@@ -446,7 +468,15 @@ func (c *cloud) signIn(a *app) {
 			})
 			return
 		}
-		dc, err := c.client.StartDeviceLogin(ctx, cloudsync.App, host)
+		// A token still kept is signed out first, so Mon doesn't list it on.
+		if old, err := c.loadToken(); err == nil && len(old) > 0 {
+			stale := *c.client
+			stale.Token = string(old)
+			lctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			stale.Logout(lctx)
+			cancel()
+		}
+		dc, err := c.client.StartDeviceLogin(ctx, cloudsync.App, deviceName())
 		if err != nil {
 			mygo.RunOnMain(func() {
 				a.dropSignin(si)

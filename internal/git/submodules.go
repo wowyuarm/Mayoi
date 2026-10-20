@@ -3,7 +3,6 @@ package git
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"mayoi/internal/remote"
@@ -58,7 +57,7 @@ func (r *Repo) Submodules() ([]*Repo, error) {
 		}
 		seen[root] = true
 		sub, err := Open(root)
-		if err == nil && filepath.Clean(sub.Root) == filepath.Clean(root) {
+		if err == nil && remote.Clean(sub.Root) == remote.Clean(root) {
 			repos = append(repos, sub)
 		}
 	}

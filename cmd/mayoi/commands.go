@@ -119,8 +119,14 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"git.writeMessage", t.CmdGitWriteMessage(), "", func() { a.showSourceControl(); a.writeMessage() }},
 		{"git.openChanges", t.CmdGitOpenChanges(), "", a.openChanges},
 		{"git.openAllChanges", t.CmdGitOpenAllChanges(), "", func() { a.openChangesTab(true) }},
+		{"git.compareFiles", t.CmdGitCompareFiles(), "", a.compareLocalFiles},
+		{"git.solveConflicts", t.CmdGitSolveConflicts(), "", a.solveActiveConflicts},
+		{"git.conflictFiles", t.CmdGitConflictFiles(), "", a.openConflicts},
 		{"git.nextChange", t.CmdGitNextChange(), "Alt+F5", func() { a.stepChange(1) }},
 		{"git.prevChange", t.CmdGitPrevChange(), "Shift+Alt+F5", func() { a.stepChange(-1) }},
+		{"git.nextFile", t.CmdGitNextFile(), "", func() { a.stepDiffFile(1) }},
+		{"git.prevFile", t.CmdGitPrevFile(), "", func() { a.stepDiffFile(-1) }},
+		{"git.appendChange", t.CmdGitAppendChange(), "", a.appendAtCursor},
 		{"git.showChange", t.CmdGitShowChange(), "", a.editActive(func(d *editor) { d.peekHunk(caretLine(d)) })},
 		{"git.revertChange", t.CmdGitRevertChange(), "", a.editActive(func(d *editor) { a.onCaretHunk(d, a.revertHunk) })},
 		{"git.stageChange", t.CmdGitStageChange(), "", a.editActive(func(d *editor) { a.onCaretHunk(d, a.stageHunk) })},
@@ -153,7 +159,7 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"review.clear", t.CmdReviewClear(), "", a.clearReview},
 		{"view.terminal", t.CmdViewTerminal(), "Ctrl+`", a.togglePanel},
 		{"view.newTerminal", t.CmdViewNewTerminal(), "Ctrl+Shift+`", a.newTerminal},
-		{"view.terminalTab", t.CmdViewTerminalTab(), "", func() { a.newTerminalTab(a.column(), a.workDir(), true) }},
+		{"view.terminalTab", t.CmdViewTerminalTab(), "", func() { a.newTerminalTab(a.fileColumn(), a.workDir(), true) }},
 		{"view.terminalMove", t.CmdViewTerminalMove(), "", a.moveTerminal},
 		{"view.terminalLockRight", t.CmdViewTerminalLockRight(), "", a.moveTerminalToLockedRight},
 		{"view.panelPosition.bottom", t.CmdViewPanelBottom(), "", func() { a.setPanelPosition("") }},
@@ -170,6 +176,7 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"view.projectTabs", t.CmdViewProjectTabs(), "", a.toggleProjectTabs},
 		{"view.wordWrapTab", t.CmdViewWordWrapTab(), "Alt+Z", a.toggleTabWrap},
 		{"view.togglePreview", t.CmdViewTogglePreview(), "Shift+CmdOrCtrl+V", a.togglePreview},
+		{"view.previewToSide", t.CmdViewPreviewToSide(), "", a.previewToSide},
 		// The text, or the picture shown.
 		{"view.zoomIn", t.CmdViewZoomIn(), "CmdOrCtrl+=", func() { a.zoom(1) }},
 		{"view.zoomOut", t.CmdViewZoomOut(), "CmdOrCtrl+-", func() { a.zoom(-1) }},
@@ -207,6 +214,14 @@ func remoteLabel(ssh, wsl string) string {
 		return ssh
 	}
 	return wsl
+}
+
+// solveActiveConflicts shows the three-way merge of the file of the tab
+// shown when it is in conflict.
+func (a *app) solveActiveConflicts() {
+	if t := a.activeTab(); t != nil && t.path() != "" {
+		a.openMerge(t.path(), true)
+	}
 }
 
 // recentCommand is the prefix of the commands that open a recent
@@ -374,6 +389,16 @@ func (a *app) zoom(by float32) {
 	a.host.fontChanged()
 }
 
+// updateItem is "Check for Updates…", or "Update to 0.12.0…" once a
+// check found that version.
+func (a *app) updateItem() *mygo.MenuItem {
+	it := updater.MenuItem()
+	if v := a.host.update(); v != "" {
+		it.Label = locales.MenuUpdateTo(v)
+	}
+	return it
+}
+
 // menu is the menu bar, which the windows share: its items run the
 // command of the window they are chosen in, by run. cli adds the items
 // that install the mayoi command; builds that can update themselves get
@@ -468,8 +493,8 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 	var help []*mygo.MenuItem
 	about := []*mygo.MenuItem{{Role: mygo.RoleAbout}}
 	if mygo.Updater.Enabled() {
-		about = append(about, updater.MenuItem())
-		help = append(help, updater.MenuItem(), mygo.Separator())
+		about = append(about, a.updateItem())
+		help = append(help, a.updateItem(), mygo.Separator())
 	}
 	help = append(help, account...)
 	appMenu := &mygo.MenuItem{Role: mygo.RoleAppMenu}
@@ -510,7 +535,7 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 		}},
 		{Label: locales.MenuView(), Submenu: []*mygo.MenuItem{
 			item("view.sidebar"), checkbox("view.sidebarRight", a.settings.SidebarRight), item("view.explorer"), item("view.search"), item("view.scm"), mygo.Separator(),
-			checkbox("view.wordWrap", a.settings.WordWrap), item("view.wordWrapTab"), item("view.togglePreview"),
+			checkbox("view.wordWrap", a.settings.WordWrap), item("view.wordWrapTab"), item("view.togglePreview"), item("view.previewToSide"),
 			checkbox("view.vim", a.settings.Vim), checkbox("view.projectTabs", a.settings.ProjectTabs), mygo.Separator(),
 			item("view.splitRight"), item("view.nextColumn"), item("view.prevColumn"),
 			item("view.moveTabNext"), item("view.moveTabPrev"), mygo.Separator(),
@@ -536,8 +561,8 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 		}},
 		{Label: locales.MenuGit(), Submenu: []*mygo.MenuItem{
 			item("git.commit"), item("git.commitPush"), item("git.amend"), item("git.undoCommit"), mygo.Separator(),
-			item("git.openChanges"), item("git.openAllChanges"), item("git.nextChange"), item("git.prevChange"), mygo.Separator(),
-			item("git.showChange"), item("git.revertChange"), item("git.stageChange"), mygo.Separator(),
+			item("git.openChanges"), item("git.openAllChanges"), item("git.compareFiles"), item("git.nextChange"), item("git.prevChange"), item("git.nextFile"), item("git.prevFile"), mygo.Separator(),
+			item("git.showChange"), item("git.revertChange"), item("git.appendChange"), item("git.stageChange"), mygo.Separator(),
 			item("git.stageFile"), item("git.unstageFile"), item("git.stageAll"), mygo.Separator(),
 			item("git.switchBranch"), item("git.createBranch"), item("git.fetch"), item("git.pull"), item("git.push"), mygo.Separator(),
 			checkbox("git.blame", a.settings.Blame), item("git.refresh"), mygo.Separator(),

@@ -614,6 +614,7 @@ const featMD = "# A tour of Mayoi\n\n" +
 	"## Roadmap\n\n" +
 	"- [x] Remote SSH\n- [x] Markdown preview\n- [ ] Language servers\n\n" +
 	"> Light enough to start in an instant, and to stay out of your way.\n\n" +
+	"> [!TIP]\n> Press `⇧⌘V` to switch between the text and its preview.\n\n" +
 	"| Shortcut | Action |\n|---|---|\n| ⌘P | Quick open |\n| ⇧⌘F | Find in files |\n| ⌘\\\\ | Split right |\n\n" +
 	"```go\nfunc main() {\n\tfmt.Println(\"hello, mayoi\")\n}\n```\n"
 

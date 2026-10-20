@@ -921,6 +921,10 @@ func (a *gitContext) scmFile(c *ui.Context, r scmRow, action *func()) {
 				if a.app.smallButton(c, iconMinus, locales.UnstageChanges()) {
 					*action = func() { a.toggleStaged(r) }
 				}
+			case groupMerge:
+				if a.app.smallButton(c, iconMerge, locales.MergeSolveConflicts()) {
+					*action = func() { a.app.openMerge(e.Path, true) }
+				}
 			default:
 				if r.group != groupMerge && !e.Submodule() && a.app.smallButton(c, iconUndo, locales.DiscardChangesEllipsis()) {
 					*action = func() { a.discardChosen(r) }
@@ -1465,8 +1469,11 @@ func (a *gitContext) scmFolder(c *ui.Context, r scmRow, action *func()) {
 // scmFileMenu is the menu of a changed file's row.
 func (a *gitContext) scmFileMenu(m *ui.Menu, r scmRow, action *func()) {
 	e := r.e
-	if m.Item(locales.CmdGitOpenChanges()).Chosen() {
+	if m.Item(locales.CmdGitOpenChanges()).Disabled(r.group == groupMerge).Chosen() {
 		*action = func() { a.openChange(r, true) }
+	}
+	if r.group == groupMerge && m.Item(locales.MergeSolveConflicts()).Chosen() {
+		*action = func() { a.app.openMerge(e.Path, true) }
 	}
 	if m.Item(openLabel(e)).Disabled(e.Letter() == 'D' && r.group != groupStaged).Chosen() {
 		*action = func() { a.app.openPath(e.Path, true) }
@@ -1609,11 +1616,11 @@ func (a *gitContext) chooseScmFile(f *diffFile) {
 }
 
 // openChange shows the changes of a file of the view: those staged, or
-// those not, or the file itself while it is in conflict.
+// those not, or the three-way merge of one in conflict.
 func (a *gitContext) openChange(r scmRow, focus bool) {
 	switch r.group {
 	case groupMerge:
-		a.app.openPath(r.e.Path, focus)
+		a.app.openMerge(r.e.Path, focus)
 	case groupStaged:
 		a.showChanges(diffTarget{path: r.e.Path, base: diffStaged}, focus)
 	default:

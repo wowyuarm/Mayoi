@@ -2,6 +2,8 @@
 // lines changed since a version of a file and for showing the changes.
 package linediff
 
+import "unicode/utf8"
+
 // Kind is how a line differs from the base text.
 type Kind uint8
 
@@ -104,7 +106,19 @@ const maxWordTokens = 600
 // Words returns the runs of line a and of line b that differ, word by
 // word, of a line modified from a to b.
 func Words(a, b string) (as, bs []Span) {
-	ta, tb := tokens(a), tokens(b)
+	return spans(a, b, tokens)
+}
+
+// Chars returns the runs of line a and of line b that differ, character
+// by character, of a line modified from a to b.
+func Chars(a, b string) (as, bs []Span) {
+	return spans(a, b, runes)
+}
+
+// spans returns the runs of line a and of line b that differ, as the
+// pieces split says they are made of.
+func spans(a, b string, split func(string) []Span) (as, bs []Span) {
+	ta, tb := split(a), split(b)
 	if len(ta) > maxWordTokens || len(tb) > maxWordTokens {
 		return []Span{{0, len(a)}}, []Span{{0, len(b)}}
 	}
@@ -155,6 +169,15 @@ func tokens(s string) []Span {
 		}
 		out = append(out, Span{i, j})
 		i = j
+	}
+	return out
+}
+
+// runes splits a line into its characters one each.
+func runes(s string) []Span {
+	out := make([]Span, 0, len(s))
+	for i, r := range s {
+		out = append(out, Span{i, i + utf8.RuneLen(r)})
 	}
 	return out
 }

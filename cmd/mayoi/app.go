@@ -12,6 +12,7 @@ import (
 	"github.com/egoist/mygo/plugins/terminal"
 	"github.com/egoist/mygo/ui"
 
+	"mayoi/internal/git"
 	"mayoi/internal/highlight"
 	"mayoi/internal/keymap"
 	"mayoi/internal/mon"
@@ -92,6 +93,10 @@ type host interface {
 	// account was signed out elsewhere.
 	ai() *mon.Client
 	aiSignedOut()
+	// update is the new version of Mayoi a check found, "" when there is
+	// none, and installUpdate opens the update window to install it.
+	update() string
+	installUpdate()
 	// With project tabs, stepProject shows the project by steps along the
 	// rail, showProject the one at i, the last for -1, and closeProject
 	// closes the window's, as the window closes when it is its only one.
@@ -256,6 +261,7 @@ type app struct {
 	branches   branchPicker      // the box that switches branches
 	recents    recentPicker      // the box of the recent folders
 	remotePick remotePicker      // the box that connects to a host
+	conflicts  conflictsList     // the box of the files in conflict
 	find       findState
 	inFiles    searchState // search in the files, of the sidebar
 	prompt     *prompt
@@ -534,6 +540,10 @@ func (a *app) saveDoc(d *document, then func()) {
 }
 
 func (a *app) saveActive() {
+	if t := a.activeTab(); t != nil && t.merge != nil {
+		a.saveMerge(t.merge)
+		return
+	}
 	if d := a.activeEditor(); d != nil {
 		a.saveDoc(d.document, nil)
 	}
@@ -568,7 +578,7 @@ func (a *app) saveAll() {
 // changes of its own shows the file's new text.
 func (a *app) diskChanged(changed, removed []string) {
 	for _, path := range append(slices.Clone(changed), removed...) {
-		if remote.Base(path) == ".gitmodules" {
+		if remote.Base(path) == ".gitmodules" || a.git.repo == nil && a.mayHoldWorkTree(path) {
 			a.repositories.dirty = true
 		}
 	}
@@ -608,6 +618,21 @@ func (a *app) diskChanged(changed, removed []string) {
 		}
 	}
 	a.gitChanged()
+}
+
+// mayHoldWorkTree reports whether a path made or gone under a folder that
+// is not a work tree may add or drop one under it: a .git, or a folder
+// where one may be, cloned or removed, outside the work trees found.
+func (a *app) mayHoldWorkTree(path string) bool {
+	if remote.Base(path) == ".git" {
+		return true
+	}
+	rel, err := remote.Rel(a.root, path)
+	if err != nil || rel == "." || strings.HasPrefix(rel, "..") || strings.Count(rel, "/") >= git.NestedDepth {
+		return false
+	}
+	ctx := a.repositoryForPath(path)
+	return ctx.git.repo == nil || ctx.git.repo.Root == path
 }
 
 // reloadDoc makes a document's text the file's on disk, as a step of

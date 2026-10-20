@@ -103,18 +103,15 @@ func lineRows(old, new []string, hunks []linediff.Hunk) (unified, pairs []diffRo
 	return unified, pairs
 }
 
-// diffContext is how many unchanged lines show on each side of a change.
-const diffContext = 3
-
 // span is a run of rows, from up to to.
 type span struct{ from, to int }
 
 // foldRows adds the rows of file f, number file of the diff, to out, from
 // all its line rows of the layout shown: the unchanged lines more than
-// diffContext from a change folded into a gap, unless the gap is open,
+// context away from a change folded into a gap, unless the gap is open,
 // and a header before each run of changes and the lines around them.
 // With full set, every line shows, and no header.
-func foldRows(out []diffRow, f *diffFile, file int, all []diffRow, full bool) []diffRow {
+func foldRows(out []diffRow, f *diffFile, file int, all []diffRow, full bool, context int) []diffRow {
 	if full {
 		for _, r := range all {
 			r.file = file
@@ -146,10 +143,10 @@ func foldRows(out []diffRow, f *diffFile, file int, all []diffRow, full bool) []
 		}
 		from, to := i, j
 		if i > 0 {
-			from += diffContext
+			from += context
 		}
 		if j < len(all) {
-			to -= diffContext
+			to -= context
 		}
 		if to-from >= 2 {
 			if f.open[newAt[from]] {
