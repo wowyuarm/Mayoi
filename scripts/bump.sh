@@ -125,4 +125,4 @@ scripts/release-notes.sh "$VERSION"
 echo
 
 git push --quiet --atomic origin main "$TAG"
-echo "==> pushed $TAG. The Release workflow: https://github.com/sorrycc/Mayoi/actions/workflows/release.yml"
+echo "==> pushed $TAG. The Release workflow: https://github.com/wowyuarm/Mayoi/actions/workflows/release.yml"

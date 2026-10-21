@@ -89,7 +89,7 @@ source and how fast it runs, and [CONTRIBUTING.md](CONTRIBUTING.md) to build, te
 
 Mayoi also builds for Windows.
 
-On Linux, `curl -fsSL https://github.com/sorrycc/Mayoi/releases/latest/download/install.sh | sh` installs the latest
+On Linux, `curl -fsSL https://github.com/wowyuarm/Mayoi/releases/latest/download/install.sh | sh` installs the latest
 release for you in `~/.local`, with the `mayoi` command and an entry in the applications menu.
 
 ## Getting started

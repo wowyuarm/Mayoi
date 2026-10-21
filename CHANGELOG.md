@@ -14,6 +14,9 @@ needs a `## <version>` section here, or its build fails.
 - Windows remote paths keep one platform-independent spelling across the
   Explorer, search, Git, recent folders, sessions and command-line opens;
   paths saved with Windows separators are read back correctly.
+- Releases come from this repository, and installed apps check them for
+  updates: the updater's public key and its GitHub repository are this
+  fork's, so an update no longer installs upstream's build over this one.
 - Scrolling with Command held over a terminal no longer shrinks or grows
   its font, as it did when switching back to Mayoi with Command-Tab;
   `Cmd+=` and `Cmd+-` still size all the text.
