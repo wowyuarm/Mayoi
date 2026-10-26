@@ -199,7 +199,12 @@ color, while it is on.
 Click a commit to see it in the preview tab, the keyboard staying in the list, so clicking through commits leaves one
 tab; Enter, a double click or **Open Changes** in its menu keeps it in a tab of its own, focused. The tab shows its
 message, author, date, hash, branches and tags at the top, then each file it changed from its first parent, as the
-**Changes** tab shows them. Its menu checks it out (switching to
+**Changes** tab shows them. The button in the diff's toolbar or **Git → Show Files of Commits** shows a panel at the
+tab's right, hidden at first, that lists those files in a tree of their folders or by path as **View as Tree** has the
+changes: a click, or the arrows, scrolls the diff to a file, and the file at the top of the diff is chosen as it
+scrolls. Drag its edge to widen it; the same button or menu item hides it again, in every commit's tab. The arrow at the start of a commit's row lists the files it changed under it,
+→ and ← doing the same; a click on one shows the commit's changes at that file in the preview tab, and Enter keeps it.
+The commit's menu checks it out (switching to
 its branch when it has one, or detaching HEAD at it once asked), creates a branch or a tag there, copies the hash, the
 message or the name of a branch or tag, and on HEAD undoes it.
 
@@ -315,13 +320,16 @@ Branch rows offer checkout and pull; a remote branch's **Fetch Remote** fetches 
 branch creation, rename, deletion, merge and rebase, and remote creation, URL editing, removal, fetch and prune.
 Deletion refuses unmerged branches. **Refresh** rereads local refs; **Fetch** contacts the remote.
 
-The branch in the status bar shows how far it is ahead of its upstream (↑) and behind it (↓). Click it to switch
-branches, create one, or fetch, pull and push. Switching waits until open files are saved.
+Click the branch in the status bar to open the same branch picker as source control. The sync button alongside it
+shows how far the branch is ahead of its upstream (↑) and behind it (↓), and pulls then pushes in one click; a branch
+without an upstream has a publish button instead. Switching waits until open files are saved.
 
-**Switch Branch…**, from the branch at the top of source control, the status bar's menu or the **Git** menu, opens a box
+**Switch Branch…**, from the branch at the top of source control, the status bar or the **Git** menu, opens a box
 of the branches, local and of the remotes, the one checked out first and then the one committed to last. Each shows the
 subject of its last commit and how long ago it was made. Type to find one by name, or type a new name to create a branch
-from the one checked out. Choosing a remote's branch checks out a local branch that tracks it.
+from the one checked out. **Create Branch…** at the top of the unfiltered list opens a name prompt. With matching
+branches, Enter switches to the first match; with no matches, it creates the typed name. Choosing a remote's branch
+checks out a local branch that tracks it. Fetch, pull and push are also available in source control and the **Git** menu.
 
 Pull only fast-forwards. Push sets the upstream the first time. Git never prompts for a password inside Mayoi: it uses
 your SSH agent and credential helper, and if those fail, the error says to run the command once in the terminal.
@@ -372,7 +380,9 @@ it at a side of the window. There it sits past the sidebar,
 so with the sidebar on the same side the panel is the outer one, and dragging its inner edge sizes it. The title bar's
 terminal button is on the panel's side too: left of the sidebar's button when both are on the left, at the right of the
 bar otherwise. You can run several terminals, move one between the panel and a column by dragging it or from its menu,
-and maximize the panel. Terminal colors follow the theme.
+and maximize the panel. **View → New Terminals in Editor Area**, `terminalLocation` in `settings.json`, has New Terminal
+and the Explorer's **Open in Terminal** open a tab of the editor area rather than the panel; Toggle Terminal and the
+panel's **+** still use the panel. Terminal colors follow the theme.
 Files dropped on a terminal type their paths, quoted for the shell. ⌘V with only an image on the clipboard sends an empty
 bracketed paste, as VS Code's terminal does, so that Claude Code pastes the screenshot. Selecting text copies it, as
 in Ghostty and iTerm2: a drag, a double click for a word, a triple click for a line, Shift with a drag in a program
@@ -433,6 +443,7 @@ Each folder gets its own window.
 
 - **Open Folder…** (⌘O) opens a folder in the current window.
 - **New Window** (⇧⌘N) opens a window showing nothing, which the welcome page fills.
+- **Star on GitHub**, at the foot of the welcome page, opens Mayoi's repository in the browser.
 - **Open Folder in New Window…** (⌥⌘O), or ⌘-clicking a recent folder (or pressing ⌘↵ on it), opens it in a new window.
 - **File → Open Recent** lists the last ten folders, except the window's own and any no longer on disk, and has
   **Clear Recently Opened**. On macOS the Dock icon's menu lists them too, under **New Window**.
@@ -553,12 +564,29 @@ Debian package in `/usr/bin`.
 - `mayoi .` opens the current folder, in a new window or the one that already has it, or with project tabs in a new
   tab.
 - `mayoi <file>` opens a file in the window whose folder contains it.
+- `mayoi -g <file:line[:column]>` opens a file with the caret at a line and column.
+- `mayoi -d <file> <file>` compares two files, side by side or inline as the diffs are set to show.
+- `mayoi -n [folder or file]...` opens them in a new window, and with nothing, a new empty window.
+- `mayoi -w <file>...` returns once the files are closed, so that `git config core.editor "mayoi -w"` edits commit
+  messages in Mayoi.
+- `mayoi --remote <host:/path>` opens a folder on an SSH host.
+- `mayoi run <command>...` runs commands by the identifiers that `keybindings.json` names them by, in order, as
+  `mayoi run view.terminal git.pull`. Some take an argument after `=` in place of what they would ask in the window:
+  `file.openFolder=<folder>`, `file.openFolderWindow=<folder>`, `file.saveAs=<file>`, `go.line=<line[:column]>`,
+  `go.quickOpen=<text>`, `view.selectTheme=<theme>` and `remote.forwardPort=<port>`. An unknown command, or an
+  argument one doesn't take, runs none of them.
+- `mayoi commands` lists the commands, a line for each, with its identifier, name, shortcut and argument, apart by
+  tabs.
+- `mayoi --help` lists the options, and `mayoi --version` prints the version.
 
-The command returns immediately, and starts Mayoi if it isn't running.
+A command acts on the window whose folder contains the directory it runs in, else the one in front; `--window
+<folder>` picks the window that has the folder open. The command returns as soon as Mayoi has done what it asked, but
+with `-w`, and starts Mayoi if it isn't running. When something goes wrong, it says so and exits with status 1, or 2
+for options it doesn't know. A `mayoi` command an older Mayoi installed is brought up to date as Mayoi starts.
 
 ## Appearance and persistence
 
-**View → Theme** picks a theme, Mayoi, The Matrix, Claude or Qoder, and apart from it whether the window follows the system's
+**View → Theme** picks a theme, Mayoi, The Matrix, Claude, Qoder or Grok Bot, and apart from it whether the window follows the system's
 light or dark mode or is always Light or Dark. Light and Dark are greyed out under The Matrix, which is always dark.
 The Matrix is phosphor green on black, with the whole window in the code's font, file icons in greens, and red and amber
 kept for what is removed, failed or changed. Digital rain falls behind the welcome page while the window has the
@@ -567,7 +595,16 @@ near-black with Claude's orange, in a light and a dark kind. Clawd, Claude Code'
 the welcome page and sits at the start of the status bar: it blinks now and then, and hops while a Git command or a search of the files
 runs, and holds still as the rain does. Qoder is Qoder's Forest theme: white or green-tinged greys with forest green,
 in a light and a dark kind, and its code in Forest's greens, blues, teals and ambers. Qoduck, Qoder's duck, takes the
-logo's place and the status bar's start as Clawd does, and blinks, bobs and hops as it does. **View → Sidebar on Right**
+logo's place and the status bar's start as Clawd does, and blinks, bobs and hops as it does. Grok Bot is the Grok Bot
+app's Sand theme: white or near-black greys, near-black or near-white buttons and its blue for the accent, in a light
+and a dark kind, and its code in the warm colors of x.ai's terminal. Grok Bot's face, a round head with two slanted
+eyes, takes the logo's place and the status bar's start as Clawd does, looks up as it hops, and now and then glances
+to one side and the other.
+**View → Theme → Color Theme…** (`workbench.action.selectTheme` in `keybindings.json`, as `cmd+k cmd+t`), or **Color
+Theme…** on the welcome page, opens a box of the themes, each with a little window in its colors and its character: the
+window takes each theme as ↑ and ↓ move to it, and ← and → switch the appearance; Return keeps them, and Escape goes
+back to those the box opened on. From one theme or appearance to another, every color of the window fades to the new
+one's, at once when the system asks for reduced motion. **View → Sidebar on Right**
 moves the sidebar to the right of the editors. It remembers the sidebar's and the panel's sides, the sidebar and panel
 sizes, and every window with its folder, frame, columns and tabs, each tab with its caret, selection, scroll position
 and own word wrap, and the folders open in the Explorer. Started without a folder, Mayoi reopens the windows that were

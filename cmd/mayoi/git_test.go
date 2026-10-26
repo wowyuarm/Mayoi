@@ -789,8 +789,8 @@ func TestDiffOfEveryFile(t *testing.T) {
 	if !hs.tt.HasText("Changes") {
 		t.Errorf("no name: %q", hs.tt.Texts())
 	}
-	if _, ok := hs.tt.Find("Side by Side"); !ok {
-		t.Errorf("no side-by-side diff toggle")
+	if _, ok := hs.tt.Find("Layout"); !ok {
+		t.Errorf("no diff layout menu")
 	}
 	hs.shot("git-diff-all")
 	v.cursor = -1
@@ -1501,7 +1501,7 @@ func TestBranchPicker(t *testing.T) {
 	// Typing finds a branch, and Enter switches to it.
 	hs.tt.Type("top")
 	hs.settle()
-	if cs := a.branchChoices(); len(cs) != 2 || b.branches[b.results[cs[0].at].Index].Name != "topic" || cs[1].create != "top" {
+	if cs := a.branchChoices(); len(cs) != 2 || cs[0].create != "top" || b.branches[b.results[cs[1].at].Index].Name != "topic" || b.sel != 1 {
 		t.Fatalf("choices %+v", cs)
 	}
 	hs.tt.Key(0, ui.KeyEnter)
@@ -1537,7 +1537,11 @@ func TestBranchPicker(t *testing.T) {
 			t.Errorf("offers to create %q", ch.create)
 		}
 	}
-	a.closeBranchPicker()
+	hs.tt.Key(0, ui.KeyEnter)
+	hs.settleGit()
+	if a.branch() != "feature" || a.git.status.Upstream != "origin/feature" {
+		t.Fatalf("remote checkout: %+v", a.git.status)
+	}
 	// Escape closes it.
 	a.openBranchPicker()
 	hs.settle()

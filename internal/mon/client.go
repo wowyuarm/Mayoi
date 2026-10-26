@@ -1,10 +1,12 @@
 // Package mon signs Mayoi in to Mon, the account behind sorrycc's apps at
-// mon.sorrycc.dev, syncs its settings and asks Mon's AI gateway.
+// mon.sorrycc.dev, syncs its settings, asks Mon's AI gateway and sends
+// crash reports.
 //
-// It is a copy of github.com/sorrycc/mon/client, at Mon 17fc8af, which is a
-// private module: change both together. Sign-in uses the OAuth device
-// flow: the app shows a short code, the person approves it on the Mon
-// website, and the app receives an access token.
+// It is a copy of github.com/sorrycc/mon/client, at Mon 17fc8af, and its
+// crashes.go at Mon 631d84a, which is a private module: change both
+// together. Sign-in uses the OAuth device flow: the app shows a short
+// code, the person approves it on the Mon website, and the app receives an
+// access token.
 //
 //	c := mon.New("https://mon.sorrycc.dev")
 //	dc, err := c.StartDeviceLogin(ctx, "mayoi", hostname)

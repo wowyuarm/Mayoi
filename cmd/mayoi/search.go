@@ -19,6 +19,7 @@ import (
 
 	"github.com/egoist/mygo/ui"
 
+	"mayoi/internal/bg"
 	"mayoi/internal/remote"
 	"mayoi/internal/vfs"
 	"mayoi/internal/workspace"
@@ -231,7 +232,8 @@ func (a *app) runSearch(gen int, re *regexp.Regexp, fold foldQuery, rels []strin
 		go a.searchRemote(gen, root, re, fold, rels, texts, cancel, partial, pre)
 		return
 	}
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		var (
 			mu    sync.Mutex
 			batch []*searchFile
@@ -251,6 +253,7 @@ func (a *app) runSearch(gen int, re *regexp.Regexp, fold foldQuery, rels []strin
 		}
 		for range max(1, min(runtime.GOMAXPROCS(0), 8, len(rels))) {
 			wg.Go(func() {
+				defer recoverCrash()
 				for !cancel.Load() {
 					i := int(next.Add(1) - 1)
 					if i >= len(rels) {
@@ -286,7 +289,7 @@ func (a *app) runSearch(gen int, re *regexp.Regexp, fold foldQuery, rels []strin
 			break
 		}
 		flush(true)
-	}()
+	})
 }
 
 // searchFileText finds re in a file, or in its text in texts: nil when
@@ -725,7 +728,7 @@ func (a *app) replaceMatches(files []*searchFile, only *searchMatch) {
 		a.toldReplaced(n, changed, only != nil)
 		return
 	}
-	go func() {
+	bg.Go(func() {
 		var failed []string
 		for _, path := range closed {
 			k, err := replaceInFile(path, re, tmpl, only)
@@ -744,7 +747,7 @@ func (a *app) replaceMatches(files []*searchFile, only *searchMatch) {
 			a.searchAgain(closed)
 			a.toldReplaced(n, changed, only != nil)
 		})
-	}()
+	})
 }
 
 // toldReplaced says how many matches a replacement replaced, or that
@@ -798,7 +801,7 @@ func (a *app) searchView(c *ui.Context) {
 	s := &a.inFiles
 	if k := s.searchKey(); k != s.key {
 		s.key, s.typedAt, s.waiting = k, time.Now(), true
-		time.AfterFunc(searchPause, a.invalidate)
+		bg.AfterFunc(searchPause, a.invalidate)
 	}
 	if s.query != "" && (s.running || s.waiting) {
 		ui.Progress(c.Key("search-activity"), -1).Height(2).Radius(0).Label(locales.SearchSearching())

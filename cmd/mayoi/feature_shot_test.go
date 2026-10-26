@@ -785,6 +785,7 @@ func TestFeatThemes(t *testing.T) {
 	}{
 		{themeMatrix, true, "matrix"}, {themeClaude, false, "claude-light"}, {themeClaude, true, "claude-dark"},
 		{themeQoder, false, "qoder-light"}, {themeQoder, true, "qoder-dark"},
+		{themeGrokBot, false, "grokbot-light"}, {themeGrokBot, true, "grokbot-dark"},
 	} {
 		hs := featHarness(t, tc.dark, featOpts{theme: tc.theme, expanded: []string{"cmd", "cmd/mayoi"}})
 		a := hs.a

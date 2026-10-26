@@ -129,3 +129,30 @@ func TestDraggingFilesFromTheSidebar(t *testing.T) {
 		t.Fatalf("tabs %q", tabNames(a.cols[1]))
 	}
 }
+
+// Files copied in the Finder paste into a terminal of this machine as
+// their paths, quoted for the shell, not as the names the clipboard has
+// as text.
+func TestPastingFilesIntoATerminal(t *testing.T) {
+	featShell(t)
+	hs := newHarness(t, true)
+	a := hs.a
+	t.Cleanup(a.closeTerminals)
+	a.newTerminal()
+	hs.settle()
+	s := a.panelTerm
+	hs.until("the prompt", func() bool { return strings.Contains(s.term.Text(), "❯") })
+	if a.terminalPaste(s, "main.go") {
+		t.Fatal("text alone taken")
+	}
+	spaced := hs.path("my notes.md")
+	os.WriteFile(spaced, nil, 0o644)
+	hs.h.clipboard = []string{hs.path("main.go"), spaced}
+	if !a.terminalPaste(s, "main.go\nmy notes.md") {
+		t.Fatal("files not taken")
+	}
+	want := quotePaths(hs.h.clipboard)
+	hs.until("the paths pasted", func() bool {
+		return strings.Contains(strings.ReplaceAll(s.term.Text(), "\n", ""), strings.TrimSpace(want))
+	})
+}

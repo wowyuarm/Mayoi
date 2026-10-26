@@ -264,6 +264,8 @@ func (a *app) remoteLoaded(d *document, path string, info fs.FileInfo, data []by
 	d.loading = false
 	if err == nil && isBinary(data) {
 		err = errBinary
+	} else if err == nil && hasLongLine(data) {
+		err = errLongLine
 	}
 	if err != nil {
 		if errors.Is(err, remote.ErrOffline) || !remote.IsConnected(path) {
@@ -279,6 +281,8 @@ func (a *app) remoteLoaded(d *document, path string, info fs.FileInfo, data []by
 		switch {
 		case errors.Is(err, errBinary):
 			a.fail("%s", locales.FailBinary(remote.Base(path)))
+		case errors.Is(err, errLongLine):
+			a.fail("%s", locales.FailLongLine(remote.Base(path)))
 		case !errors.Is(err, fs.ErrNotExist) || !d.restored:
 			a.fail("%s", locales.FailOpen(remote.Base(path), err.Error()))
 		}
@@ -339,7 +343,7 @@ func (a *app) reloadRemote(d *document) {
 			return
 		}
 		info, data, err := vfs.ReadFileInfo(path, maxOpenBytes)
-		if err != nil || isBinary(data) {
+		if err != nil || isBinary(data) || hasLongLine(data) {
 			return
 		}
 		a.post(func() {
@@ -656,6 +660,7 @@ func (a *app) loadingView(c *ui.Context, d *editor) {
 // shutdown stops watching the folder and lets go of its connection, as
 // the project closes for good.
 func (a *app) shutdown() {
+	a.docClosed(nil)
 	if a.tree != nil {
 		a.tree.Close()
 	}
@@ -705,6 +710,10 @@ func (a *app) revertRemote(d *document) {
 			}
 			if isBinary(data) {
 				a.fail("%s", locales.FailBinaryNow(d.name()))
+				return
+			}
+			if hasLongLine(data) {
+				a.fail("%s", locales.FailLongLine(d.name()))
 				return
 			}
 			d.takeText(data)

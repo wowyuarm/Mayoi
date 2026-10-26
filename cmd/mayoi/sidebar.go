@@ -328,10 +328,10 @@ func (a *app) fileTree(c *ui.Context) {
 				action = func() { a.host.reveal(path) }
 			}
 			if !isDir && m.Item(locales.OpenInTerminal()).Chosen() {
-				action = func() { a.newTerminalIn(dir) }
+				action = func() { a.openTerminal(dir) }
 			}
 			if isDir && m.Item(locales.OpenInTerminal()).Chosen() {
-				action = func() { a.newTerminalIn(path) }
+				action = func() { a.openTerminal(path) }
 			}
 			m.Separator()
 			if _, changed := a.repositoryForPath(path).git.entries[path]; changed && !isDir {
@@ -469,7 +469,7 @@ func (a *app) fileTree(c *ui.Context) {
 			action = func() { a.host.reveal(a.root) }
 		}
 		if m.Item(locales.OpenInTerminal()).Chosen() {
-			action = func() { a.newTerminalIn(a.root) }
+			action = func() { a.openTerminal(a.root) }
 		}
 		m.Separator()
 		if m.Item(locales.PasteLabel()).Disabled(len(a.clipboardSources()) == 0).Chosen() {

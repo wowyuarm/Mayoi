@@ -12,6 +12,7 @@ import (
 	"github.com/egoist/mygo/plugins/terminal"
 	"github.com/egoist/mygo/ui"
 
+	"mayoi/internal/bg"
 	"mayoi/internal/git"
 	"mayoi/internal/highlight"
 	"mayoi/internal/keymap"
@@ -115,7 +116,10 @@ type app struct {
 	// window is what the settings keep of this window.
 	window *settings.Window
 
-	pal      *palette
+	pal *palette
+	// fade is the window's way from one palette to another, as the
+	// theme or the appearance changes.
+	fade     paletteFade
 	font     codeFont
 	services ui.Services
 	// vimReg is what vim mode put on the clipboard last, which tells
@@ -207,6 +211,10 @@ type app struct {
 	docs []*document
 	cols []*column
 	col  int
+	// findCol is the column the find widget shows in, the one with the
+	// keyboard as the frame's columns began: a click on another's tab as
+	// they draw moves col, and the widget's input binds one control.
+	findCol *column
 	// review is the comments on lines of the changes, to send to an agent.
 	review review
 	// fileCol caches the last unlocked column used for files. Removal clears
@@ -228,6 +236,11 @@ type app struct {
 	terms     []*session
 	panelTerm *session
 	nextTerm  int
+	// panelScroll measures whether the terminal chips need a scroll bar;
+	// panelLayout requests a follow-up frame when their available room or
+	// titles change, so the header can use the freshly measured overflow.
+	panelScroll ui.ScrollState
+	panelLayout panelHeaderLayout
 	// termTheme is the theme of the settings the terminals have the colors
 	// of.
 	termTheme string
@@ -257,9 +270,11 @@ type app struct {
 
 	quick      quickOpen
 	palette    []paletteEntry    // the commands of the command palette, made as it first opens
+	waits      []docWait         // the mayoi --wait commands waiting for documents to close
 	hints      map[string]string // the keys of the commands, as tooltips show them
 	branches   branchPicker      // the box that switches branches
 	recents    recentPicker      // the box of the recent folders
+	themes     themePicker       // the box of the color themes
 	remotePick remotePicker      // the box that connects to a host
 	conflicts  conflictsList     // the box of the files in conflict
 	find       findState
@@ -508,6 +523,7 @@ func (a *app) saveDoc(d *document, then func()) {
 			if path == "" {
 				return
 			}
+			a.dropKept(d)
 			d.path = path
 			d.hl.Close()
 			d.hl = highlight.New(highlight.Lexer(path), a.invalidate)
@@ -555,15 +571,18 @@ func (a *app) saveActiveAs() {
 		return
 	}
 	d := ed.document
-	a.askSavePath(d.name(), func(path string) {
-		if path == "" {
-			return
-		}
-		d.path = path
-		d.hl.Close()
-		d.hl = highlight.New(highlight.Lexer(path), a.invalidate)
-		a.saveDoc(d, nil)
-	})
+	a.askSavePath(d.name(), func(path string) { a.saveDocAs(d, path) })
+}
+
+// saveDocAs saves a document to path, which it is the file of from then.
+func (a *app) saveDocAs(d *document, path string) {
+	if path == "" {
+		return
+	}
+	d.path = path
+	d.hl.Close()
+	d.hl = highlight.New(highlight.Lexer(path), a.invalidate)
+	a.saveDoc(d, nil)
 }
 
 func (a *app) saveAll() {
@@ -643,7 +662,7 @@ func (a *app) reloadDoc(d *document) {
 		return
 	}
 	data, err := os.ReadFile(d.path)
-	if err != nil || isBinary(data) {
+	if err != nil || isBinary(data) || hasLongLine(data) {
 		return
 	}
 	d.takeText(data)
@@ -689,7 +708,8 @@ func (a *app) refreshIndex() {
 	a.indexed = time.Now()
 	a.indexing, a.indexStale = true, false
 	root := a.root
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		files := workspace.Index(root)
 		a.post(func() {
 			a.indexing = false
@@ -698,7 +718,7 @@ func (a *app) refreshIndex() {
 				a.quick.stale = true
 			}
 		})
-	}()
+	})
 }
 
 // refreshIgnored asks Git again in the background what it ignores, when
@@ -712,7 +732,8 @@ func (a *app) refreshIgnored() {
 	}
 	a.ignoring, a.ignoredStale = true, false
 	root := a.root
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		ignored := workspace.Ignored(root)
 		a.post(func() {
 			a.ignoring = false
@@ -720,7 +741,7 @@ func (a *app) refreshIgnored() {
 				a.ignored = ignored
 			}
 		})
-	}()
+	})
 }
 
 // isIgnored reports whether Git ignores path, or a folder above it.

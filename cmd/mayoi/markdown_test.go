@@ -33,7 +33,7 @@ Inline <!-- hidden inline -->comment<br>hard break.<br/>Again<br />Done.
 A paragraph with **bold**, *italic*, ***both***, ~~deleted~~, ` + "`inline code`" + ` and [a link](https://example.com). Visit https://example.com.
 Soft
 break and a hard  
-break. <em>HTML stays text</em>
+break. <em>HTML is styled</em>
 
 中文段落含 **中文粗体**、*中文斜体*、~~中文删除线~~、` + "`行内代码`" + `，以及 ~~[删除链接](https://example.com)~~。
 
@@ -93,7 +93,7 @@ break. <em>HTML stays text</em>
 ##### Heading five
 ###### Heading six
 
-<div>HTML block is displayed literally.</div>
+<div>HTML block is shown as its text.</div>
 `
 
 func TestMarkdownBlocks(t *testing.T) {
@@ -395,6 +395,7 @@ func TestShotMarkdown(t *testing.T) {
 		dark        bool
 	}{
 		{"light", "", false}, {"dark", "", true}, {"matrix", themeMatrix, true}, {"claude", themeClaude, true}, {"qoder", themeQoder, false},
+		{"grokbot", themeGrokBot, true},
 	} {
 		hs := newHarness(t, theme.dark)
 		hs.a.settings.Theme = theme.theme
@@ -448,7 +449,8 @@ func TestMarkdownLocalImagesAndLinks(t *testing.T) {
 	imageSource := []byte("![art](art.png) ![logo](logo.svg)")
 	first := parseMarkdown(imageSource, path, "", nil, c)
 	second := parseMarkdown(imageSource, path, "", nil, c)
-	if len(first) != 2 || first[0].runs[0].bitmap != second[0].runs[0].bitmap || first[1].runs[0].w != 64 || first[1].runs[0].h != 32 {
+	// Pictures of a paragraph next to each other share a row.
+	if len(first) != 1 || len(first[0].runs) != 2 || first[0].runs[0].bitmap != second[0].runs[0].bitmap || first[0].runs[1].w != 64 || first[0].runs[1].h != 32 {
 		t.Fatal("image cache or SVG")
 	}
 	// A reused pointer proves a second bitmap was not decoded.
@@ -646,7 +648,7 @@ func TestMarkdownInlineStyles(t *testing.T) {
 	a := hs.a
 	a.settings.FontWeight = 500
 	a.settings.FontFeatures = []string{"calt=0", "ss01"}
-	for _, theme := range []string{"", themeMatrix, themeClaude, themeQoder} {
+	for _, theme := range []string{"", themeMatrix, themeClaude, themeQoder, themeGrokBot} {
 		for _, dark := range []bool{false, true} {
 			a.pal = paletteFor(theme, dark)
 			p := a.pal

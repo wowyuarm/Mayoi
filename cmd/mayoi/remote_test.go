@@ -260,7 +260,7 @@ func TestRemoteFolder(t *testing.T) {
 		e, ok := a.git.entries[main]
 		return ok && e.X != '.' && e.Y == '.'
 	})
-	a.unstage(main)
+	a.repository().unstage(main)
 	hs.untilLong("the unstage", func() bool {
 		e, ok := a.git.entries[main]
 		return ok && e.X == '.' && e.Y == 'M'

@@ -2,7 +2,9 @@ package main
 
 import (
 	"math"
+	"reflect"
 	"time"
+	"unsafe"
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
@@ -612,6 +614,166 @@ func qoderDarkPalette() *palette {
 	return p
 }
 
+// grokBotLightPalette is Grok Bot in a light window, its app's Sand
+// Light: white and near-white greys, ink in shades of #1c1c1c, near-black
+// buttons, and its blue for the accent. The app has no colors of code, so
+// they are drawn from its primitives, the deeper kind of each hue.
+func grokBotLightPalette() *palette {
+	p := &palette{
+		editor:    ui.Hex("#ffffff"),
+		chrome:    ui.Hex("#f5f5f5"),
+		panel:     ui.Hex("#fcfcfc"),
+		border:    ui.Hex("#e5e5e5"),
+		hover:     ui.RGBA(28, 28, 28, 0.06),
+		active:    ui.RGBA(28, 28, 28, 0.08),
+		text:      ui.Hex("#1c1c1c"),
+		muted:     ui.Hex("#656565"),
+		faint:     ui.Hex("#808080"),
+		accent:    ui.Hex("#1680f3"),
+		accentDim: ui.RGBA(22, 128, 243, 0.5),
+		line:      ui.RGBA(28, 28, 28, 0.03),
+		selection: ui.RGBA(30, 134, 252, 0.20),
+		gutter:    ui.Hex("#999999"),
+		gutterNow: ui.Hex("#3d3d3d"),
+		status:    ui.Hex("#f5f5f5"),
+		statusFg:  ui.Hex("#656565"),
+		modified:  ui.Hex("#da830e"),
+		danger:    ui.Hex("#e72e3b"),
+		match:     ui.RGBA(245, 147, 18, 0.24),
+		matchNow:  ui.RGBA(245, 147, 18, 0.44),
+		matchRing: ui.RGBA(194, 115, 11, 0.9),
+		guide:     ui.RGBA(28, 28, 28, 0.07),
+		guideNow:  ui.RGBA(28, 28, 28, 0.24),
+		bracket:   ui.RGBA(28, 28, 28, 0.28),
+		word:      ui.RGBA(28, 28, 28, 0.065),
+		shadow:    ui.RGBA(28, 28, 28, 0.12),
+		added:     ui.Hex("#10ab61"),
+		changed:   ui.Hex("#1680f3"),
+		removed:   ui.Hex("#e72e3b"),
+		// The app's primary button, near-black under white, as it is under
+		// the pointer and pressed.
+		fill:        ui.Hex("#1c1c1c"),
+		fillHover:   ui.Hex("#363636"),
+		fillPressed: ui.Hex("#525252"),
+		fillText:    ui.Hex("#ffffff"),
+		// White on the app's red reads at 4.2:1, so buttons take its
+		// pressed red, at 5.5:1.
+		dangerFill:     ui.Hex("#c82532"),
+		dangerText:     ui.Hex("#ffffff"),
+		surface:        ui.Hex("#ffffff"),
+		surfaceHover:   ui.Hex("#f1f1f1"),
+		surfacePressed: ui.Hex("#e8e8e8"),
+		scrollbar:      ui.RGBA(28, 28, 28, 0.18),
+		ansi: [16]ui.Color{
+			ui.Hex("#1c1c1c"), ui.Hex("#cd2834"), ui.Hex("#00854a"), ui.Hex("#aa6300"),
+			ui.Hex("#0b6dd3"), ui.Hex("#c62378"), ui.Hex("#008273"), ui.Hex("#a3a3a3"),
+			ui.Hex("#656565"), ui.Hex("#e72e3b"), ui.Hex("#10ab61"), ui.Hex("#da830e"),
+			ui.Hex("#1680f3"), ui.Hex("#e52f8b"), ui.Hex("#10a693"), ui.Hex("#d4d4d4"),
+		},
+	}
+	s := &p.syntax
+	s[highlight.Plain] = p.text
+	s[highlight.Keyword] = ui.Hex("#7547d0")
+	s[highlight.Type] = ui.Hex("#008273")
+	s[highlight.Function] = ui.Hex("#0b6dd3")
+	s[highlight.String] = ui.Hex("#00854a")
+	s[highlight.Number] = ui.Hex("#c14c00")
+	s[highlight.Comment] = ui.Hex("#878787")
+	s[highlight.Operator] = ui.Hex("#525252")
+	s[highlight.Punctuation] = ui.Hex("#6b6b6b")
+	s[highlight.Constant] = ui.Hex("#c14c00")
+	s[highlight.Builtin] = ui.Hex("#aa6300")
+	s[highlight.Tag] = ui.Hex("#cd2834")
+	s[highlight.Attribute] = ui.Hex("#aa6300")
+	s[highlight.Variable] = p.text
+	s[highlight.Heading] = ui.Hex("#0b6dd3")
+	s[highlight.Deleted] = ui.Hex("#cd2834")
+	s[highlight.Inserted] = ui.Hex("#00854a")
+	return p
+}
+
+// grokBotDarkPalette is Grok Bot in a dark window, its app's Sand Dark:
+// near-black greys, light ink, near-white buttons with dark labels, as
+// x.ai's, and a lighter blue for the accent. The code and the terminal
+// take the warm colors of the terminal on x.ai's page.
+func grokBotDarkPalette() *palette {
+	p := &palette{
+		dark:      true,
+		editor:    ui.Hex("#161616"),
+		chrome:    ui.Hex("#0e0e0e"),
+		panel:     ui.Hex("#121212"),
+		border:    ui.Hex("#262626"),
+		hover:     ui.RGBA(255, 255, 255, 0.06),
+		active:    ui.RGBA(255, 255, 255, 0.09),
+		text:      ui.Hex("#ededed"),
+		muted:     ui.Hex("#a9a9a9"),
+		faint:     ui.Hex("#737373"),
+		accent:    ui.Hex("#4d9bff"),
+		accentDim: ui.RGBA(77, 155, 255, 0.55),
+		line:      ui.RGBA(255, 255, 255, 0.035),
+		selection: ui.RGBA(24, 132, 252, 0.30),
+		gutter:    ui.Hex("#5c5c5c"),
+		gutterNow: ui.Hex("#c1c1c1"),
+		status:    ui.Hex("#0e0e0e"),
+		statusFg:  ui.Hex("#a9a9a9"),
+		modified:  ui.Hex("#e28600"),
+		danger:    ui.Hex("#ff6463"),
+		match:     ui.RGBA(251, 149, 0, 0.20),
+		matchNow:  ui.RGBA(251, 149, 0, 0.38),
+		matchRing: ui.RGBA(251, 149, 0, 0.85),
+		guide:     ui.RGBA(255, 255, 255, 0.065),
+		guideNow:  ui.RGBA(255, 255, 255, 0.22),
+		bracket:   ui.RGBA(255, 255, 255, 0.30),
+		word:      ui.RGBA(255, 255, 255, 0.075),
+		shadow:    ui.RGBA(0, 0, 0, 0.45),
+		added:     ui.Hex("#00ba69"),
+		changed:   ui.Hex("#4d9bff"),
+		removed:   ui.Hex("#ff6463"),
+		// The app's primary button, near-white under a near-black label,
+		// as x.ai's Download is; and its error, a button as bright, with
+		// the same.
+		fill:           ui.Hex("#f5f5f5"),
+		fillHover:      ui.Hex("#dbdbdb"),
+		fillPressed:    ui.Hex("#c1c1c1"),
+		fillText:       ui.Hex("#161616"),
+		dangerFill:     ui.Hex("#ff6463"),
+		dangerText:     ui.Hex("#161616"),
+		surface:        ui.Hex("#1f1f1f"),
+		surfaceHover:   ui.Hex("#262626"),
+		surfacePressed: ui.Hex("#2e2e2e"),
+		scrollbar:      ui.RGBA(255, 255, 255, 0.16),
+		inverse:        ui.Hex("#262626"),
+		inverseText:    ui.Hex("#f5f5f5"),
+		ansi: [16]ui.Color{
+			ui.Hex("#2a2825"), ui.Hex("#d7766c"), ui.Hex("#91c17a"), ui.Hex("#cfb47c"),
+			ui.Hex("#93adff"), ui.Hex("#bc97ff"), ui.Hex("#29c6be"), ui.Hex("#d7d1c9"),
+			ui.Hex("#8d867e"), ui.Hex("#ff908b"), ui.Hex("#a4cb92"), ui.Hex("#e3cb98"),
+			ui.Hex("#aec2ff"), ui.Hex("#cdb5ff"), ui.Hex("#59d6cf"), ui.Hex("#f2ede5"),
+		},
+	}
+	s := &p.syntax
+	s[highlight.Plain] = ui.Hex("#d7d1c9")
+	s[highlight.Keyword] = ui.Hex("#bc97ff")
+	s[highlight.Type] = ui.Hex("#29c6be")
+	s[highlight.Function] = ui.Hex("#93adff")
+	s[highlight.String] = ui.Hex("#91c17a")
+	s[highlight.Number] = ui.Hex("#d59556")
+	// x.ai's terminal's comments are too dim to read on the editor, so
+	// they take its dim text.
+	s[highlight.Comment] = ui.Hex("#8d867e")
+	s[highlight.Operator] = ui.Hex("#b3ada5")
+	s[highlight.Punctuation] = ui.Hex("#9a948c")
+	s[highlight.Constant] = ui.Hex("#d59556")
+	s[highlight.Builtin] = ui.Hex("#cfb47c")
+	s[highlight.Tag] = ui.Hex("#d7766c")
+	s[highlight.Attribute] = ui.Hex("#cfb47c")
+	s[highlight.Variable] = ui.Hex("#e6e0d8")
+	s[highlight.Heading] = ui.Hex("#93adff")
+	s[highlight.Deleted] = ui.Hex("#f7768e")
+	s[highlight.Inserted] = ui.Hex("#9ece6a")
+	return p
+}
+
 var (
 	black, white = ui.Hex("#000000"), ui.Hex("#ffffff")
 
@@ -624,14 +786,19 @@ var (
 
 	qoderLightPal = qoderLightPalette().derive()
 	qoderDarkPal  = qoderDarkPalette().derive()
+
+	grokBotLightPal = grokBotLightPalette().derive()
+	grokBotDarkPal  = grokBotDarkPalette().derive()
 )
 
 // The Themes of the settings beside Mayoi's own, "": The Matrix, which is
-// always dark, and Claude and Qoder, light or dark as the Appearance is.
+// always dark, and Claude, Qoder and Grok Bot, light or dark as the
+// Appearance is.
 const (
-	themeMatrix = "matrix"
-	themeClaude = "claude"
-	themeQoder  = "qoder"
+	themeMatrix  = "matrix"
+	themeClaude  = "claude"
+	themeQoder   = "qoder"
+	themeGrokBot = "grokbot"
 )
 
 // paletteFor returns the palette of a theme of the settings, in a window
@@ -648,6 +815,10 @@ func paletteFor(theme string, dark bool) *palette {
 		return qoderDarkPal
 	case theme == themeQoder:
 		return qoderLightPal
+	case theme == themeGrokBot && dark:
+		return grokBotDarkPal
+	case theme == themeGrokBot:
+		return grokBotLightPal
 	case dark:
 		return darkPal
 	}
@@ -725,7 +896,14 @@ func contrast(x, y ui.Color) float64 {
 // and returns that palette.
 func (a *app) applyTheme(c *ui.Context) *palette {
 	t := *c.Theme()
-	p := paletteFor(a.settings.Theme, t.Dark)
+	dark := t.Dark
+	switch a.settings.Appearance {
+	case "light":
+		dark = false
+	case "dark":
+		dark = true
+	}
+	p := a.fade.step(c, paletteFor(a.settings.Theme, dark))
 	t.Dark = p.dark
 	t.Background = p.editor
 	// Every state of the accent, or a hovered button would turn the
@@ -750,6 +928,76 @@ func (a *app) applyTheme(c *ui.Context) *palette {
 	c.SetTheme(&t)
 	return p
 }
+
+// paletteFadeFor is how long the window takes from one palette to the
+// next.
+const paletteFadeFor = 220 * time.Millisecond
+
+// paletteFade takes the window from one palette to another: each of its
+// colors fades to the new one's, rather than the whole window flashing.
+type paletteFade struct {
+	from, to *palette
+	at       time.Time
+}
+
+// step returns the palette to paint with now, on the way to to: to
+// itself once there, or at once with less motion. Each palette on the way
+// is new, so that what is cached of a palette is made anew.
+func (f *paletteFade) step(c *ui.Context, to *palette) *palette {
+	now := c.Now()
+	if to != f.to {
+		if f.to != nil && !c.Preferences().ReduceMotion {
+			// From where the window is, as it may be on its way already.
+			f.from, f.at = f.paletteAt(now), now
+		}
+		f.to = to
+	}
+	p := f.paletteAt(now)
+	if p == to {
+		f.from = nil
+	} else {
+		c.AnimationFrame()
+	}
+	return p
+}
+
+// paletteAt returns the palette at a moment of the fade.
+func (f *paletteFade) paletteAt(now time.Time) *palette {
+	k := float32(now.Sub(f.at)) / float32(paletteFadeFor)
+	if f.from == nil || k >= 1 || k < 0 {
+		return f.to
+	}
+	return mixPalettes(f.from, f.to, ui.EaseInOut(k))
+}
+
+// mixPalettes returns a new palette a part k of the way from x to y: its
+// colors mixed, and what is not a color y's. A color either leaves zero,
+// for the theme's own, is y's.
+func mixPalettes(x, y *palette, k float32) *palette {
+	p := *y
+	v := reflect.ValueOf(&p).Elem()
+	mix := func(off uintptr) {
+		at := func(q *palette) *ui.Color { return (*ui.Color)(unsafe.Add(unsafe.Pointer(q), off)) }
+		xc, yc := *at(x), *at(y)
+		if xc != (ui.Color{}) && yc != (ui.Color{}) {
+			*at(&p) = xc.Mix(yc, k)
+		}
+	}
+	for i := range v.NumField() {
+		f := v.Type().Field(i)
+		switch {
+		case f.Type == colorType:
+			mix(f.Offset)
+		case f.Type.Kind() == reflect.Array && f.Type.Elem() == colorType:
+			for j := range f.Type.Len() {
+				mix(f.Offset + uintptr(j)*colorType.Size())
+			}
+		}
+	}
+	return &p
+}
+
+var colorType = reflect.TypeFor[ui.Color]()
 
 // popIn is how a box over an editor comes in, as find's: it fades in,
 // from a little above where it settles, and goes back up as it fades out.

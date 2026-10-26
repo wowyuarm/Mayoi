@@ -115,6 +115,9 @@ type Prefs struct {
 	// scrolling sideways to them. A tab may choose otherwise, until this
 	// changes: Settings.WrapGen counts its changes.
 	WordWrap bool `json:"wordWrap,omitempty"`
+	// PreviewMermaid draws the blocks of Mermaid of a Markdown preview as
+	// the diagrams they make, rather than their source.
+	PreviewMermaid bool `json:"previewMermaid"`
 	// DiffLayout is how diffs show: "split" side by side, "inline" in
 	// one column, or "" side by side when they are wide enough to.
 	DiffLayout string `json:"diffLayout,omitempty"`
@@ -164,8 +167,8 @@ type Prefs struct {
 	// Appearance is "light", "dark", or "" to follow the system.
 	Appearance string `json:"appearance,omitempty"`
 	// Theme is "matrix" for The Matrix, which is always dark, "claude" for
-	// Claude or "qoder" for Qoder, light or dark as Appearance is, or ""
-	// for Mayoi's own.
+	// Claude, "qoder" for Qoder or "grokbot" for Grok Bot, light or dark as
+	// Appearance is, or "" for Mayoi's own.
 	Theme string `json:"theme,omitempty"`
 	// SidebarRight puts the sidebar right of the editors, rather than left.
 	SidebarRight bool `json:"sidebarRight,omitempty"`
@@ -173,6 +176,9 @@ type Prefs struct {
 	// below the editors, "left" or "right" at the window's side, past
 	// the sidebar.
 	PanelPosition string `json:"panelPosition,omitempty"`
+	// TerminalLocation is where a new terminal opens: "" in the panel, or
+	// "editor" in a tab of the editor area.
+	TerminalLocation string `json:"terminalLocation,omitempty"`
 	// ProjectTabs keeps the folders open in one window, a rail on its left
 	// choosing which shows, rather than a window for each.
 	ProjectTabs bool `json:"projectTabs,omitempty"`
@@ -185,6 +191,10 @@ type Prefs struct {
 	// AIModel is the model of Mon's AI gateway that writes commit
 	// messages, "" for Mayoi's choice.
 	AIModel string `json:"aiModel,omitempty"`
+	// CrashReports is what Mayoi does with the report of a crash at the
+	// next launch: "" asks whether to send it to Mon, "always" sends it
+	// and "never" doesn't.
+	CrashReports string `json:"crashReports,omitempty"`
 	// SyncIgnored is what settings sync leaves on this machine: keys of
 	// the preferences, "settings.json" for all of them, and
 	// "keybindings.json" for the keyboard shortcuts.
@@ -307,10 +317,14 @@ type Layout struct {
 	SidebarWidth  float32 `json:"sidebarWidth,omitempty"`
 	PanelHeight   float32 `json:"panelHeight,omitempty"`
 	PanelWidth    float32 `json:"panelWidth,omitempty"`
+	// CommitFilesOpen shows the panel of the files of a commit's tab, hidden
+	// at first, and CommitFilesWidth is how wide it is.
+	CommitFilesOpen  bool    `json:"commitFilesOpen,omitempty"`
+	CommitFilesWidth float32 `json:"commitFilesWidth,omitempty"`
 }
 
 // DefaultLayout is the layout of a first launch.
-var DefaultLayout = Layout{SidebarWidth: 248, PanelHeight: 260, PanelWidth: 400}
+var DefaultLayout = Layout{SidebarWidth: 248, PanelHeight: 260, PanelWidth: 400, CommitFilesWidth: 240}
 
 // Normalize keeps the layout in its bounds, as base has it where it has
 // none, as a session an older version kept.
@@ -321,8 +335,12 @@ func (l *Layout) Normalize(base Layout) {
 	if l.PanelWidth == 0 {
 		l.PanelWidth = base.PanelWidth
 	}
+	if l.CommitFilesWidth == 0 {
+		l.CommitFilesWidth = base.CommitFilesWidth
+	}
 	l.SidebarWidth = clamp(l.SidebarWidth, 160, 600)
 	l.PanelWidth = clamp(l.PanelWidth, 160, 2000)
+	l.CommitFilesWidth = clamp(l.CommitFilesWidth, 140, 800)
 	l.PanelHeight = clamp(l.PanelHeight, 100, 2000)
 }
 
@@ -362,6 +380,11 @@ type Tab struct {
 	ScrollX float32 `json:"scrollX,omitempty"`
 	ScrollY float32 `json:"scrollY,omitempty"`
 	Wrap    *bool   `json:"wrap,omitempty"`
+	// Untitled is the file in the untitled folder beside the settings that
+	// keeps the text of an untitled document as the app quit, and Number
+	// the number of its name.
+	Untitled string `json:"untitled,omitempty"`
+	Number   int    `json:"number,omitempty"`
 }
 
 // MaxDiffContext is as many unchanged lines around a change as a diff
@@ -373,7 +396,7 @@ func Default() *Settings {
 	return &Settings{
 		Prefs: Prefs{
 			FontSize: 13, FontFamily: "monospace", FontWeight: 400, LineHeight: 1.55,
-			AutoSave: true, Blame: true, TerminalCopyOnSelect: true,
+			AutoSave: true, Blame: true, TerminalCopyOnSelect: true, PreviewMermaid: true,
 			DiffAlignedRows: true, DiffContext: 3, DiffSyncScroll: true, MergeAutoApply: true,
 		},
 	}
@@ -477,6 +500,9 @@ func (s *Settings) normalize() {
 	// "" and "bottom" are the same panel position.
 	if s.PanelPosition != "left" && s.PanelPosition != "right" {
 		s.PanelPosition = ""
+	}
+	if s.TerminalLocation != "editor" {
+		s.TerminalLocation = ""
 	}
 	// The themes were appearances once.
 	if s.Appearance == "matrix" || s.Appearance == "claude" {

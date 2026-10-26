@@ -10,6 +10,7 @@ import (
 
 	"github.com/egoist/mygo/ui"
 
+	"mayoi/internal/bg"
 	"mayoi/internal/git"
 	"mayoi/internal/highlight"
 	"mayoi/internal/linediff"
@@ -520,7 +521,8 @@ func (a *app) refreshMerge(v *mergeView) {
 	}
 	v.loading = true
 	path, op := v.path, v.op
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		base, ours, theirs, err := r.Stages(path)
 		oursSide, theirsSide := r.MergeSides(op)
 		data, readErr := vfs.ReadFile(path)
@@ -551,7 +553,7 @@ func (a *app) refreshMerge(v *mergeView) {
 			}
 			a.invalidate()
 		})
-	}()
+	})
 }
 
 // makeMergeResult makes the document the middle pane edits: the base of
@@ -884,7 +886,7 @@ func (a *app) saveMerge(v *mergeView) {
 		return
 	}
 	doc, path := v.doc, v.path
-	go func() {
+	bg.Go(func() {
 		data, err := vfs.ReadFile(path)
 		differs := err != nil || doc.buf.String() != strings.ReplaceAll(string(data), "\r\n", "\n")
 		a.post(func() {
@@ -893,7 +895,7 @@ func (a *app) saveMerge(v *mergeView) {
 			}
 			a.saveDoc(doc, nil)
 		})
-	}()
+	})
 }
 
 // markMergeResolved saves the result of a merge view and stages its file,

@@ -21,8 +21,8 @@ All of Mayoi's files are in one data folder:
 | `window-state.json` | Mayoi         | Each window's position and size                                                   |
 | `updater.json`      | Mayoi         | Update choices: automatic downloads, a skipped version, the last check            |
 | `sync.json`         | Mayoi         | [Settings sync](#settings-sync): the account, and the settings as last synced     |
-| `crash.log`         | Mayoi         | What ended Mayoi if it crashed, with every goroutine's stack; empty otherwise     |
-| `crashes/`          | Mayoi         | The last 10 crash logs, each named by the time of its crash                       |
+| `crash.log`         | Mayoi         | Mayoi's version and system, then what ended it if it crashed, with every stack    |
+| `crashes/`          | Mayoi         | The last 10 crash logs, by time; `.sent` or `.unsent` once asked about            |
 
 To keep the files somewhere else, start Mayoi with `MAYOI_DATA_DIR` set to a folder. Mayoi then reads and writes all
 of these files there instead, which is a way to try a setup without touching your own. Create the folder first, and
@@ -48,15 +48,17 @@ takes its default.
 | `terminalFontFamily`    | `""`          | Font names, separated by commas                             |                                                |
 | `terminalFontSize`      | `0`           | 0, or 9 to 28                                               |                                                |
 | `terminalCopyOnSelect`  | `true`        | `true`, `false`                                             |                                                |
-| `theme`                 | `""`          | `""` (Mayoi), `"matrix"`, `"claude"`, `"qoder"`             | **View → Theme**                               |
+| `theme`                 | `""`          | `""` (Mayoi), `"matrix"`, `"claude"`, `"qoder"`, `"grokbot"` | **View → Theme**, **Color Theme…**             |
 | `appearance`            | `""`          | `""` (follow the system), `"light"`, `"dark"`               | **View → Theme**                               |
 | `sidebarRight`          | `false`       | `true`, `false`                                             | **View → Sidebar on Right**                    |
 | `panelPosition`         | `""`          | `""` (bottom), `"left"`, `"right"`                          | **View → Panel Position**                      |
+| `terminalLocation`      | `""`          | `""` (the panel), `"editor"`                                | **View → New Terminals in Editor Area**        |
 | `projectTabs`           | `false`       | `true`, `false`                                             | **View → Project Tabs**                        |
 | `projectTabStyle`       | none          | A label, color and icon for each folder                     | A square's context menu on the rail            |
 | `locale`                | `""`          | `""` (follow the system), `"en"`, `"zh-Hans"`, `"ja"`       | **View → Language**                            |
 | `autoSave`              | `true`        | `true`, `false`                                             | **File → Auto Save**                           |
 | `wordWrap`              | `false`       | `true`, `false`                                             | **View → Word Wrap**                           |
+| `previewMermaid`        | `true`        | `true`, `false`                                             | Only this file                                 |
 | `vim`                   | `false`       | `true`, `false`                                             | **View → Vim Mode**                            |
 | `vimCtrlKeys`           | `false`       | `true`, `false`                                             | Only this file                                 |
 | `blame`                 | `true`        | `true`, `false`                                             | **Git → Inline Blame**                         |
@@ -70,6 +72,7 @@ takes its default.
 | `scmAllBranches`        | `false`       | `true`, `false`                                             | **Show All Branches** in Source Control's menu |
 | `syncIgnored`           | none          | Keys, `"settings.json"`, `"keybindings.json"`               | The [settings sync](#settings-sync) panel      |
 | `aiModel`               | `""`          | `""` (`deepseek-flash`), or a model of the AI gateway       | Only this file                                 |
+| `crashReports`          | `""`          | `""` (ask), `"always"`, `"never"`                           | **Don't ask again** when Mayoi asks           |
 
 ### Language
 
@@ -98,6 +101,10 @@ differ in width lines them up only roughly.
 - **`panelPosition`** is where the terminal panel is: `""` or `"bottom"` below the editors, `"left"` or `"right"` at a
   side of the window. At a side it sits past the sidebar, so with the sidebar on the same side the panel is the outer
   of the two.
+- **`terminalLocation`** is where a new terminal opens: `""` in the panel, or `"editor"` in a tab of the editor area,
+  in the column files open in, as **New Terminal in Editor Area** does. It applies to New Terminal (⌃⇧`) and the
+  Explorer's **Open in Terminal**. Toggle Terminal (⌃`), the title bar's terminal button and the panel's **+** still
+  open the panel.
 - **`projectTabs`** keeps every folder open in one window, as project tabs on a rail on its left, rather than a
   window for each. Changing it gathers the windows into one, or parts them, at once.
 - **`projectTabStyle`** gives a project's square on the rail its own label, up to two characters, in place of its
@@ -111,6 +118,8 @@ differ in width lines them up only roughly.
 - **`autoSave`** saves a changed file a moment after you stop typing, and when you leave it.
 - **`wordWrap`** wraps long lines at the edge of the editor. **⌥Z** wraps or unwraps one tab only, until this
   setting changes.
+- **`previewMermaid`** draws the `mermaid` code blocks of a Markdown preview as diagrams. Turn it off to show
+  them as code. A `.mmd` or `.mermaid` file's own preview draws its diagram either way.
 - **`diffHighlight`** chooses whether changed lines show word-level, character-level or line-level tinting. The
   highlighting changes how a diff looks; block actions still use whole line hunks.
 - **`diffContext`** keeps that many unchanged lines around each diff hunk visible and folds the rest.
@@ -127,6 +136,10 @@ differ in width lines them up only roughly.
 - **`scmAllBranches`** shows the commits of every branch and tag, not only those of the branch checked out.
 - **`aiModel`** is the model of Mon's AI gateway that writes commit messages, `deepseek-flash` when empty. The models
   your account can use are listed at `https://mon.sorrycc.dev/api/v1/ai/v1/models`.
+- **`crashReports`** is what Mayoi does at launch with the crash logs of the last runs: `""` asks whether to send them
+  to Mon, `"always"` sends them and `"never"` doesn't. A report is anonymous, never sent with your account's token,
+  and has your home folder taken out. **Show Report** in the question opens the logs as they would be sent. Only
+  releases send reports, and builds started with `MAYOI_MON_URL`.
 
 ### Example
 

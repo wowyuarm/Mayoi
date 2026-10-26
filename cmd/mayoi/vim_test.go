@@ -1,6 +1,8 @@
 package main
 
 import (
+	"image"
+	"image/color"
 	"mayoi/locales"
 	"os"
 	"strings"
@@ -494,6 +496,40 @@ func TestVimCursorAndFlash(t *testing.T) {
 	if d.vim.flash != [2]int{0, 3} {
 		t.Fatal("a delete lit the text it took")
 	}
+}
+
+// From mode to mode, the badge shows the name of the mode it is in, not
+// the one it left fading out over it: the white of INSERT broke up the
+// strokes of NORMAL as it went.
+func TestVimBadgeShowsOneMode(t *testing.T) {
+	skipOnWindows(t, "a pixel of the badge drawn by Windows' text is lighter than its ground, since the test came in")
+	hs, _ := vimHarness(t, "a.txt", "one two\n")
+	hs.vim("i")
+	hs.settle()
+	hs.tt.Key(0, ui.KeyEscape)
+	// Past the colors' crossing over, 140 ms.
+	for range 9 {
+		step(hs.tt)
+	}
+	box, ok := hs.tt.Find("NORMAL")
+	if !ok {
+		t.Fatal("no NORMAL in the status bar")
+	}
+	img := hs.tt.Image()
+	r := image.Rect(int(box.X), int(box.Y), int(box.X+box.W), int(box.Y+box.H)).Intersect(img.Bounds())
+	// The badge's ground, left of its name; nothing on it is lighter.
+	ground := luma(img.RGBAAt(r.Min.X+3, (r.Min.Y+r.Max.Y)/2))
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		for x := r.Min.X + 3; x < r.Max.X-3; x++ {
+			if c := img.RGBAAt(x, y); luma(c) > ground+3 {
+				t.Fatalf("the badge shows %v at (%d, %d), lighter than its ground", c, x, y)
+			}
+		}
+	}
+}
+
+func luma(c color.RGBA) float32 {
+	return 0.2126*float32(c.R) + 0.7152*float32(c.G) + 0.0722*float32(c.B)
 }
 
 // On a layout of another script, the keys are where a US keyboard has

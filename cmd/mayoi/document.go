@@ -20,7 +20,15 @@ import (
 // maxOpenBytes is the largest file the editor opens.
 const maxOpenBytes = 64 << 20
 
-var errBinary = errors.New("binary file")
+// maxLineBytes is the longest line the editor opens: a line is laid out
+// whole, and one of a minified bundle or source map would take
+// gigabytes and the main thread.
+const maxLineBytes = 64 << 10
+
+var (
+	errBinary   = errors.New("binary file")
+	errLongLine = errors.New("line too long")
+)
 
 // document is a file open in the editor: its text, and what follows from
 // the text alone. Each tab that shows it has an editor of its own.
@@ -28,8 +36,13 @@ type document struct {
 	id    int
 	path  string // absolute; "" for an untitled document
 	title string // an untitled document's name
-	buf   *ui.TextBuffer
-	saved uint64 // the buffer's version on disk
+	// number is the number of an untitled document's name, and kept the
+	// file that keeps its text as the app quits, of version keptVersion.
+	number      int
+	kept        string
+	keptVersion uint64
+	buf         *ui.TextBuffer
+	saved       uint64 // the buffer's version on disk
 	// savedSnap is the text on disk, which undoing back to makes the
 	// document clean again.
 	savedSnap ui.TextSnapshot
@@ -228,6 +241,9 @@ func readDocument(id int, path string, notify func()) (*document, error) {
 	if isBinary(data) {
 		return nil, errBinary
 	}
+	if hasLongLine(data) {
+		return nil, errLongLine
+	}
 	crlf := bytes.Contains(data, []byte("\r\n"))
 	if crlf {
 		data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
@@ -265,6 +281,18 @@ func isBinary(data []byte) bool {
 		}
 	}
 	return !utf8.Valid(head)
+}
+
+// hasLongLine reports whether a line of data is longer than maxLineBytes.
+func hasLongLine(data []byte) bool {
+	for len(data) > maxLineBytes {
+		i := bytes.IndexByte(data[:maxLineBytes+1], '\n')
+		if i < 0 {
+			return true
+		}
+		data = data[i+1:]
+	}
+	return false
 }
 
 // save writes the document to its path, beside it first and renamed, so

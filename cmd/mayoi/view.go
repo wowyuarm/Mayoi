@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -57,6 +58,7 @@ func (a *app) view(c *ui.Context) {
 	// The places that take the keys say so as they are built.
 	a.keyFocus = placeNone
 	a.pal = a.applyTheme(c)
+	updateLinuxControlsTheme(a.fade.to)
 	a.themeTerminals()
 	a.fontTerminals()
 	a.copyTerminals()
@@ -139,9 +141,10 @@ func (a *app) view(c *ui.Context) {
 				sidebar()
 			}
 			main := ui.Column(c.Key("main")).MinWidth(0)
-			if side != "" && a.panelMax {
+			if (side == "left" || side == "right") && a.panelMax {
 				// A panel maximized at a side takes the row, so the
-				// editors give it theirs rather than sharing it.
+				// editors give it theirs rather than sharing it. One at
+				// the bottom is in the editors' column, and takes theirs.
 				main.Grow(0).Width(0)
 			} else {
 				main.Grow(1)
@@ -160,6 +163,7 @@ func (a *app) view(c *ui.Context) {
 	a.branchPickerView(c)
 	a.repositoryPickerView(c)
 	a.recentPickerView(c)
+	a.themePickerView(c)
 	a.remotePickerView(c)
 	a.conflictsView(c)
 	a.promptView(c)
@@ -334,7 +338,11 @@ func (a *app) splitter(c *ui.Context, at edge, drag func(d float32)) {
 func (a *app) titleBar(c *ui.Context) {
 	p := a.pal
 	bar := c.TitleBar()
-	ui.Row(c).Height(max(bar.Height, titleBarH)).Padding(0, bar.Right+8, 0, bar.Left+10).AlignItems(ui.Center).
+	rightPad := bar.Right + 8
+	if runtime.GOOS == "linux" && bar.Right > 0 {
+		rightPad = bar.Right - 2
+	}
+	ui.Row(c).Height(max(bar.Height, titleBarH)).Padding(0, rightPad, 0, bar.Left+10).AlignItems(ui.Center).
 		BorderWidth(0, 0, 1, 0).BorderColor(p.border).DragWindow().Children(func() {
 		// The sidebar's button is on its side. The terminal's is on the
 		// panel's: at the left of the bar when the panel is at the
@@ -353,11 +361,18 @@ func (a *app) titleBar(c *ui.Context) {
 			}
 		}
 		terminalButton := func() {
-			if a.iconButton(c, iconTerminal, a.withKey(locales.CmdViewTerminal(), "view.terminal"), a.window.PanelOpen).Clicked() {
+			btn := a.iconButton(c, iconTerminal, a.withKey(locales.CmdViewTerminal(), "view.terminal"), a.window.PanelOpen)
+			if runtime.GOOS == "linux" {
+				btn.Padding(1, 0, 0, 0)
+			}
+			if btn.Clicked() {
 				a.togglePanel()
 			}
 		}
 		ui.Row(c).Basis(0).Grow(1).MinWidth(56).Gap(2).Children(func() {
+			if hostOS != "darwin" {
+				a.iconButton(c, iconMenu, locales.Menu(), false).Menu(a.appUIMenu)
+			}
 			if panelLeft {
 				terminalButton()
 			}
@@ -485,6 +500,7 @@ func (a *app) columns(c *ui.Context) {
 	// The columns as the frame began: one an action of the frame takes
 	// away, from its tab strip as it draws, is let be till the next.
 	cols := slices.Clone(a.cols)
+	a.findCol = a.column()
 	ui.Row(c.Key("columns")).Bind(&a.colsView).Grow(1).MinHeight(0).AlignItems(ui.Stretch).Children(func() {
 		for i, col := range cols {
 			if !slices.Contains(a.cols, col) {
@@ -574,7 +590,7 @@ func (a *app) columnView(c *ui.Context, col *column) {
 					a.editorView(c, shown.ed)
 					a.hunkPeekView(c, shown.ed)
 					a.reviewBoxView(c, shown.ed)
-					if col == a.column() {
+					if col == a.findCol {
 						a.findView(c, shown.ed)
 					}
 					a.vimLineView(c, shown.ed)
@@ -599,9 +615,25 @@ type dragItem struct {
 	file *fileDrag
 }
 
+// owns reports whether what was dragged is this window's to take: a tab or
+// a terminal dragged from another window stays there, as its view binds
+// controls of that window, or a file, which opens in any.
+func (a *app) owns(it dragItem) bool {
+	switch {
+	case it.file != nil:
+		return true
+	case it.term != nil:
+		return slices.Contains(a.terms, it.term)
+	case it.tab != nil:
+		col, _ := a.locate(it.tab)
+		return col != nil
+	}
+	return false
+}
+
 // dropInColumn puts what was dragged at place at of a column.
 func (a *app) dropInColumn(it dragItem, col *column, at int) {
-	if slices.Index(a.cols, col) < 0 {
+	if slices.Index(a.cols, col) < 0 || !a.owns(it) {
 		return
 	}
 	switch {
@@ -617,7 +649,7 @@ func (a *app) dropInColumn(it dragItem, col *column, at int) {
 // dropBeside puts what was dragged in a column of its own, before a
 // column or after it.
 func (a *app) dropBeside(it dragItem, col *column, after bool) {
-	if slices.Index(a.cols, col) < 0 {
+	if slices.Index(a.cols, col) < 0 || !a.owns(it) {
 		return
 	}
 	if it.file != nil {
@@ -1002,14 +1034,6 @@ func (a *gitContext) gitSyncStatus(c *ui.Context, showCounts bool) {
 	}
 }
 
-// plural counts n things, as "1 line" or "2 lines".
-func plural(n int, thing string) string {
-	if n == 1 {
-		return "1 " + thing
-	}
-	return fmt.Sprintf("%d %ss", n, thing)
-}
-
 // vimBadge shows vim mode's mode in the status bar, as a badge colored
 // by it: plain in normal mode, the accent in insert mode, and the color
 // of a change in visual mode; then the keys of a command typed so far.
@@ -1023,12 +1047,13 @@ func (a *app) vimBadge(c *ui.Context, v *vimState, text func(string) ui.Element)
 		bg, fg = p.modified.Alpha(0.22), p.modifiedFg
 	}
 	row := ui.Row(c.Key("status:vim")).Height(statusBarH).Padding(0, 6).Gap(6).AlignItems(ui.Center)
-	// From mode to mode, the badge's colors and name cross over.
+	// From mode to mode, the badge's colors cross over. Its name changes at
+	// once: the old fading out over the new broke up the strokes of both.
 	fade := ui.Animation{Duration: 140 * time.Millisecond}
 	bg, fg = row.AnimateColor("bg", bg, fade), row.AnimateColor("fg", fg, fade)
 	row.Children(func() {
 		ui.Text(c, v.mode.String()).FontSize(10.5).FontWeight(650).LetterSpacing(0.6).TextColor(fg).SingleLine().
-			Padding(1, 6).Radius(4).Background(bg).ContentTransition(ui.ContentTransition{})
+			Padding(1, 6).Radius(4).Background(bg)
 		if a.vimRec != 0 {
 			// A register recording, as vim says: a red dot, and its name.
 			ui.Row(c.Key("status:vim-rec")).Gap(5).AlignItems(ui.Center).
@@ -1117,7 +1142,7 @@ func (a *app) statusBar(c *ui.Context) {
 		a.portsStatus(c, text)
 		if b := repo.branch(); b != "" {
 			bb := ui.ButtonBase(c.Key("status:branch")).Height(statusBarH-6).Padding(0, 6).Gap(5).Radius(4).
-				AlignItems(ui.Center).Label(locales.BranchLabel(b)).Tooltip(locales.BranchStatusTip(b))
+				AlignItems(ui.Center).Label(locales.BranchLabel(b)).Tooltip(locales.BranchStatusTip(b)).Disabled(repo.git.busy != "")
 			if bb.Hovered() {
 				bb.Background(p.hover)
 			}
@@ -1129,7 +1154,9 @@ func (a *app) statusBar(c *ui.Context) {
 					text(b).ContentTransition(ui.ContentTransition{})
 				}
 			})
-			bb.Menu(repo.branchMenu)
+			if bb.Clicked() {
+				repo.openBranchPicker()
+			}
 		}
 		repo.gitSyncStatus(c, visible.gitSyncCounts)
 		a.transferStatus(c, text)
@@ -1338,6 +1365,7 @@ func (a *app) welcome(c *ui.Context) {
 					a.welcomeAction(c, iconFilePlus, locales.CmdFileNew(), a.keyHint("file.new"), a.newFile)
 					a.welcomeAction(c, iconTerminal, locales.CmdViewTerminal(), a.keyHint("view.terminal"), a.togglePanel)
 					a.welcomeAction(c, iconSidebar, locales.CmdViewSidebar(), a.keyHint("view.sidebar"), a.toggleSidebar)
+					a.welcomeAction(c, iconSparkles, locales.CmdViewSelectTheme(), a.keyHint("view.selectTheme"), a.openThemePicker)
 					if a.host.account() == "" && a.settings.Path() != "" {
 						a.welcomeAction(c, iconCloud, locales.CmdAccountSignIn(), "", func() { a.host.signIn() })
 					}
@@ -1382,9 +1410,33 @@ func (a *app) welcome(c *ui.Context) {
 						}
 					})
 				}
+				a.welcomeStar(c)
 			})
 		})
 	})
+}
+
+// repoURL is Mayoi's repository on GitHub.
+const repoURL = "https://github.com/sorrycc/Mayoi"
+
+// welcomeStar is the link at the foot of the welcome page that opens
+// Mayoi's repository, to star it: quieter than the rows above it.
+func (a *app) welcomeStar(c *ui.Context) {
+	p := a.pal
+	r := ui.ButtonBase(c.Key("welcome:star")).AlignSelf(ui.Start).Height(24).Padding(0, 10).Radius(6).Gap(6).
+		AlignItems(ui.Center).Label(locales.WelcomeStar()).Tooltip(repoURL)
+	col := p.faint
+	if r.Hovered() {
+		col = p.accent
+	}
+	col = r.AnimateColor("text", col, ui.Animation{Duration: hoverFade.Duration})
+	riseIn(r, 150*time.Millisecond).Children(func() {
+		ui.Icon(c, iconStar).FontSize(13).TextColor(col)
+		ui.Text(c, locales.WelcomeStar()).FontSize(12).TextColor(col).SingleLine()
+	})
+	if r.Clicked() {
+		a.services.OpenURL(repoURL)
+	}
 }
 
 // welcomeRowH is the height of every row of the welcome page, with keys
@@ -1508,6 +1560,17 @@ func (a *app) togglePanel() {
 		a.focusTerminal()
 	} else {
 		a.focusColumn()
+	}
+	a.settings.Changed()
+}
+
+// toggleTerminalLocation has new terminals open in the editor area, or in
+// the panel again.
+func (a *app) toggleTerminalLocation() {
+	if a.settings.TerminalLocation == "" {
+		a.settings.TerminalLocation = "editor"
+	} else {
+		a.settings.TerminalLocation = ""
 	}
 	a.settings.Changed()
 }

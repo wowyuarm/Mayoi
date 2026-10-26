@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -28,6 +29,9 @@ func TestMain(m *testing.M) {
 	}
 	locale := i18n.Locale()
 	i18n.SetLocaleFunc(func() string { return locale })
+	// The previews' pictures of the web are not fetched, but by the tests
+	// of them, from servers of their own.
+	markdownRemote.get = func(string) ([]byte, error) { return nil, errors.New("offline") }
 	os.Exit(m.Run())
 }
 

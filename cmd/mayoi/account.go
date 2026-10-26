@@ -193,6 +193,7 @@ func (m *mayoi) startCloud() {
 func (c *cloud) refreshProfile() {
 	client := *c.client
 	go func() {
+		defer recoverCrash()
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		u, err := client.Me(ctx)
@@ -619,6 +620,7 @@ func (c *cloud) picture() *ui.Bitmap {
 	}
 	c.avatarURL, c.avatar = url, nil
 	go func() {
+		defer recoverCrash()
 		bm := fetchAvatar(url)
 		if bm == nil {
 			return

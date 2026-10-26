@@ -35,6 +35,156 @@ type Messages struct{ locale string }
 // source language.
 func In(locale string) Messages { return Messages{locale} }
 
+// CmdViewSelectTheme says "Color Theme…"
+// in the language the app shows.
+func CmdViewSelectTheme() string { return In(i18n.Locale()).CmdViewSelectTheme() }
+
+// CmdViewSelectTheme says "Color Theme…"
+// in the language of msgs.
+func (msgs Messages) CmdViewSelectTheme() string {
+	return Catalog.Format(msgs.locale, "cmdViewSelectTheme", nil)
+}
+
+// ErrMermaidTimeout says "the diagram took too long to draw"
+// in the language the app shows.
+func ErrMermaidTimeout() string { return In(i18n.Locale()).ErrMermaidTimeout() }
+
+// ErrMermaidTimeout says "the diagram took too long to draw"
+// in the language of msgs.
+func (msgs Messages) ErrMermaidTimeout() string {
+	return Catalog.Format(msgs.locale, "errMermaidTimeout", nil)
+}
+
+// MermaidCannotDraw says "Cannot draw the diagram: {err}"
+// in the language the app shows.
+func MermaidCannotDraw(err string) string { return In(i18n.Locale()).MermaidCannotDraw(err) }
+
+// MermaidCannotDraw says "Cannot draw the diagram: {err}"
+// in the language of msgs.
+func (msgs Messages) MermaidCannotDraw(err string) string {
+	return Catalog.Format(msgs.locale, "mermaidCannotDraw", map[string]any{"err": err})
+}
+
+// ShowDiagram says "Show Diagram"
+// in the language the app shows.
+func ShowDiagram() string { return In(i18n.Locale()).ShowDiagram() }
+
+// ShowDiagram says "Show Diagram"
+// in the language of msgs.
+func (msgs Messages) ShowDiagram() string {
+	return Catalog.Format(msgs.locale, "showDiagram", nil)
+}
+
+// ThemeAboutClaude says "Ivory and near-black, with Claude's orange"
+// in the language the app shows.
+func ThemeAboutClaude() string { return In(i18n.Locale()).ThemeAboutClaude() }
+
+// ThemeAboutClaude says "Ivory and near-black, with Claude's orange"
+// in the language of msgs.
+func (msgs Messages) ThemeAboutClaude() string {
+	return Catalog.Format(msgs.locale, "themeAboutClaude", nil)
+}
+
+// ThemeAboutGrokBot says "Grok Bot's Sand: monochrome, with its blue"
+// in the language the app shows.
+func ThemeAboutGrokBot() string { return In(i18n.Locale()).ThemeAboutGrokBot() }
+
+// ThemeAboutGrokBot says "Grok Bot's Sand: monochrome, with its blue"
+// in the language of msgs.
+func (msgs Messages) ThemeAboutGrokBot() string {
+	return Catalog.Format(msgs.locale, "themeAboutGrokBot", nil)
+}
+
+// ThemeAboutMatrix says "Phosphor green, with digital rain"
+// in the language the app shows.
+func ThemeAboutMatrix() string { return In(i18n.Locale()).ThemeAboutMatrix() }
+
+// ThemeAboutMatrix says "Phosphor green, with digital rain"
+// in the language of msgs.
+func (msgs Messages) ThemeAboutMatrix() string {
+	return Catalog.Format(msgs.locale, "themeAboutMatrix", nil)
+}
+
+// ThemeAboutMayoi says "Mayoi's own, in violet"
+// in the language the app shows.
+func ThemeAboutMayoi() string { return In(i18n.Locale()).ThemeAboutMayoi() }
+
+// ThemeAboutMayoi says "Mayoi's own, in violet"
+// in the language of msgs.
+func (msgs Messages) ThemeAboutMayoi() string {
+	return Catalog.Format(msgs.locale, "themeAboutMayoi", nil)
+}
+
+// ThemeAboutQoder says "Qoder's Forest greens"
+// in the language the app shows.
+func ThemeAboutQoder() string { return In(i18n.Locale()).ThemeAboutQoder() }
+
+// ThemeAboutQoder says "Qoder's Forest greens"
+// in the language of msgs.
+func (msgs Messages) ThemeAboutQoder() string {
+	return Catalog.Format(msgs.locale, "themeAboutQoder", nil)
+}
+
+// ThemeAlwaysDark says "Always dark"
+// in the language the app shows.
+func ThemeAlwaysDark() string { return In(i18n.Locale()).ThemeAlwaysDark() }
+
+// ThemeAlwaysDark says "Always dark"
+// in the language of msgs.
+func (msgs Messages) ThemeAlwaysDark() string {
+	return Catalog.Format(msgs.locale, "themeAlwaysDark", nil)
+}
+
+// ThemeAppearance says "appearance"
+// in the language the app shows.
+func ThemeAppearance() string { return In(i18n.Locale()).ThemeAppearance() }
+
+// ThemeAppearance says "appearance"
+// in the language of msgs.
+func (msgs Messages) ThemeAppearance() string {
+	return Catalog.Format(msgs.locale, "themeAppearance", nil)
+}
+
+// ThemeKeep says "keep"
+// in the language the app shows.
+func ThemeKeep() string { return In(i18n.Locale()).ThemeKeep() }
+
+// ThemeKeep says "keep"
+// in the language of msgs.
+func (msgs Messages) ThemeKeep() string {
+	return Catalog.Format(msgs.locale, "themeKeep", nil)
+}
+
+// ThemeLabel says "Color Theme"
+// in the language the app shows.
+func ThemeLabel() string { return In(i18n.Locale()).ThemeLabel() }
+
+// ThemeLabel says "Color Theme"
+// in the language of msgs.
+func (msgs Messages) ThemeLabel() string {
+	return Catalog.Format(msgs.locale, "themeLabel", nil)
+}
+
+// ThemeNoMatches says "No matching themes"
+// in the language the app shows.
+func ThemeNoMatches() string { return In(i18n.Locale()).ThemeNoMatches() }
+
+// ThemeNoMatches says "No matching themes"
+// in the language of msgs.
+func (msgs Messages) ThemeNoMatches() string {
+	return Catalog.Format(msgs.locale, "themeNoMatches", nil)
+}
+
+// ThemePlaceholder says "Select a color theme"
+// in the language the app shows.
+func ThemePlaceholder() string { return In(i18n.Locale()).ThemePlaceholder() }
+
+// ThemePlaceholder says "Select a color theme"
+// in the language of msgs.
+func (msgs Messages) ThemePlaceholder() string {
+	return Catalog.Format(msgs.locale, "themePlaceholder", nil)
+}
+
 // AbortDetail says "HEAD, the staged changes and the files go back to how they were before it."
 // in the language the app shows.
 func AbortDetail() string { return In(i18n.Locale()).AbortDetail() }
@@ -335,6 +485,16 @@ func (msgs Messages) BranchFrom(branch string) string {
 	return Catalog.Format(msgs.locale, "branchFrom", map[string]any{"branch": branch})
 }
 
+// BranchInvalidName says "Enter a valid Git branch name."
+// in the language the app shows.
+func BranchInvalidName() string { return In(i18n.Locale()).BranchInvalidName() }
+
+// BranchInvalidName says "Enter a valid Git branch name."
+// in the language of msgs.
+func (msgs Messages) BranchInvalidName() string {
+	return Catalog.Format(msgs.locale, "branchInvalidName", nil)
+}
+
 // BranchLabel says "Branch {name}"
 // in the language the app shows.
 func BranchLabel(name string) string { return In(i18n.Locale()).BranchLabel(name) }
@@ -375,11 +535,11 @@ func (msgs Messages) BranchReading() string {
 	return Catalog.Format(msgs.locale, "branchReading", nil)
 }
 
-// BranchStatusTip says "Branch {name}: switch, fetch, pull or push"
+// BranchStatusTip says "Branch {name}: switch or create a branch"
 // in the language the app shows.
 func BranchStatusTip(name string) string { return In(i18n.Locale()).BranchStatusTip(name) }
 
-// BranchStatusTip says "Branch {name}: switch, fetch, pull or push"
+// BranchStatusTip says "Branch {name}: switch or create a branch"
 // in the language of msgs.
 func (msgs Messages) BranchStatusTip(name string) string {
 	return Catalog.Format(msgs.locale, "branchStatusTip", map[string]any{"name": name})
@@ -757,6 +917,16 @@ func (msgs Messages) ButtonDontSave() string {
 	return Catalog.Format(msgs.locale, "buttonDontSave", nil)
 }
 
+// ButtonDontSend says "Don't Send"
+// in the language the app shows.
+func ButtonDontSend() string { return In(i18n.Locale()).ButtonDontSend() }
+
+// ButtonDontSend says "Don't Send"
+// in the language of msgs.
+func (msgs Messages) ButtonDontSend() string {
+	return Catalog.Format(msgs.locale, "buttonDontSend", nil)
+}
+
 // ButtonSave says "Save"
 // in the language the app shows.
 func ButtonSave() string { return In(i18n.Locale()).ButtonSave() }
@@ -765,6 +935,26 @@ func ButtonSave() string { return In(i18n.Locale()).ButtonSave() }
 // in the language of msgs.
 func (msgs Messages) ButtonSave() string {
 	return Catalog.Format(msgs.locale, "buttonSave", nil)
+}
+
+// ButtonSendReport says "Send"
+// in the language the app shows.
+func ButtonSendReport() string { return In(i18n.Locale()).ButtonSendReport() }
+
+// ButtonSendReport says "Send"
+// in the language of msgs.
+func (msgs Messages) ButtonSendReport() string {
+	return Catalog.Format(msgs.locale, "buttonSendReport", nil)
+}
+
+// ButtonShowReport says "Show Report"
+// in the language the app shows.
+func ButtonShowReport() string { return In(i18n.Locale()).ButtonShowReport() }
+
+// ButtonShowReport says "Show Report"
+// in the language of msgs.
+func (msgs Messages) ButtonShowReport() string {
+	return Catalog.Format(msgs.locale, "buttonShowReport", nil)
 }
 
 // ButtonUndo says "Undo"
@@ -1527,6 +1717,16 @@ func (msgs Messages) CmdGitPrevFile() string {
 	return Catalog.Format(msgs.locale, "cmdGitPrevFile", nil)
 }
 
+// CmdGitToggleCommitFiles says "Show Files of Commits"
+// in the language the app shows.
+func CmdGitToggleCommitFiles() string { return In(i18n.Locale()).CmdGitToggleCommitFiles() }
+
+// CmdGitToggleCommitFiles says "Show Files of Commits"
+// in the language of msgs.
+func (msgs Messages) CmdGitToggleCommitFiles() string {
+	return Catalog.Format(msgs.locale, "cmdGitToggleCommitFiles", nil)
+}
+
 // CmdGitPull says "Pull"
 // in the language the app shows.
 func CmdGitPull() string { return In(i18n.Locale()).CmdGitPull() }
@@ -2237,6 +2437,16 @@ func (msgs Messages) CmdViewTerminal() string {
 	return Catalog.Format(msgs.locale, "cmdViewTerminal", nil)
 }
 
+// CmdViewTerminalLocation says "New Terminals in Editor Area"
+// in the language the app shows.
+func CmdViewTerminalLocation() string { return In(i18n.Locale()).CmdViewTerminalLocation() }
+
+// CmdViewTerminalLocation says "New Terminals in Editor Area"
+// in the language of msgs.
+func (msgs Messages) CmdViewTerminalLocation() string {
+	return Catalog.Format(msgs.locale, "cmdViewTerminalLocation", nil)
+}
+
 // CmdViewTerminalLockRight says "Move Terminal to Locked Right Column"
 // in the language the app shows.
 func CmdViewTerminalLockRight() string { return In(i18n.Locale()).CmdViewTerminalLockRight() }
@@ -2589,6 +2799,46 @@ func CopyRelativePath() string { return In(i18n.Locale()).CopyRelativePath() }
 // in the language of msgs.
 func (msgs Messages) CopyRelativePath() string {
 	return Catalog.Format(msgs.locale, "copyRelativePath", nil)
+}
+
+// CrashDetail says "The report says where in Mayoi's code it happened, with Mayoi's version and your system. It holds none of your files,…"
+// in the language the app shows.
+func CrashDetail() string { return In(i18n.Locale()).CrashDetail() }
+
+// CrashDetail says "The report says where in Mayoi's code it happened, with Mayoi's version and your system. It holds none of your files,…"
+// in the language of msgs.
+func (msgs Messages) CrashDetail() string {
+	return Catalog.Format(msgs.locale, "crashDetail", nil)
+}
+
+// CrashDontAsk says "Don't ask again"
+// in the language the app shows.
+func CrashDontAsk() string { return In(i18n.Locale()).CrashDontAsk() }
+
+// CrashDontAsk says "Don't ask again"
+// in the language of msgs.
+func (msgs Messages) CrashDontAsk() string {
+	return Catalog.Format(msgs.locale, "crashDontAsk", nil)
+}
+
+// CrashQuestion says "Mayoi quit unexpectedly. Send a crash report?"
+// in the language the app shows.
+func CrashQuestion() string { return In(i18n.Locale()).CrashQuestion() }
+
+// CrashQuestion says "Mayoi quit unexpectedly. Send a crash report?"
+// in the language of msgs.
+func (msgs Messages) CrashQuestion() string {
+	return Catalog.Format(msgs.locale, "crashQuestion", nil)
+}
+
+// CrashRecoveredQuestion says "Mayoi ran into an error. Send an error report?"
+// in the language the app shows.
+func CrashRecoveredQuestion() string { return In(i18n.Locale()).CrashRecoveredQuestion() }
+
+// CrashRecoveredQuestion says "Mayoi ran into an error. Send an error report?"
+// in the language of msgs.
+func (msgs Messages) CrashRecoveredQuestion() string {
+	return Catalog.Format(msgs.locale, "crashRecoveredQuestion", nil)
 }
 
 // CreateBranchEllipsis says "Create Branch…"
@@ -3207,6 +3457,46 @@ func DiffNextFile() string { return In(i18n.Locale()).DiffNextFile() }
 // in the language of msgs.
 func (msgs Messages) DiffNextFile() string {
 	return Catalog.Format(msgs.locale, "diffNextFile", nil)
+}
+
+// DiffToggleCommitFiles says "Files of the Commit"
+// in the language the app shows.
+func DiffToggleCommitFiles() string { return In(i18n.Locale()).DiffToggleCommitFiles() }
+
+// DiffToggleCommitFiles says "Files of the Commit"
+// in the language of msgs.
+func (msgs Messages) DiffToggleCommitFiles() string {
+	return Catalog.Format(msgs.locale, "diffToggleCommitFiles", nil)
+}
+
+// DiffCommitFiles says "Files"
+// in the language the app shows.
+func DiffCommitFiles() string { return In(i18n.Locale()).DiffCommitFiles() }
+
+// DiffCommitFiles says "Files"
+// in the language of msgs.
+func (msgs Messages) DiffCommitFiles() string {
+	return Catalog.Format(msgs.locale, "diffCommitFiles", nil)
+}
+
+// DiffHideCommitFiles says "Hide Files"
+// in the language the app shows.
+func DiffHideCommitFiles() string { return In(i18n.Locale()).DiffHideCommitFiles() }
+
+// DiffHideCommitFiles says "Hide Files"
+// in the language of msgs.
+func (msgs Messages) DiffHideCommitFiles() string {
+	return Catalog.Format(msgs.locale, "diffHideCommitFiles", nil)
+}
+
+// DiffGoToFile says "Go to File in Diff"
+// in the language the app shows.
+func DiffGoToFile() string { return In(i18n.Locale()).DiffGoToFile() }
+
+// DiffGoToFile says "Go to File in Diff"
+// in the language of msgs.
+func (msgs Messages) DiffGoToFile() string {
+	return Catalog.Format(msgs.locale, "diffGoToFile", nil)
 }
 
 // DiffNoChanges says "No Changes"
@@ -3875,6 +4165,16 @@ func FailBinaryNow(name string) string { return In(i18n.Locale()).FailBinaryNow(
 // in the language of msgs.
 func (msgs Messages) FailBinaryNow(name string) string {
 	return Catalog.Format(msgs.locale, "failBinaryNow", map[string]any{"name": name})
+}
+
+// FailLongLine says "{name} has a line too long to show"
+// in the language the app shows.
+func FailLongLine(name string) string { return In(i18n.Locale()).FailLongLine(name) }
+
+// FailLongLine says "{name} has a line too long to show"
+// in the language of msgs.
+func (msgs Messages) FailLongLine(name string) string {
+	return Catalog.Format(msgs.locale, "failLongLine", map[string]any{"name": name})
 }
 
 // FailCopy says "Could not copy: {err}"
@@ -4737,6 +5037,16 @@ func (msgs Messages) LockedColumn() string {
 	return Catalog.Format(msgs.locale, "lockedColumn", nil)
 }
 
+// Menu says "Menu"
+// in the language the app shows.
+func Menu() string { return In(i18n.Locale()).Menu() }
+
+// Menu says "Menu"
+// in the language of msgs.
+func (msgs Messages) Menu() string {
+	return Catalog.Format(msgs.locale, "menu", nil)
+}
+
 // MenuAccount says "Account"
 // in the language the app shows.
 func MenuAccount() string { return In(i18n.Locale()).MenuAccount() }
@@ -5283,6 +5593,16 @@ func MergeMarkResolvedTip() string { return In(i18n.Locale()).MergeMarkResolvedT
 // in the language of msgs.
 func (msgs Messages) MergeMarkResolvedTip() string {
 	return Catalog.Format(msgs.locale, "mergeMarkResolvedTip", nil)
+}
+
+// MergeMoreActions says "More Actions"
+// in the language the app shows.
+func MergeMoreActions() string { return In(i18n.Locale()).MergeMoreActions() }
+
+// MergeMoreActions says "More Actions"
+// in the language of msgs.
+func (msgs Messages) MergeMoreActions() string {
+	return Catalog.Format(msgs.locale, "mergeMoreActions", nil)
 }
 
 // MergeMarkedResolved says "Marked {name} resolved"
@@ -7057,6 +7377,16 @@ func QuickConnectAction() string { return In(i18n.Locale()).QuickConnectAction()
 // in the language of msgs.
 func (msgs Messages) QuickConnectAction() string {
 	return Catalog.Format(msgs.locale, "quickConnectAction", nil)
+}
+
+// QuickCreateAction says "create"
+// in the language the app shows.
+func QuickCreateAction() string { return In(i18n.Locale()).QuickCreateAction() }
+
+// QuickCreateAction says "create"
+// in the language of msgs.
+func (msgs Messages) QuickCreateAction() string {
+	return Catalog.Format(msgs.locale, "quickCreateAction", nil)
 }
 
 // QuickGoToAction says "go to"
@@ -9083,6 +9413,26 @@ func (msgs Messages) ScmViewAsTree() string {
 	return Catalog.Format(msgs.locale, "scmViewAsTree", nil)
 }
 
+// ScmShowCommitFiles says "Show Files"
+// in the language the app shows.
+func ScmShowCommitFiles() string { return In(i18n.Locale()).ScmShowCommitFiles() }
+
+// ScmShowCommitFiles says "Show Files"
+// in the language of msgs.
+func (msgs Messages) ScmShowCommitFiles() string {
+	return Catalog.Format(msgs.locale, "scmShowCommitFiles", nil)
+}
+
+// ScmHideCommitFiles says "Hide Files"
+// in the language the app shows.
+func ScmHideCommitFiles() string { return In(i18n.Locale()).ScmHideCommitFiles() }
+
+// ScmHideCommitFiles says "Hide Files"
+// in the language of msgs.
+func (msgs Messages) ScmHideCommitFiles() string {
+	return Catalog.Format(msgs.locale, "scmHideCommitFiles", nil)
+}
+
 // ScmWriteMessage says "Write the Message with AI"
 // in the language the app shows.
 func ScmWriteMessage() string { return In(i18n.Locale()).ScmWriteMessage() }
@@ -10645,6 +10995,16 @@ func WelcomeRecent() string { return In(i18n.Locale()).WelcomeRecent() }
 // in the language of msgs.
 func (msgs Messages) WelcomeRecent() string {
 	return Catalog.Format(msgs.locale, "welcomeRecent", nil)
+}
+
+// WelcomeStar says "Star on GitHub"
+// in the language the app shows.
+func WelcomeStar() string { return In(i18n.Locale()).WelcomeStar() }
+
+// WelcomeStar says "Star on GitHub"
+// in the language of msgs.
+func (msgs Messages) WelcomeStar() string {
+	return Catalog.Format(msgs.locale, "welcomeStar", nil)
 }
 
 // WelcomeStart says "Start"

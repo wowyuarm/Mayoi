@@ -8,6 +8,7 @@ import (
 
 	"github.com/egoist/mygo/ui"
 
+	"mayoi/internal/bg"
 	"mayoi/internal/remote"
 	"mayoi/internal/vfs"
 	"mayoi/internal/workspace"
@@ -125,7 +126,8 @@ func (a *app) crumbsLoad(dir string) {
 	k.loading[dir] = true
 	delete(k.errs, dir)
 	gen := k.gen
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		entries, err := vfs.ReadDir(dir)
 		a.post(func() {
 			if a.crumbs.gen != gen {
@@ -142,7 +144,7 @@ func (a *app) crumbsLoad(dir string) {
 			}
 			k.kids[dir] = kids
 		})
-	}()
+	})
 }
 
 // crumbsValid reports whether the box still belongs to what shows: its

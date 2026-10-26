@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/png"
+	"mayoi/internal/bg"
 	"mayoi/internal/mon"
 	"mayoi/internal/settings"
 	"os"
@@ -155,6 +156,9 @@ type harness struct {
 	h    *fakeHost
 	tt   *ui.Tester
 	root string
+	// held counts the background work a test holds on purpose, which
+	// settle does not wait for.
+	held int64
 }
 
 func newHarness(t testing.TB, dark bool) *harness {
@@ -184,13 +188,51 @@ func step(tt *ui.Tester) {
 }
 
 // settle draws frames until the background work (reading directories,
-// highlighting, indexing) is done.
+// highlighting, indexing, git) is done: half a second of the tester's
+// clock, which the animations, the double clicks and the waits of the app
+// count by, and frames at the same time for as long as some is running or
+// posted, which on a busy machine is longer than on an idle one. While
+// work only runs, no frame is drawn, to leave the machine to it. Idle
+// counts for two frames in a row, as a frame can start work that one
+// finished asks for.
 func (hs *harness) settle() {
 	for range 30 {
 		step(hs.tt)
-		time.Sleep(5 * time.Millisecond)
+	}
+	for idle, deadline := 0, time.Now().Add(10*time.Second); idle < 2 && time.Now().Before(deadline); {
+		running, queued := hs.busy()
+		switch {
+		case queued:
+			idle = 0
+			hs.tt.Frame()
+		case running:
+			idle = 0
+			time.Sleep(time.Millisecond)
+		default:
+			idle++
+			hs.tt.Frame()
+		}
+	}
+	if !hs.idle() {
+		hs.t.Logf("settle: %d background jobs still run after 10s", bg.Running()-hs.held)
 	}
 	step(hs.tt)
+}
+
+// busy reports whether background work runs, and whether some it posted
+// waits for a frame. Whether the view asks for a frame does not count: it
+// always does while something on screen moves.
+func (hs *harness) busy() (running, queued bool) {
+	hs.a.mu.Lock()
+	n := len(hs.a.queue)
+	hs.a.mu.Unlock()
+	return bg.Running() > hs.held, n > 0
+}
+
+// idle reports whether no background work runs and none posted waits.
+func (hs *harness) idle() bool {
+	running, queued := hs.busy()
+	return !running && !queued
 }
 
 func (hs *harness) shot(name string) {
@@ -745,6 +787,41 @@ func TestTerminalPanelAtASide(t *testing.T) {
 	}
 }
 
+// Maximized, the panel takes the editors' room wherever it is, past the
+// sidebar: at the bottom too, where it is in the editors' column.
+func TestMaximizedPanelFillsTheWindow(t *testing.T) {
+	if testing.Short() {
+		t.Skip("starts a shell")
+	}
+	hs := newHarness(t, true)
+	a, tt := hs.a, hs.tt
+	t.Cleanup(a.closeTerminals)
+	width := float32(1200)
+	a.openFile(hs.path("main.go"), true)
+	a.run("view.terminal")
+	hs.settle()
+	for _, pos := range []string{"bottom", "left", "right"} {
+		a.run("view.panelPosition." + pos)
+		a.panelMax = true
+		hs.settle()
+		title, ok := tt.Find("TERMINAL")
+		hide, ok2 := tt.Find("Hide Panel")
+		if !ok || !ok2 {
+			t.Fatalf("the panel maximized at the %s is not shown", pos)
+		}
+		// The sidebar is on the left, between a panel there and the
+		// editors' room.
+		left, right := a.window.SidebarWidth, width
+		if pos == "left" {
+			left, right = 0, width-a.window.SidebarWidth
+		}
+		if title.X < left || title.X > left+40 || hide.X+hide.W < right-40 || hide.X+hide.W > right {
+			t.Errorf("the panel maximized at the %s: its title %v, its last button %v", pos, title, hide)
+		}
+		a.panelMax = false
+	}
+}
+
 func TestRestoresTheActiveTab(t *testing.T) {
 	root := workspaceFixture(t)
 	// The tabs as a version without columns kept them.
@@ -900,6 +977,49 @@ func TestReopenClosedTerminal(t *testing.T) {
 	a.closeTerminals()
 }
 
+// With terminalLocation "editor", New Terminal opens a tab of the editor
+// area, while Toggle Terminal still shows the panel. Set back, New
+// Terminal opens in the panel again.
+func TestTerminalLocation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("starts a shell")
+	}
+	hs := newHarness(t, true)
+	a := hs.a
+	a.openFile(hs.path("main.go"), true)
+	a.run("view.terminalLocation")
+	if a.settings.TerminalLocation != "editor" {
+		t.Fatalf("terminalLocation %q after the toggle", a.settings.TerminalLocation)
+	}
+	a.run("view.newTerminal")
+	hs.settle()
+	tabs := a.column().tabs
+	if len(tabs) != 2 || tabs[1].term == nil || tabs[1].term.dir != hs.root || a.column().active != 1 {
+		t.Fatalf("no terminal tab: %d tabs", len(tabs))
+	}
+	if a.panelTerm != nil || a.window.PanelOpen {
+		t.Errorf("the panel opened too: open %v", a.window.PanelOpen)
+	}
+	a.openTerminal(filepath.Join(hs.root, "web"))
+	hs.settle()
+	if tabs := a.column().tabs; len(tabs) != 3 || tabs[2].term == nil || tabs[2].term.dir != filepath.Join(hs.root, "web") {
+		t.Fatalf("Open in Terminal: %d tabs", len(tabs))
+	}
+	a.run("view.terminal")
+	hs.settle()
+	if a.panelTerm == nil || !a.window.PanelOpen {
+		t.Fatal("Toggle Terminal didn't show the panel")
+	}
+	a.run("view.terminalLocation")
+	panel := a.panelTerm
+	a.run("view.newTerminal")
+	hs.settle()
+	if a.settings.TerminalLocation != "" || a.panelTerm == panel || len(a.column().tabs) != 3 {
+		t.Errorf("New Terminal with terminalLocation %q: %d tabs", a.settings.TerminalLocation, len(a.column().tabs))
+	}
+	a.closeTerminals()
+}
+
 // The panel's header has a menu that moves the panel to a side, and back.
 func TestTerminalPanelHeaderMenu(t *testing.T) {
 	if runtime.GOOS == "windows" {
@@ -936,5 +1056,32 @@ func TestTerminalPanelHeaderMenu(t *testing.T) {
 	hs.settle()
 	if a.panelSide() != "bottom" || a.settings.PanelPosition != "" {
 		t.Fatalf("the panel is at %s (%q)", a.panelSide(), a.settings.PanelPosition)
+	}
+}
+
+// Off macOS the title bar's menu has the menu bar's menus, without the
+// edit roles it cannot send to the focused element, and runs their items.
+func TestTitleBarMenu(t *testing.T) {
+	onOS(t, "linux")
+	hs := newHarness(t, true)
+	a, tt := hs.a, hs.tt
+	if err := tt.Click("Menu"); err != nil {
+		t.Fatal(err)
+	}
+	if menu := tt.Menu(); !slices.Contains(menu, "File") || !slices.Contains(menu, "View") {
+		t.Fatalf("the title bar's menu: %q", menu)
+	}
+	if err := tt.ChooseMenuItem("Edit", "Copy"); err == nil {
+		t.Error("Copy is in the Edit menu")
+	}
+	if err := tt.Click("Menu"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.ChooseMenuItem("View", "Word Wrap"); err != nil {
+		t.Fatal(err)
+	}
+	hs.settle()
+	if !a.settings.WordWrap {
+		t.Error("Word Wrap is not on")
 	}
 }

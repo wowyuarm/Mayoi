@@ -367,6 +367,17 @@ func TestDiffPrefs(t *testing.T) {
 	}
 }
 
+// A new terminal opens in the panel unless the file says "editor".
+func TestTerminalLocation(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "settings.json")
+	for in, want := range map[string]string{"": "", "editor": "editor", "panel": "", "editorArea": ""} {
+		os.WriteFile(path, []byte(`{"terminalLocation": "`+in+`"}`), 0o644)
+		if got := Load(path).TerminalLocation; got != want {
+			t.Errorf("%q loaded as %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestScmRepositoryPreferencesRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "settings.json")
 	s := Load(path)

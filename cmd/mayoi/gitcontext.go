@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/egoist/mygo/ui"
+	"mayoi/internal/bg"
 	"mayoi/internal/git"
 	"mayoi/internal/remote"
 )
@@ -144,7 +145,8 @@ func (a *app) discoverRepositories() {
 	root, folder := a.git.repo, a.root
 	token := new(int)
 	state.token, state.scanning, state.dirty = token, true, false
-	go func() {
+	bg.Go(func() {
+		defer recoverCrash()
 		// An incomplete scan must not drop live contexts and their messages.
 		failed := func() {
 			a.post(func() {
@@ -219,7 +221,7 @@ func (a *app) discoverRepositories() {
 			}
 			state.scanning = false
 		})
-	}()
+	})
 }
 
 func (a *app) changeCount() int {
@@ -308,15 +310,17 @@ func (a *gitContext) openChangesTab(focus bool) *diffView {
 	}
 	return a.app.openChangesTab(focus, a.git.repo.Root)
 }
-func (a *gitContext) showCommit(cm git.Commit, focus bool) {
+func (a *gitContext) showCommit(cm git.Commit, focus bool) *diffView {
 	if a.git.repo != nil {
-		a.app.showCommit(cm, focus, a.git.repo.Root)
+		return a.app.showCommit(cm, focus, a.git.repo.Root)
 	}
+	return nil
 }
-func (a *gitContext) previewCommit(cm git.Commit) {
+func (a *gitContext) previewCommit(cm git.Commit) *diffView {
 	if a.git.repo != nil {
-		a.app.previewCommit(cm, a.git.repo.Root)
+		return a.app.previewCommit(cm, a.git.repo.Root)
 	}
+	return nil
 }
 
 // A controller captured by a dialog must not start work on a folder opened

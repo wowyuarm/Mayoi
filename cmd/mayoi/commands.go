@@ -126,6 +126,7 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"git.prevChange", t.CmdGitPrevChange(), "Shift+Alt+F5", func() { a.stepChange(-1) }},
 		{"git.nextFile", t.CmdGitNextFile(), "", func() { a.stepDiffFile(1) }},
 		{"git.prevFile", t.CmdGitPrevFile(), "", func() { a.stepDiffFile(-1) }},
+		{"git.toggleCommitFiles", t.CmdGitToggleCommitFiles(), "", a.toggleCommitFiles},
 		{"git.appendChange", t.CmdGitAppendChange(), "", a.appendAtCursor},
 		{"git.showChange", t.CmdGitShowChange(), "", a.editActive(func(d *editor) { d.peekHunk(caretLine(d)) })},
 		{"git.revertChange", t.CmdGitRevertChange(), "", a.editActive(func(d *editor) { a.onCaretHunk(d, a.revertHunk) })},
@@ -158,9 +159,10 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"review.send", t.CmdReviewSend(), "", a.sendReview},
 		{"review.clear", t.CmdReviewClear(), "", a.clearReview},
 		{"view.terminal", t.CmdViewTerminal(), "Ctrl+`", a.togglePanel},
-		{"view.newTerminal", t.CmdViewNewTerminal(), "Ctrl+Shift+`", a.newTerminal},
+		{"view.newTerminal", t.CmdViewNewTerminal(), "Ctrl+Shift+`", func() { a.openTerminal(a.workDir()) }},
 		{"view.terminalTab", t.CmdViewTerminalTab(), "", func() { a.newTerminalTab(a.fileColumn(), a.workDir(), true) }},
 		{"view.terminalMove", t.CmdViewTerminalMove(), "", a.moveTerminal},
+		{"view.terminalLocation", t.CmdViewTerminalLocation(), "", a.toggleTerminalLocation},
 		{"view.terminalLockRight", t.CmdViewTerminalLockRight(), "", a.moveTerminalToLockedRight},
 		{"view.panelPosition.bottom", t.CmdViewPanelBottom(), "", func() { a.setPanelPosition("") }},
 		{"view.panelPosition.left", t.CmdViewPanelLeft(), "", func() { a.setPanelPosition("left") }},
@@ -184,10 +186,12 @@ func (a *app) commandsIn(t locales.Messages) []command {
 		{"view.appearance.system", t.CmdViewAppearanceSystem(), "", func() { a.setAppearance("") }},
 		{"view.appearance.light", t.CmdViewAppearanceLight(), "", func() { a.setAppearance("light") }},
 		{"view.appearance.dark", t.CmdViewAppearanceDark(), "", func() { a.setAppearance("dark") }},
+		{"view.selectTheme", t.CmdViewSelectTheme(), "", a.openThemePicker},
 		{"view.theme.mayoi", "Mayoi", "", func() { a.setTheme("") }},
 		{"view.theme.matrix", t.CmdViewThemeMatrix(), "", func() { a.setTheme(themeMatrix) }},
 		{"view.theme.claude", "Claude", "", func() { a.setTheme(themeClaude) }},
 		{"view.theme.qoder", "Qoder", "", func() { a.setTheme(themeQoder) }},
+		{"view.theme.grokbot", "Grok Bot", "", func() { a.setTheme(themeGrokBot) }},
 		{localeCommand + "system", t.CmdViewLocaleSystem(), "", func() { a.setLocale("") }},
 	}
 	// The languages, each named in itself.
@@ -540,6 +544,7 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 			item("view.splitRight"), item("view.nextColumn"), item("view.prevColumn"),
 			item("view.moveTabNext"), item("view.moveTabPrev"), mygo.Separator(),
 			item("view.terminal"), item("view.newTerminal"), item("view.terminalTab"), item("view.terminalMove"),
+			checkbox("view.terminalLocation", a.settings.TerminalLocation == "editor"),
 			{Label: locales.MenuPanelPosition(), Submenu: []*mygo.MenuItem{
 				radio("view.panelPosition.bottom", a.panelSide() == "bottom"),
 				radio("view.panelPosition.left", a.panelSide() == "left"),
@@ -547,9 +552,10 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 			}}, mygo.Separator(),
 			item("view.zoomIn"), item("view.zoomOut"), item("view.zoomReset"), mygo.Separator(),
 			{Label: locales.MenuTheme(), Submenu: []*mygo.MenuItem{
+				item("view.selectTheme"), mygo.Separator(),
 				appearance("view.appearance.system", ""), appearance("view.appearance.light", "light"), appearance("view.appearance.dark", "dark"),
 				mygo.Separator(), theme("view.theme.mayoi", ""), theme("view.theme.matrix", themeMatrix), theme("view.theme.claude", themeClaude),
-				theme("view.theme.qoder", themeQoder),
+				theme("view.theme.qoder", themeQoder), theme("view.theme.grokbot", themeGrokBot),
 			}},
 			{Label: locales.MenuLanguage(), Submenu: languages}, mygo.Separator(),
 			{Role: mygo.RoleToggleFullScreen}, {Role: mygo.RoleToggleDevTools},
@@ -561,7 +567,8 @@ func (a *app) menu(cli bool, run func(id string, win *mygo.Window)) *mygo.Menu {
 		}},
 		{Label: locales.MenuGit(), Submenu: []*mygo.MenuItem{
 			item("git.commit"), item("git.commitPush"), item("git.amend"), item("git.undoCommit"), mygo.Separator(),
-			item("git.openChanges"), item("git.openAllChanges"), item("git.compareFiles"), item("git.nextChange"), item("git.prevChange"), item("git.nextFile"), item("git.prevFile"), mygo.Separator(),
+			item("git.openChanges"), item("git.openAllChanges"), item("git.compareFiles"), item("git.nextChange"), item("git.prevChange"), item("git.nextFile"), item("git.prevFile"),
+			checkbox("git.toggleCommitFiles", a.window.CommitFilesOpen), mygo.Separator(),
 			item("git.showChange"), item("git.revertChange"), item("git.appendChange"), item("git.stageChange"), mygo.Separator(),
 			item("git.stageFile"), item("git.unstageFile"), item("git.stageAll"), mygo.Separator(),
 			item("git.switchBranch"), item("git.createBranch"), item("git.fetch"), item("git.pull"), item("git.push"), mygo.Separator(),
@@ -633,4 +640,80 @@ func (a *app) showTabKey(k ui.Key) {
 		i = len(col.tabs) - 1
 	}
 	a.activate(col, i, true)
+}
+
+// appUIMenu fills the titlebar's menu on Windows and Linux, which have no
+// menu bar, with the menu bar's items.
+func (a *app) appUIMenu(m *ui.Menu) {
+	menu := a.menu(false, func(id string, _ *mygo.Window) {
+		a.post(func() { a.run(id) })
+	})
+	a.populateUIMenu(m, menu.Items())
+}
+
+// uiMenuSkips are the roles the titlebar's menu leaves out, which mygo
+// does for the menu bar but an app cannot yet: the edit roles go to the
+// focused element, so Copy would copy the editor's selection while a
+// terminal has the keyboard, and native UI's inspector has no API. Their
+// shortcuts and the context menus still have the edit roles.
+var uiMenuSkips = map[mygo.MenuRole]bool{
+	mygo.RoleCut: true, mygo.RoleCopy: true, mygo.RolePaste: true, mygo.RoleSelectAll: true,
+	mygo.RoleToggleDevTools: true,
+}
+
+// populateUIMenu adds items to m, with a separator only between two items.
+func (a *app) populateUIMenu(m *ui.Menu, items []*mygo.MenuItem) {
+	added, sep := false, false
+	for _, it := range items {
+		if it.Type == mygo.MenuItemSeparator {
+			sep = added
+			continue
+		}
+		if it.Hidden || it.Label == "" || uiMenuSkips[it.Role] {
+			continue
+		}
+		if sep {
+			m.Separator()
+		}
+		added, sep = true, false
+		if len(it.Submenu) > 0 {
+			m.Submenu(it.Label, func(sub *ui.Menu) {
+				a.populateUIMenu(sub, it.Submenu)
+			})
+			continue
+		}
+		item := m.Item(it.Label).Disabled(it.Disabled)
+		if it.Type == mygo.MenuItemCheckbox || it.Type == mygo.MenuItemRadio {
+			item.Checked(it.Checked)
+		}
+		if st, ok := keymap.ParseAccel(it.Accelerator); ok {
+			item.Shortcut(st.Mods, st.Key)
+		}
+		if item.Chosen() {
+			a.post(func() {
+				if it.Click != nil {
+					it.Click(it, nil)
+				} else {
+					a.handleRole(it.Role)
+				}
+			})
+		}
+	}
+}
+
+// handleRole does a role of the titlebar's menu that has no command.
+func (a *app) handleRole(r mygo.MenuRole) {
+	h, ok := a.host.(*desktop)
+	if !ok || h.f == nil || h.f.win == nil {
+		return
+	}
+	w := h.f.win
+	switch r {
+	case mygo.RoleMinimize:
+		w.Minimize()
+	case mygo.RoleClose:
+		w.Close()
+	case mygo.RoleToggleFullScreen:
+		w.SetFullScreen(!w.IsFullScreen())
+	}
 }

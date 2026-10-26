@@ -39,6 +39,7 @@ func (m *mayoi) startUpdates() {
 		}
 	})
 	go func() {
+		defer recoverCrash()
 		timer := time.NewTimer(updateFirstWait)
 		for {
 			select {

@@ -259,6 +259,7 @@ var vscodeCommands = map[string]string{
 	"editor.action.fontZoomIn":                   "view.zoomIn",
 	"editor.action.fontZoomOut":                  "view.zoomOut",
 	"editor.action.fontZoomReset":                "view.zoomReset",
+	"workbench.action.selectTheme":               "view.selectTheme",
 	"git.commit":                                 "git.commit",
 	"git.commitStaged":                           "git.commit",
 	"git.stageAll":                               "git.stageAll",

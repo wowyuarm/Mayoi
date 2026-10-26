@@ -4,7 +4,11 @@
 
 ```sh
 scripts/dev.sh                                              # run Mayoi Dev with live reload, with its own settings
-go test ./...                                               # headless UI tests
+scripts/test.sh                                             # the tests, cmd/mayoi's over every core, as CI runs them
+scripts/test.sh -full                                       # and the tests that start a shell
+RUN=TestMerge scripts/test.sh                               # only cmd/mayoi's tests whose names match
+go tool staticcheck ./...                                   # the lint CI runs, with gofmt -l .
+go test ./...                                               # headless UI tests, one after another
 go test -short ./...                                        # skip the tests that start a shell
 go test -short -run XXX -bench Frame ./cmd/mayoi            # benchmark an editor frame
 scripts/screenshots/shoot.sh                                # redraw the README screenshots
@@ -18,7 +22,7 @@ macOS, Python with Pillow and `pngquant`. To take one feature's shots, run
 
 ## Releasing
 
-Write the release notes under `## Unreleased` in `CHANGELOG.md` and commit them, then:
+Write the release notes under `## Unreleased` in `CHANGELOG.md`, as [AGENTS.md](AGENTS.md) describes, and commit them, then:
 
 ```sh
 scripts/bump.sh patch    # or minor, major, or a version such as 0.2.0

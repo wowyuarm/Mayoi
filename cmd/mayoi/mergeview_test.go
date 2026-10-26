@@ -13,6 +13,7 @@ import (
 	"github.com/egoist/mygo/ui"
 
 	gitpkg "mayoi/internal/git"
+	"mayoi/locales"
 )
 
 func TestMergeRegions(t *testing.T) {
@@ -449,6 +450,9 @@ func TestMergeViewRestoreConflict(t *testing.T) {
 	hs.mergeRepo("a\nm\nz\n", "a\nours\nz\n", "a\nside\nz\n")
 	v := hs.mergeOf()
 	a := hs.a
+	// The result started over at the base would save itself a second
+	// later, over the markers, when git is slow to settle.
+	a.settings.AutoSave = false
 	path := hs.path("shared.txt")
 	a.takeMergeSide(v, 0, false)
 	a.completeMerge(v)
@@ -936,6 +940,9 @@ func TestMergeViewFilesBar(t *testing.T) {
 		t.Fatal(err)
 	}
 	hs.settle()
+	// The merge of two.txt reads its sides in the background; its head,
+	// with Apply Changes, shows once they are in.
+	hs.awaitMerge()
 	if v2 := a.activeTab().merge; v2 == nil || v2.path != hs.path("two.txt") {
 		t.Fatalf("the merge of the file chosen is not open: %+v", a.activeTab())
 	}
@@ -1150,5 +1157,490 @@ func TestMergeFilesKeys(t *testing.T) {
 	}
 	if a.conflicts.open {
 		t.Error("the list is open still")
+	}
+}
+
+// The texts of TestMergeSyncScrollFollows: two sides of a base that
+// moved and added functions, so the mapping between the sides is not
+// one to one, and theirs ends short of where ours scrolls to.
+const (
+	syncScrollBase = `package calc
+
+import "errors"
+
+// Add returns the sum of a and b, the simplest case.
+func Add(a, b int) int {
+	return a + b
+}
+
+// Subtract returns a minus b.
+func Subtract(a, b int) int {
+	return a - b
+}
+
+// Multiply returns the product of a and b.
+func Multiply(a, b int) int {
+	return a * b
+}
+
+// Divide returns a over b, or an error when b is zero.
+func Divide(a, b int) (int, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return a / b, nil
+}
+
+// Sum adds every number in xs.
+func Sum(xs []int) int {
+	total := 0
+	for i := 0; i < len(xs); i++ {
+		total += xs[i]
+	}
+	return total
+}
+
+// Max returns the larger of a and b.
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// Min returns the smaller of a and b.
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Clamp keeps v within low and high.
+func Clamp(v, low, high int) int {
+	if v < low {
+		return low
+	}
+	if v > high {
+		return high
+	}
+	return v
+}
+`
+	syncScrollOurs = `package calc
+
+import "errors"
+
+// Add sums a and b, as ours wrote it.
+func Add(a, b int) int {
+	return a + b
+}
+
+// Subtract returns a minus b.
+func Subtract(a, b int) int {
+	return a - b
+}
+
+// Multiply returns the product of a and b.
+func Multiply(a, b int) int {
+	return a * b
+}
+
+// Divide returns a over b, or an error when b is zero.
+func Divide(a, b int) (int, error) {
+	if b == 0 {
+		return 0, errors.New("ours: zero divisor")
+	}
+	return a / b, nil
+}
+
+// Clamp keeps v within low and high.
+func Clamp(v, low, high int) int {
+	if v < low {
+		return low
+	}
+	if v > high {
+		return high
+	}
+	return v
+}
+
+// Sum adds every number in xs.
+func Sum(xs []int) int {
+	total := 0
+	for i := 0; i < len(xs); i++ {
+		total += xs[i]
+	}
+	return total
+}
+
+// Max returns the larger of a and b.
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// Min returns the smaller of a and b.
+func Min(a, b int) int {
+	if a < b {
+		return small(a, b)
+	}
+	return b
+}
+
+// Clamp keeps v within low and high.
+func Clamp(v, low, high int) int {
+	if v < low {
+		return low
+	}
+	if v > high {
+		return high
+	}
+	return v
+}
+
+// small is the lesser of a and b, shared by Min.
+func small(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+`
+	syncScrollTheirs = `package calc
+
+import "errors"
+
+// Add sums a and b, as theirs wrote it.
+func Add(a, b int) int {
+	return a + b
+}
+
+// Subtract returns a minus b.
+func Subtract(a, b int) int {
+	return a - b
+}
+
+// Multiply returns the product of a and b.
+func Multiply(a, b int) int {
+	return a * b
+}
+
+// Divide returns a over b, or an error when b is zero.
+func Divide(a, b int) (int, error) {
+	if b == 0 {
+		return 0, errors.New("theirs: zero divisor")
+	}
+	return a / b, nil
+}
+
+// Sum adds every number in xs.
+func Sum(xs []int) int {
+	total := 0
+	for i := 0; i < len(xs); i++ {
+		total += xs[i]
+	}
+	return total
+}
+
+// Max returns the larger of a and b.
+func Max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// Min returns the smaller of a and b.
+func Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+`
+)
+
+// TestMergeSyncScrollFollows: scrolling one pane of a merge moves the
+// others with it, so that the line in the middle of the mover stands
+// across from theirs as the hunks between the texts say — and the result
+// pane follows too, which it did not while its selection sync kept
+// revealing a caret it believed unseen, pinning it to the top and, with
+// the panes together, dragging the sides back there with it.
+func TestMergeSyncScrollFollows(t *testing.T) {
+	base, ours, theirs := syncScrollBase, syncScrollOurs, syncScrollTheirs
+	hs := newHarness(t, true)
+	hs.mergeRepo(base, ours, theirs)
+	v := hs.mergeOf()
+	a := hs.a
+	lineH := a.font.lineH
+	mid := func(k int) int {
+		return int((v.panes[k].scroll.Y + v.panes[k].viewH/2 - editorPadY) / lineH)
+	}
+	// Scroll ours deep, where the texts have diverged and the mapping is
+	// not one to one: the result lands on the line ours maps to, theirs
+	// on the line that maps back to it, and none stands pinned at the
+	// top.
+	v.panes[0].scroll.Y = 45 * lineH
+	hs.settle()
+	if mid(0) < 40 {
+		t.Fatalf("ours stands at line %d, the scroll did not take", mid(0))
+	}
+	if v.panes[1].scroll.Y <= 0 {
+		t.Error("the result pane stands pinned at the top while ours scrolled")
+	}
+	// A follower stands where the mapping puts it, clamped to its own
+	// ends: a side shorter than the position mapped to ends together
+	// with the rest rather than overshooting into blank.
+	clampedMid := func(k int, at float32) int {
+		h := v.panes[k].viewH
+		end := max(0, 2*editorPadY+float32(v.paneLineCount(k))*lineH-h)
+		y := clamp(editorPadY+at*lineH-h/2, 0, end)
+		return int((y + h/2 - editorPadY) / lineH)
+	}
+	res := mapMergeLine(v.pairHunks(0), float32(mid(0)), false)
+	if d := float32(mid(1)) - res; d < -1 || d > 1 {
+		t.Errorf("the result's middle line %d does not stand across ours' %d (want %.0f)", mid(1), mid(0), res)
+	}
+	at2 := mapMergeLine(v.pairHunks(2), res, true)
+	want := clampedMid(2, at2)
+	if d := float32(mid(2) - want); d < -1 || d > 1 {
+		t.Errorf("theirs' middle line %d does not stand across the result's %.0f (want %d, clamped of %.0f)", mid(2), res, want, at2)
+	}
+	// Scrolling the result leads the sides the same way.
+	v.panes[1].scroll.Y = 30 * lineH
+	hs.settle()
+	if v.panes[0].scroll.Y == 45*lineH {
+		t.Error("ours did not follow the result")
+	}
+	at0 := mapMergeLine(v.pairHunks(0), float32(mid(1)), true)
+	want0 := clampedMid(0, at0)
+	if d := float32(mid(0) - want0); d < -1 || d > 1 {
+		t.Errorf("ours' middle line %d does not stand across the result's %d (want %d, clamped of %.0f)", mid(0), mid(1), want0, at0)
+	}
+	at2 = mapMergeLine(v.pairHunks(2), float32(mid(1)), true)
+	want2 := clampedMid(2, at2)
+	if d := float32(mid(2) - want2); d < -1 || d > 1 {
+		t.Errorf("theirs' middle line %d does not stand across the result's %d (want %d, clamped of %.0f)", mid(2), mid(1), want2, at2)
+	}
+}
+
+// mergeOverflowSetup makes a two-file merge and opens one.txt's merge,
+// its first conflict taken so the result differs from the base.
+func (hs *harness) mergeOverflowSetup(t *testing.T) *mergeView {
+	hs.mergeFilesRepo()
+	v := hs.mergeOfRel("one.txt")
+	hs.a.takeMergeSide(v, 0, true)
+	hs.settle()
+	if got := v.resultLines(); slices.Equal(got, []string{"a", "b", "c", "m", "z"}) || v.unresolved() >= len(v.regions) {
+		t.Fatalf("the conflict did not go in: %q unresolved=%d", got, v.unresolved())
+	}
+	return v
+}
+
+// mergeOverflowPress presses the merge header's action where it stands:
+// on the bar while it fits, from the overflow menu once it went there.
+func (hs *harness) mergeOverflowPress(t *testing.T, label string) {
+	if _, on := hs.tt.Find(label); on {
+		if err := hs.tt.Click(label); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	if err := hs.tt.Click(locales.MergeMoreActions()); err != nil {
+		t.Fatalf("%q is neither on the bar nor has the menu a place to open: %v", label, err)
+	}
+	if !slices.Contains(hs.tt.Menu(), label) {
+		t.Fatalf("%q is neither on the bar nor in the menu: %q", label, hs.tt.Menu())
+	}
+	if err := hs.tt.ChooseMenuItem(label); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestMergeHeadDropsLeastNeededFirst: as the window narrows, the merge
+// header's file actions go one by one, the least needed first, each only
+// once the row would not hold it, and those left fit. Whatever went
+// stands in the overflow menu, and nothing stays on both. The bar of the
+// conflict chosen goes as its rows do, into its own overflow.
+func TestMergeHeadDropsLeastNeededFirst(t *testing.T) {
+	skipOnWindows(t, "Windows' wider font holds the actions at 540")
+	hs := newHarness(t, true)
+	hs.mergeOverflowSetup(t)
+	// In the order they go: the head's file actions, then the bar of the
+	// conflict.
+	parts := []string{"Conflicts…", "Save and Close", "Apply Changes", "Save", "Reset to Base", "Mark Resolved"}
+	sideParts := []string{"Resolve using Right", "Resolve using Left", "Ignore Right", "Ignore Left", "Accept Right", "Accept Left"}
+	gone, sideGone := 0, 0
+	for w := 1200; w >= 540; w -= 20 {
+		hs.tt.SetSize(w, 640)
+		hs.settle()
+		for i, s := range parts {
+			box, shown := hs.tt.Find(s)
+			switch {
+			case !shown:
+				gone = max(gone, i+1)
+			case i < gone:
+				t.Errorf("at %d, %q is back", w, s)
+			case box.X+box.W > float32(w):
+				t.Errorf("at %d, %q does not fit: %.0f+%.0f", w, s, box.X, box.W)
+			}
+		}
+		for i, s := range sideParts {
+			box, shown := hs.tt.Find(s)
+			switch {
+			case !shown:
+				sideGone = max(sideGone, i+1)
+			case i < sideGone:
+				t.Errorf("at %d, %q is back", w, s)
+			case box.X+box.W > float32(w):
+				t.Errorf("at %d, %q does not fit: %.0f+%.0f", w, s, box.X, box.W)
+			}
+		}
+		if box, ok := hs.tt.Find(locales.MergeApply()); !ok || box.X+box.W > float32(w) {
+			t.Errorf("at %d, Apply does not fit: %v", w, box)
+		}
+	}
+	if gone == 0 {
+		t.Fatal("the actions never go, though the row ran out of room")
+	}
+	if sideGone == 0 {
+		t.Fatal("the sides of the conflict never go, though their row ran out of room")
+	}
+	// What went stands in the overflow menu, in the row's order, and
+	// nothing stands in both places. The menu of the head holds no action
+	// of the conflict's bar: each row keeps its own.
+	if err := hs.tt.Click(locales.MergeMoreActions()); err != nil {
+		t.Fatal(err)
+	}
+	menu := hs.tt.Menu()
+	if len(menu) == 0 {
+		t.Fatal("the overflow menu holds nothing")
+	}
+	last := -1
+	for _, s := range menu {
+		i := slices.Index(parts, s)
+		if i < 0 {
+			if s != locales.MergeApply() && !slices.Contains(sideParts, s) {
+				t.Errorf("the menu holds %q, which no action of the row is", s)
+			}
+			if slices.Contains(sideParts, s) {
+				t.Errorf("the head's menu holds %q, which the conflict's bar went without", s)
+			}
+			continue
+		}
+		if _, on := hs.tt.Find(s); on {
+			t.Errorf("%q stands on the bar and in the menu", s)
+		}
+		if i < last {
+			t.Errorf("%q stands out of the row's order in the menu: %q", s, menu)
+		}
+		last = i
+	}
+	// The conflict's bar keeps its own overflow: it holds what went from
+	// it, and the head's menu held none of it.
+	box, ok := hs.tt.Find(locales.MergePrevConflict())
+	if !ok {
+		t.Fatal("the bar of the conflict is gone altogether")
+	}
+	hs.tt.ClickAt(float32(540)-25, box.Y+box.H/2)
+	sideMenu := hs.tt.Menu()
+	if len(sideMenu) == 0 {
+		t.Fatal("the conflict bar's overflow holds nothing")
+	}
+	sideLast := -1
+	for _, s := range sideMenu {
+		i := slices.Index(sideParts, s)
+		if i < 0 {
+			t.Errorf("the conflict bar's menu holds %q, which no action of it is", s)
+			continue
+		}
+		if _, on := hs.tt.Find(s); on {
+			t.Errorf("%q stands on the bar and in the menu", s)
+		}
+		if i < sideLast {
+			t.Errorf("%q stands out of the row's order in the menu: %q", s, sideMenu)
+		}
+		sideLast = i
+	}
+	if slices.Contains(sideMenu, locales.MergeResetBase()) {
+		t.Error("the conflict bar's menu holds an action of the head")
+	}
+}
+
+// TestMergeHeadOverflowMenuActs: an action of the overflow menu does what
+// the button it went from does, on the bar or in the menu as the width
+// has it.
+func TestMergeHeadOverflowMenuActs(t *testing.T) {
+	hs := newHarness(t, true)
+	v := hs.mergeOverflowSetup(t)
+	// The row cannot hold every action at this width.
+	hs.tt.SetSize(760, 640)
+	hs.settle()
+	if _, ok := hs.tt.Find(locales.MergeMoreActions()); !ok {
+		t.Fatal("no overflow menu at 760, though the actions cannot fit")
+	}
+	// Reset to Base puts the base back, wherever it stands.
+	hs.mergeOverflowPress(t, locales.MergeResetBase())
+	hs.settle()
+	if got := v.doc.buf.String(); got != "a\nb\nc\nm\nz\n" {
+		t.Fatalf("the result is not the base: %q", got)
+	}
+	// Conflicts… opens the files in conflict.
+	hs.mergeOverflowPress(t, locales.MergeConflictsEllipsis())
+	hs.settle()
+	if !hs.a.conflicts.open {
+		t.Error("the files in conflict do not open")
+	}
+	hs.a.closeConflicts()
+	hs.settle()
+	// Save and Close saves the file and ends the merge.
+	hs.mergeOverflowPress(t, locales.MergeSaveClose())
+	hs.settle()
+	body, err := os.ReadFile(hs.path("one.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "a\nb\nc\nm\nz\n" {
+		t.Errorf("the file does not hold the result: %q", body)
+	}
+	if tm := hs.a.activeTab(); tm != nil && tm.merge != nil {
+		t.Error("the merge does not close")
+	}
+}
+
+// TestMergeActionsOverflowMenuActs: an action that went from the bar of
+// the conflict stands in its overflow, and does what its button does.
+func TestMergeActionsOverflowMenuActs(t *testing.T) {
+	hs := newHarness(t, true)
+	v := hs.mergeOverflowSetup(t)
+	// The bar of the conflict cannot hold its actions at this width.
+	hs.tt.SetSize(760, 640)
+	hs.settle()
+	if _, ok := hs.tt.Find(locales.MergeUseRight()); ok {
+		t.Fatal("Resolve using Right still stands on the bar at 760")
+	}
+	box, ok := hs.tt.Find(locales.MergePrevConflict())
+	if !ok {
+		t.Fatal("the bar of the conflict is gone altogether")
+	}
+	hs.tt.ClickAt(760-25, box.Y+box.H/2)
+	if !slices.Contains(hs.tt.Menu(), locales.MergeUseRight()) {
+		t.Fatalf("the conflict bar's overflow lacks Resolve using Right: %q", hs.tt.Menu())
+	}
+	if err := hs.tt.ChooseMenuItem(locales.MergeUseRight()); err != nil {
+		t.Fatal(err)
+	}
+	hs.settle()
+	if v.unresolved() != 0 {
+		t.Errorf("Resolve using Right from the overflow leaves %d conflicts", v.unresolved())
+	}
+	for _, r := range v.regions {
+		if st := v.stateOf(r); st != regionRight {
+			t.Errorf("a conflict stands %v, not theirs", st)
+		}
 	}
 }
