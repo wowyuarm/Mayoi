@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"mayoi/internal/remote"
 )
 
 // Request is what the mayoi command asks the running app.
@@ -110,6 +112,12 @@ Examples:
 func Parse(args []string, cwd string) (Request, error) {
 	r := Request{Cwd: cwd}
 	abs := func(p string) string {
+		// A path of a host, which the editor knows by its own spelling:
+		// Windows would take /ssh:host/x for a relative path, and join it
+		// to the directory the command ran in.
+		if remote.Is(p) {
+			return remote.Clean(p)
+		}
 		if !filepath.IsAbs(p) {
 			p = filepath.Join(cwd, p)
 		}

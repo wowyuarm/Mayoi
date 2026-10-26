@@ -150,7 +150,9 @@ func (m *mayoi) openTargets(req cli.Request, reply func(cli.Reply)) {
 	at := map[string]cli.Target{}
 	for i, t := range req.Paths {
 		paths[i] = t.Path
-		at[filepath.Clean(t.Path)] = t
+		// As splitPaths cleans them, which is what the lookup below
+		// reads: a remote path keeps its host and slashes.
+		at[remote.Clean(t.Path)] = t
 	}
 	folders, files := splitPaths(paths)
 	if req.Wait && len(files) == 0 {
@@ -347,8 +349,12 @@ var commandArgs = map[string]commandArg{
 	}},
 }
 
-// pathArg is a path the mayoi command gave, absolute.
+// pathArg is a path the mayoi command gave, absolute. A remote path, which
+// the editor knows by its own spelling, is kept as it is.
 func pathArg(p, cwd string) string {
+	if remote.Is(p) {
+		return remote.Clean(p)
+	}
 	if rest, ok := strings.CutPrefix(p, "~"+string(filepath.Separator)); ok || p == "~" {
 		home, _ := os.UserHomeDir()
 		p = filepath.Join(home, rest)
